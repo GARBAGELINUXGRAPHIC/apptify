@@ -1,0 +1,162 @@
+html { scroll-behavior: smooth; }
+body { margin: 0; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+.topbar { height: 64px; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid color-mix(in srgb,var(--apple-border) 50%,transparent); background: color-mix(in srgb,var(--apple-surface) 90%,transparent); backdrop-filter: blur(20px); }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--apple-text); text-decoration: none; font-weight: 650; font-size: 20px; }
+.brand-symbol { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--apple-text); color: var(--apple-surface); font-weight: 600; font-size: 24px; line-height: 1; padding-bottom: 4px; font-family: Georgia,serif; }
+.version { color: var(--apple-secondary); font-size: 10px; font-weight: 400; border: 1px solid var(--apple-border); border-radius: 5px; padding: 1px 5px; margin-left: 1px; }
+.top-nav { align-self: stretch; display: flex; gap: 35px; }
+.top-nav button { display: flex; align-items: center; gap: 4px; padding: 1px 0 0; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--apple-secondary); font-size: 13px; }
+.top-nav button.active { color: var(--apple-text); border-color: var(--apple-text); }
+.top-actions { display: flex; align-items: center; gap: 17px; }
+.vue-badge { display: flex; align-items: center; gap: 6px; color: var(--apple-secondary); font-size: 11px; }
+.vue-badge > span { width: 5px; height: 5px; background: #42b883; border-radius: 50%; }
+.top-actions .apple-button { color: var(--apple-secondary); }
+.mobile-nav-toggle { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; background: none; color: var(--apple-text); border: 0; }
+.sidebar { width: 220px; position: fixed; top: 64px; bottom: 0; left: 0; z-index: 40; padding: 30px 16px 20px; border-right: 1px solid color-mix(in srgb,var(--apple-border) 50%,transparent); background: var(--apple-surface); overflow: auto; display: flex; flex-direction: column; }
+.sidebar .apple-search { min-height: 35px; font-size: 12px; border-radius: 6px; margin: 0 2px 24px; }
+.sidebar .apple-search input { padding: 8px 0; }
+.sidebar-label { font-size: 10px; color: var(--apple-secondary); padding: 0 12px; margin: 0 0 10px; }
+.nav-item { border: 0; background: transparent; display: flex; align-items: center; gap: 11px; color: var(--apple-secondary); width: 100%; padding: 11px 12px; border-radius: 6px; font-size: 13px; text-align: left; flex-shrink: 0; }
+.nav-item span { flex: 1; }
+.nav-item small { font-size: 10px; opacity: .65; font-variant-numeric: tabular-nums; }
+.nav-item:hover { background: var(--apple-bg); }
+.nav-item.active { color: var(--apple-accent); background: color-mix(in srgb,var(--apple-accent) 8%,var(--apple-surface)); font-weight: 550; }
+.secondary-label { margin-top: 32px; }
+.sidebar-footer { margin-top: auto; padding: 68px 12px 0; display: flex; flex-direction: column; gap: 5px; }
+.footer-monogram { font-family: Georgia,serif; font-size: 26px; color: var(--apple-secondary); margin-bottom: 7px; }
+.sidebar-footer strong { font-size: 11px; font-weight: 500; }
+.sidebar-footer small { font-size: 10px; color: var(--apple-secondary); }
+.main-content { margin-left: 220px; padding: 29px 42px 0; min-height: calc(100vh - 64px); max-width: 1800px; }
+.page-eyebrow { display: flex; gap: 8px; align-items: center; color: var(--apple-secondary); font-size: 10px; margin-bottom: 26px; }
+.page-eyebrow svg { opacity: .4; }
+.page-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 26px; }
+.page-heading h1 { font-size: 38px; line-height: 1.2; font-weight: 650; margin: 0; }
+.page-heading h1 > span { color: var(--apple-secondary); }
+.page-heading p { font-size: 13px; color: var(--apple-secondary); margin: 12px 0 0; }
+.page-heading > .apple-button { font-size: 12px; border-color: var(--apple-border); color: var(--apple-text); background: var(--apple-surface); }
+.workspace-toolbar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px; min-height: 47px; gap: 12px; }
+.view-tabs { display: flex; align-self: stretch; gap: 24px; }
+.view-tabs button { padding: 10px 0 14px; border: 0; border-bottom: 2px solid transparent; color: var(--apple-secondary); background: transparent; font-size: 12px; display: flex; align-items: center; gap: 7px; }
+.view-tabs button.active { color: var(--apple-text); border-color: var(--apple-text); font-weight: 550; }
+.view-tabs small { font-size: 9px; padding: 1px 5px; border-radius: 4px; background: var(--apple-surface-alt); color: var(--apple-secondary); }
+.preview-controls { display: flex; gap: 5px; align-items: center; padding-bottom: 8px; }
+.preview-controls button { width: 31px; height: 31px; display: grid; place-items: center; color: var(--apple-secondary); background: none; border: 0; border-radius: 5px; }
+.preview-controls button.active { color: var(--apple-text); background: var(--apple-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .07); }
+.toolbar-divider { display: block; width: 1px; height: 16px; background: var(--apple-border); margin: 0 7px; }
+.specimen-grid { display: grid; grid-template-columns: 1.04fr 1fr 1fr; gap: 18px; }
+.specimen { min-width: 0; padding: 21px 24px 22px; border-radius: 8px; background: var(--apple-surface); box-shadow: 0 2px 10px rgb(0 0 0 / .025); position: relative; display: flex; flex-direction: column; }
+.specimen-caption { display: flex; align-items: center; justify-content: space-between; color: var(--apple-secondary); font-size: 9px; margin-bottom: 22px; }
+.specimen-caption button { padding: 0; display: grid; place-items: center; color: var(--apple-secondary); background: transparent; border: 0; width: 28px; height: 28px; margin: -7px -8px -7px 0; }
+.specimen h2 { font-size: 21px; font-weight: 600; line-height: 1.3; margin: 0 0 25px; }
+.specimen-product { background: #fff; color: #1d1d1f; padding-bottom: 24px; }
+.specimen-product .specimen-caption { color: #6e6e73; margin-bottom: 14px; }
+.product-title small { font-size: 9px; color: #b55c3c; font-weight: 550; }
+.product-title h2 { font-size: 26px; margin: 7px 0 5px; }
+.product-title p { font-size: 13px; color: #6e6e73; margin: 0; }
+.specimen-product .apple-image { margin: 0 -5px; width: calc(100% + 10px); max-height: 212px; background: #fff; }
+.specimen-product .apple-image img { object-fit: contain; }
+.specimen-product .apple-image__zoom { opacity: 0; }
+.specimen-product:hover .apple-image__zoom,.specimen-product .apple-image:focus-within .apple-image__zoom { opacity: 1; }
+.product-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; }
+.product-swatches { display: flex; gap: 5px; }
+.product-swatches i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.product-swatches i:first-child { outline: 1px solid #aaa; outline-offset: 2px; margin-right: 2px; }
+.product-actions .apple-button { font-size: 11px; min-height: 32px; padding: 6px 13px; }
+.button-specimens { display: flex; align-items: center; flex-direction: column; gap: 15px; padding: 9px 0 22px; }
+.button-specimens > .apple-button { min-width: 144px; font-size: 13px; min-height: 40px; }
+.icon-button-row { display: flex; gap: 12px; margin-top: 4px; }
+.icon-button-row .apple-button { width: 38px; height: 38px; min-height: 38px; }
+.specimen-foot { margin-top: auto; padding-top: 15px; display: flex; gap: 10px; justify-content: space-between; align-items: center; color: var(--apple-secondary); font-size: 10px; }
+.specimen-foot code { font-size: 10px; }
+.preference-demo { display: flex; flex-direction: column; gap: 14px; }
+.preference-demo .apple-field__label { display: none; }
+.preference-demo .apple-slider .apple-field__label { display: block; }
+.setting-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid color-mix(in srgb,var(--apple-border) 55%,transparent); padding: 3px 0 13px; }
+.setting-line > div:first-child { min-width: 0; }
+.setting-line strong { display: block; font-size: 12px; font-weight: 500; }
+.setting-line small { display: block; font-size: 10px; color: var(--apple-secondary); margin-top: 4px; }
+.setting-line .apple-field { flex-shrink: 0; }
+.check-row { padding-top: 5px; }
+.check-row .apple-choice__label { font-size: 11px; }
+.form-specimen .apple-form { display: flex; flex-direction: column; gap: 13px; }
+.form-specimen .apple-form .apple-field { margin-bottom: 10px; }
+.form-specimen .apple-form .apple-button { margin-top: 9px; align-self: flex-start; font-size: 12px; min-height: 36px; }
+.specimen .apple-field__label { font-size: 11px; }
+.specimen input { font-size: 12px; }
+.media-specimen .apple-image { flex: 1; min-height: 184px; }
+.feedback-specimen .apple-alert { font-size: 11px; padding: 12px; }
+.progress-demo { margin: 25px 0; }
+.progress-demo > div:first-child { display: flex; justify-content: space-between; font-size: 11px; color: var(--apple-secondary); margin-bottom: 10px; }
+.feedback-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 3px; padding-top: 25px; }
+.feedback-actions .apple-button { font-size: 11px; }
+.more-components { display: flex; align-items: center; justify-content: space-between; padding: 33px 0; gap: 20px; }
+.more-components h2 { margin: 0 0 7px; font-size: 19px; font-weight: 600; }
+.more-components span { color: var(--apple-secondary); font-size: 12px; }
+.more-components .apple-button { font-size: 12px; }
+.page-footer { padding: 23px 0; border-top: 1px solid var(--apple-border); display: flex; justify-content: space-between; gap: 12px; font-size: 10px; color: var(--apple-secondary); margin-top: 10px; }
+.mobile-preview { max-width: 390px; margin-inline: auto; }
+.mobile-preview .specimen-grid { grid-template-columns: 1fr; }
+.catalog-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 36px; }
+.catalog-item { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; border: 1px solid transparent; border-radius: 8px; background: var(--apple-surface); color: var(--apple-text); text-align: left; padding: 23px; min-width: 0; }
+.catalog-item:hover { border-color: var(--apple-accent); }
+.catalog-icon { margin-bottom: 15px; color: var(--apple-secondary); }
+.catalog-item strong { font-size: 15px; font-weight: 550; }
+.catalog-item code { font-size: 10px; color: var(--apple-secondary); overflow-wrap: anywhere; }
+.catalog-item > svg { position: absolute; right: 18px; top: 26px; color: var(--apple-secondary); }
+.detail-preview { background: var(--apple-surface); border-radius: 8px; padding: 40px; min-height: 280px; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; }
+.detail-preview .component-demo { width: 100%; max-width: 720px; min-width: 0; }
+.component-demo > .apple-field { max-width: 420px; }
+.component-demo > .apple-form { max-width: 420px; }
+.component-demo .apple-form .apple-field { margin-bottom: 18px; }
+.component-demo > .apple-image { max-width: 560px; }
+.demo-product { max-width: 330px; margin-inline: auto; }
+.demo-product .apple-image { margin-top: 10px; }
+.demo-copy { padding: 24px 0; color: var(--apple-secondary); }
+.demo-slide { width: 100%; height: 260px; object-fit: cover; }
+.detail-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; font-size: 12px; color: var(--apple-secondary); margin-bottom: 60px; }
+.detail-footer > span { overflow-wrap: anywhere; }
+.code-view { border-radius: 8px; overflow: hidden; background: var(--apple-surface); padding: 22px; margin-bottom: 20px; }
+.code-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; font-size: 12px; color: var(--apple-secondary); }
+pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); border-radius: 6px; line-height: 1.8; font-size: 12px; tab-size: 2; }
+.api-line { overflow-wrap: anywhere; font-size: 13px; line-height: 2; color: var(--apple-secondary); }
+.code-view h2 { font-size: 17px; margin-top: 28px; }
+.foundation-section { padding: 25px 0 35px; border-top: 1px solid var(--apple-border); }
+.foundation-section h2 { margin: 0 0 25px; font-size: 21px; font-weight: 600; }
+.theme-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.theme-options button { display: flex; align-items: center; gap: 12px; background: var(--apple-surface); border: 1px solid transparent; border-radius: 8px; padding: 14px 20px; color: var(--apple-text); }
+.theme-options button.selected { border-color: var(--apple-accent); }
+.theme-options button > span { width: 23px; height: 23px; border-radius: 50%; border: 1px solid #aaa5; }
+.token-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; }
+.token > div { height: 80px; border: 1px solid var(--apple-border); border-radius: 6px; margin-bottom: 10px; }
+.token > span { display: block; font-size: 13px; margin-bottom: 3px; }
+.token code { color: var(--apple-secondary); font-size: 10px; overflow-wrap: anywhere; }
+.type-sample { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
+.type-large { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.type-sample h3 { font-size: 24px; font-weight: 600; margin: 0; }
+.type-sample code { font-size: 10px; color: var(--apple-secondary); }
+.motion-samples { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
+.preferences-content { display: flex; flex-direction: column; gap: 24px; }
+.quickstart h3 { font-size: 17px; margin: 24px 0 8px; }
+.quickstart p { font-size: 13px; color: var(--apple-secondary); line-height: 1.7; }
+.nav-scrim { display: none; }
+@media(min-width:1600px) { .main-content { padding-inline: 60px; } .specimen-grid { gap: 24px; } .specimen { padding: 25px 30px; } .specimen-product .apple-image { max-height: 230px; } }
+@media(max-width:1180px) { .main-content { padding-inline: 26px; } .sidebar { width: 196px; } .main-content { margin-left: 196px; } .specimen-grid { grid-template-columns: 1fr 1fr; } .specimen-product .apple-image { max-height: 225px; } .specimen { min-height: 350px; } .catalog-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:800px) { .topbar { padding-inline: 20px; } .top-nav { gap: 22px; } .sidebar { width: 176px; padding-inline: 10px; } .main-content { margin-left: 176px; padding-inline: 22px; } .specimen-grid { grid-template-columns: 1fr; } .specimen { min-height: 0; padding: 24px; } .specimen-product .apple-image { max-height: 260px; } .page-heading h1 { font-size: 31px; } .page-heading > .apple-button { display: none; } .token-grid { grid-template-columns: 1fr 1fr; } .detail-preview { padding: 25px; } .page-footer { flex-direction: column; } }
+@media(max-width:640px) {
+  .topbar { height: 58px; padding-inline: 17px; } .brand { font-size: 19px; } .brand-symbol { width: 26px; height: 26px; } .top-nav,.vue-badge { display: none; } .top-actions { gap: 1px; } .mobile-nav-toggle { display: flex; }
+  .sidebar { width: 240px; top: 58px; padding: 22px 15px; transform: translateX(-100%); transition: transform var(--apple-duration) var(--apple-ease); z-index: 60; }
+  .sidebar.is-open { transform: none; } .sidebar .nav-item { min-height: 44px; }
+  .nav-scrim { display: block; position: fixed; inset: 58px 0 0; border: 0; background: rgb(0 0 0 / .3); z-index: 55; }
+  .main-content { margin-left: 0; padding: 22px 18px 0; } .page-eyebrow { margin-bottom: 22px; } .page-heading { margin-bottom: 23px; } .page-heading h1 { font-size: 32px; } .page-heading p { font-size: 12px; }
+  .workspace-toolbar { margin-bottom: 20px; } .view-tabs { gap: 18px; } .view-tabs button { font-size: 11px; } .preview-controls { gap: 1px; } .preview-controls button { width: 29px; min-height: 36px; } .toolbar-divider { margin-inline: 3px; }
+  .specimen-grid { gap: 16px; } .specimen h2 { font-size: 23px; } .specimen-product .apple-image { max-height: 250px; } .specimen-caption { font-size: 10px; } .specimen-caption button { min-width: 36px; min-height: 36px; }
+  .product-title h2 { font-size: 30px; } .product-actions .apple-button { min-height: 40px; font-size: 12px; } .button-specimens > .apple-button { min-height: 44px; } .icon-button-row .apple-button { width: 44px; height: 44px; }
+  .setting-line strong { font-size: 14px; } .setting-line small { font-size: 11px; } .check-row .apple-choice__label { font-size: 13px; } .specimen .apple-field__label { font-size: 12px; } .specimen input { font-size: 16px; }
+  .catalog-grid { gap: 11px; } .catalog-item { padding: 18px 14px; } .catalog-item strong { font-size: 14px; } .catalog-item code { font-size: 9px; } .catalog-item > svg { right: 10px; top: 20px; }
+  .detail-preview { padding: 20px 16px; } .detail-footer { margin-bottom: 30px; font-size: 10px; } .detail-footer .apple-button { font-size: 12px; padding-inline: 10px; }
+  .more-components { align-items: flex-start; flex-direction: column; gap: 9px; padding-block: 28px; } .more-components .apple-button { padding-left: 0; } .type-large { font-size: 29px; } .motion-samples { grid-template-columns: 1fr; }
+  .code-view { padding: 15px; } pre { padding: 15px; font-size: 11px; } .demo-slide { height: 200px; }
+}
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } }
