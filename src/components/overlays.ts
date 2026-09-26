@@ -1,5 +1,5 @@
 import {
-  Teleport, cloneVNode, defineComponent, h, mergeProps, nextTick,
+  Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, mergeProps, nextTick,
   type Component, type PropType, type VNode,
 } from 'vue'
 import {
@@ -7,7 +7,10 @@ import {
   RotateCcw, X, ZoomIn, ZoomOut,
 } from 'lucide-vue-next'
 import VueEasyLightbox from 'vue-easy-lightbox'
-import { appleKey, resolveMotion, type AppleContext } from '../core/context'
+import { appleKey, resolveMotion, type AppleContext, type OverlayEntry } from '../core/context'
+import { ripple } from '../core/motion'
+import { AppleButton } from './button'
+import { AppleAutoSize } from './motion'
 
 type Motion = 'inherit' | 'auto' | 'full' | 'reduced' | 'none'
 type CloseReason = 'escape' | 'backdrop' | 'cancel' | 'confirm' | 'close'
@@ -33,7 +36,11 @@ const portal = (vm: unknown, node: VNode): VNode => {
   return target ? h(Teleport, { to: target }, node) : node
 }
 const iconButton = (label: string, icon: Component, onClick: () => void, attrs = {}) =>
-  h('button', { type: 'button', class: 'apple-overlay-icon', 'aria-label': label, title: label, onClick, ...attrs }, [h(icon, { size: 20, 'aria-hidden': true })])
+  ripple(h('button', { type: 'button', class: 'apple-overlay-icon', 'aria-label': label, title: label, onClick, ...attrs }, [h(icon, { size: 20, 'aria-hidden': true })]), !(attrs as { disabled?: boolean }).disabled)
+
+const durationOf = (motion: string) => motion === 'none' ? 0 : motion === 'reduced' ? 120 : 320
+const presence = (name: string, motion: string, node: VNode | null, afterLeave: () => void) =>
+  h(Transition, { name, appear: true, css: motion !== 'none', duration: durationOf(motion), onAfterLeave: afterLeave }, { default: () => node })
 
 interface Layer {
   element: HTMLElement
@@ -75,6 +82,8 @@ function registerLayer(layer: Layer): () => void {
         const top = fresh.layers.at(-1)
         if (!top) return
         if (event.key === 'Escape') {
+          const popup = (event.target as Element | null)?.closest?.('[data-apple-popup-open="true"]')
+          if (popup && top.element.contains(popup)) return
           event.preventDefault()
           event.stopImmediatePropagation()
           if (!top.persistent()) top.close()
@@ -194,16 +203,7 @@ function createModal(name: string, kind: ModalKind) {
     beforeUnmount() { this.disposeLayer?.() },
     methods: {
       async syncLayer() {
-        if (!this.modelValue) {
-          const wasOpen = Boolean(this.disposeLayer)
-          this.disposeLayer?.()
-          this.disposeLayer = null
-          if (wasOpen) {
-            await nextTick()
-            if (!this.modelValue) this.$emit('after-close')
-          }
-          return
-        }
+        if (!this.modelValue) return
         await nextTick()
         const element = this.$refs.panel as HTMLElement | undefined
         if (!this.modelValue || this.disposeLayer || !element) return
@@ -211,14 +211,20 @@ function createModal(name: string, kind: ModalKind) {
           element,
           restore: element.ownerDocument.activeElement as HTMLElement | null,
           close: () => this.dismiss('escape'),
-          persistent: () => this.persistent || this.loading,
+          persistent: () => !this.modelValue || this.persistent || this.loading,
           modal: true, trap: true,
           top: (value, depth) => { this.isTop = value; this.depth = depth },
         })
         this.$emit('open')
       },
+      afterClose() {
+        if (this.modelValue) return
+        this.disposeLayer?.()
+        this.disposeLayer = null
+        this.$emit('after-close')
+      },
       dismiss(reason: CloseReason = 'close', value?: unknown) {
-        if (this.loading || ((reason === 'backdrop' || reason === 'escape') && this.persistent)) return
+        if (!this.modelValue || this.loading || ((reason === 'backdrop' || reason === 'escape') && this.persistent)) return
         this.$emit('update:modelValue', false)
         this.$emit('close', value, reason)
       },
@@ -234,7 +240,6 @@ function createModal(name: string, kind: ModalKind) {
       },
     },
     render() {
-      if (!this.modelValue) return null
       const heading = this.$slots.title?.() ?? this.title
       const panel = h('section', mergeProps(this.$attrs, {
         ref: 'panel', role: 'dialog', tabindex: -1,
@@ -250,18 +255,19 @@ function createModal(name: string, kind: ModalKind) {
           h('div', { class: 'apple-modal-heading' }, heading ? [h('h2', heading)] : []),
           this.closable ? iconButton('关闭', X, () => this.dismiss(), { disabled: this.loading }) : null,
         ]) : null,
-        h('div', { class: 'apple-modal-body' }, this.$slots.default?.({ close: (value?: unknown) => this.dismiss('close', value) }) ?? (this.message ? [h('p', this.message)] : [])),
+        h('div', { class: 'apple-modal-body' }, [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: (value?: unknown) => this.dismiss('close', value) }) ?? (this.message ? [h('p', this.message)] : []) })]),
         this.showFooter || this.$slots.footer ? h('footer', { class: 'apple-modal-footer' }, this.$slots.footer?.({ close: (value?: unknown) => this.dismiss('close', value), confirm: this.confirm, cancel: this.cancel }) ?? [
-          this.cancelText ? h('button', { type: 'button', class: 'apple-overlay-button apple-overlay-button--secondary', disabled: this.loading, onClick: this.cancel }, this.cancelText) : null,
-          this.confirmText ? h('button', { type: 'button', class: ['apple-overlay-button', { 'apple-overlay-button--danger': this.tone === 'danger' }], disabled: this.loading, onClick: this.confirm }, [this.loading ? h(LoaderCircle, { size: 17, class: 'apple-overlay-spin', 'aria-hidden': true }) : null, this.confirmText]) : null,
+          this.cancelText ? h(AppleButton, { variant: 'secondary', disabled: this.loading, motion: this.motion, onClick: this.cancel }, { default: () => this.cancelText }) : null,
+          this.confirmText ? h(AppleButton, { variant: this.tone === 'danger' ? 'danger' : 'primary', loading: this.loading, disabled: this.loading, motion: this.motion, onClick: this.confirm }, { default: () => this.confirmText }) : null,
         ]) : null,
       ])
-      return portal(this, h('div', {
+      const backdrop = this.modelValue ? h('div', {
         class: ['apple-overlay-backdrop', `apple-overlay-backdrop--${kind}`],
         'data-apple-motion': this.resolvedMotion,
-        style: { zIndex: 1200 + this.depth * 20 },
+        style: { zIndex: 1200 + this.depth * 20, '--apple-overlay-duration': `${durationOf(this.resolvedMotion)}ms` },
         onClick: (event: MouseEvent) => { if (event.target === event.currentTarget && this.isTop) this.dismiss('backdrop') },
-      }, [panel]))
+      }, [panel]) : null
+      return portal(this, presence('apple-modal-presence', this.resolvedMotion, backdrop, this.afterClose))
     },
   })
 }
@@ -284,7 +290,7 @@ export const AppleSnackbar = defineComponent({
     closable: { type: Boolean, default: true },
     motion: motionProp,
   },
-  emits: ['update:modelValue', 'close', 'action'],
+  emits: ['update:modelValue', 'close', 'action', 'after-close'],
   data: () => ({ timer: null as ReturnType<typeof setTimeout> | null, remaining: 0, started: 0, hovered: false, focused: false }),
   watch: {
     modelValue() { this.restart() },
@@ -317,12 +323,13 @@ export const AppleSnackbar = defineComponent({
     },
   },
   render() {
-    if (!this.modelValue) return null
+    const motion = motionOf(this, this.motion)
     const glyph = this.tone === 'success' ? CheckCircle2 : ['error', 'danger', 'warning'].includes(this.tone) ? CircleAlert : Info
-    return h('div', mergeProps(this.$attrs, {
+    const notification = this.modelValue ? h('div', mergeProps(this.$attrs, {
       class: ['apple-snackbar', `apple-snackbar--${this.tone}`],
       role: ['error', 'danger'].includes(this.tone) ? 'alert' : 'status',
-      'aria-atomic': true, 'data-apple-motion': motionOf(this, this.motion),
+      'aria-atomic': true, 'data-apple-motion': motion,
+      style: { '--apple-overlay-duration': `${durationOf(motion)}ms` },
       onMouseenter: () => { this.hovered = true; this.pause() },
       onMouseleave: () => { this.hovered = false; this.resume() },
       onFocusin: () => { this.focused = true; this.pause() },
@@ -332,40 +339,66 @@ export const AppleSnackbar = defineComponent({
     }), [
       h(glyph, { class: 'apple-snackbar-symbol', size: 21, 'aria-hidden': true }),
       h('div', { class: 'apple-snackbar-content' }, this.$slots.default?.() ?? [this.title ? h('strong', this.title) : null, h('span', this.message)]),
-      this.action ? h('button', { type: 'button', class: 'apple-snackbar-action', onClick: () => this.$emit('action') }, this.action) : null,
+      this.action ? h(AppleButton, { variant: 'ghost', class: 'apple-snackbar-action', onClick: () => this.$emit('action') }, { default: () => this.action }) : null,
       this.closable ? iconButton('关闭通知', X, () => this.close()) : null,
-    ])
+    ]) : null
+    return presence('apple-toast', motion, notification, () => this.$emit('after-close'))
   },
 })
 
 export const AppleOverlayHost = defineComponent({
   name: 'AppleOverlayHost',
   inject: { apple: { from: appleKey, default: undefined } },
+  data: () => ({ present: [] as Array<{ entry: OverlayEntry; open: boolean }> }),
+  computed: {
+    activeEntries(): OverlayEntry[] { return [...(contextOf(this)?.overlays.entries ?? [])] },
+  },
+  watch: {
+    activeEntries: {
+      immediate: true,
+      handler(entries: OverlayEntry[]) {
+        const active = new Set(entries.map(entry => entry.id))
+        this.present.forEach(item => { item.open = active.has(item.entry.id) })
+        entries.forEach(entry => {
+          const item = this.present.find(item => item.entry.id === entry.id)
+          if (item) item.entry = entry
+          else this.present.push({ entry, open: true })
+        })
+      },
+    },
+  },
+  methods: {
+    remove(id: string) { this.present = this.present.filter(item => item.entry.id !== id) },
+  },
   render() {
     const context = contextOf(this)
     if (!context) return null
-    const modals = context.overlays.entries.filter(entry => entry.kind !== 'snackbar')
-    const notifications = context.overlays.entries.filter(entry => entry.kind === 'snackbar')
-    const dialogs = modals.map(entry => {
+    const modals = this.present.filter(item => item.entry.kind !== 'snackbar')
+    const notifications = this.present.filter(item => item.entry.kind === 'snackbar')
+    const dialogs = modals.map(({ entry, open }) => {
       const close = (value?: unknown) => context.overlays.close(entry.id, value)
       const sendMessage = (channel: string, payload?: unknown) => entry.onMessage
         ? entry.onMessage(channel, payload)
         : context.messages.sendMessage(channel, payload)
       return h(entry.kind === 'drawer' ? AppleDrawer : entry.kind === 'sheet' ? AppleSheet : AppleDialog, {
-        key: entry.id, modelValue: true, title: entry.title, message: entry.message,
+        key: entry.id, modelValue: open, title: entry.title, message: entry.message,
         persistent: entry.persistent, confirmText: entry.confirmText, cancelText: entry.cancelText,
-        tone: entry.tone, onClose: close,
+        tone: entry.tone, onClose: close, onAfterClose: () => this.remove(entry.id),
       }, entry.component ? {
         default: () => h(entry.component as Component, { ...entry.props, close, sendMessage }),
       } : undefined)
     })
-    const snackbar = notifications.length ? portal(this, h('div', { class: 'apple-snackbar-stack', 'aria-label': '通知' }, notifications.map(entry =>
-      h(AppleSnackbar, {
-        key: entry.id, modelValue: true, title: entry.title, message: entry.message,
-        tone: entry.tone as 'default', duration: entry.duration,
-        onClose: () => context.overlays.close(entry.id),
-      }),
-    ))) : null
+    const snackbar = portal(this, h('div', { class: 'apple-snackbar-stack', 'aria-label': '通知' }, [
+      h(AppleAutoSize, null, { default: () => h(TransitionGroup, { name: 'apple-toast-stack', tag: 'div', class: 'apple-snackbar-list' }, {
+        default: () => notifications.map(({ entry, open }) => h('div', { key: entry.id, class: 'apple-snackbar-position' }, [
+          h(AppleSnackbar, {
+            modelValue: open, title: entry.title, message: entry.message,
+            tone: entry.tone as 'default', duration: entry.duration,
+            onClose: () => context.overlays.close(entry.id), onAfterClose: () => this.remove(entry.id),
+          }),
+        ])),
+      }) }),
+    ]))
     return h('div', { class: 'apple-overlay-host' }, [...dialogs, snackbar])
   },
 })
@@ -387,7 +420,7 @@ export const ApplePopover = defineComponent({
     panelClass: { type: String, default: '' },
     motion: motionProp,
   },
-  emits: ['update:modelValue', 'open', 'close'],
+  emits: ['update:modelValue', 'open', 'close', 'after-close'],
   data: () => ({
     internalOpen: false, left: 0, top: 0, depth: 0, isTop: false,
     disposeLayer: null as (() => void) | null,
@@ -437,10 +470,7 @@ export const ApplePopover = defineComponent({
       this.positioned = true
     },
     async syncLayer() {
-      const wasOpen = Boolean(this.disposeLayer)
-      this.disposeLayer?.(); this.disposeLayer = null
-      this.disposePosition?.(); this.disposePosition = null
-      if (!this.opened) { this.positioned = false; if (wasOpen) this.$emit('close'); return }
+      if (!this.opened) return
       await nextTick()
       const panel = this.$refs.panel as HTMLElement | undefined
       const anchor = this.$refs.anchor as HTMLElement | undefined
@@ -448,13 +478,13 @@ export const ApplePopover = defineComponent({
       this.position()
       this.disposeLayer = registerLayer({
         element: panel, restore: panel.ownerDocument.activeElement as HTMLElement | null,
-        close: () => this.setOpen(false), persistent: () => false, modal: false, trap: this.trapFocus,
+        close: () => this.setOpen(false), persistent: () => !this.opened, modal: false, trap: this.trapFocus,
         top: (top, depth) => { this.isTop = top; this.depth = depth },
       })
       const doc = panel.ownerDocument
       const win = doc.defaultView!
       const outside = (event: Event) => {
-        if (this.isTop && !panel.contains(event.target as Node) && !anchor.contains(event.target as Node)) this.setOpen(false)
+        if (this.opened && this.isTop && !panel.contains(event.target as Node) && !anchor.contains(event.target as Node)) this.setOpen(false)
       }
       const position = () => this.position()
       win.addEventListener('resize', position)
@@ -470,6 +500,14 @@ export const ApplePopover = defineComponent({
       }
       this.$emit('open')
     },
+    afterClose() {
+      if (this.opened) return
+      this.disposeLayer?.(); this.disposeLayer = null
+      this.disposePosition?.(); this.disposePosition = null
+      this.positioned = false
+      this.$emit('close')
+      this.$emit('after-close')
+    },
   },
   render() {
     const id = `apple-popover-${this.$.uid}`
@@ -479,19 +517,22 @@ export const ApplePopover = defineComponent({
     const activator = this.$slots.activator?.({ props: activatorProps, open: () => this.setOpen(true), close: () => this.setOpen(false), isOpen: this.opened })
     const trigger = activator
       ? activator.map((node, index) => index === 0 ? cloneVNode(node, activatorProps) : node)
-      : [h('button', { type: 'button', class: 'apple-overlay-button apple-overlay-button--secondary', ...activatorProps }, this.label)]
-    const popup = this.opened ? portal(this, h('div', mergeProps(this.$attrs, {
+      : [h(AppleButton, { variant: 'secondary', ...activatorProps }, { default: () => this.label })]
+    const motion = motionOf(this, this.motion)
+    const panel = this.opened ? h('div', mergeProps(this.$attrs, {
       id, ref: 'panel', role: this.role, tabindex: this.role === 'tooltip' ? undefined : -1,
       'aria-label': this.role === 'tooltip' ? undefined : this.label,
-      'data-apple-motion': motionOf(this, this.motion),
+      'data-apple-motion': motion,
       class: ['apple-popover', this.panelClass],
       style: {
         left: `${this.left}px`, top: `${this.top}px`, zIndex: 1200 + this.depth * 20,
         width: typeof this.width === 'number' ? `${this.width}px` : this.width,
+        '--apple-overlay-duration': `${durationOf(motion)}ms`,
         visibility: this.positioned ? 'visible' : 'hidden',
       },
       onMouseenter: () => this.hover(true), onMouseleave: () => this.hover(false),
-    }), this.$slots.default?.({ close: () => this.setOpen(false) }))) : null
+    }), [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: () => this.setOpen(false) }) })]) : null
+    const popup = portal(this, presence('apple-popover-presence', motion, panel, this.afterClose))
     return h('span', {
       ref: 'anchor', class: 'apple-popover-anchor',
       onMouseenter: () => this.hover(true), onMouseleave: () => this.hover(false),
@@ -559,7 +600,7 @@ export const AppleMenu = defineComponent({
       onKeydown: this.navigate,
     }, {
       activator: this.$slots.activator,
-      default: () => this.items.map(item => h('button', {
+      default: () => this.items.map(item => ripple(h('button', {
         key: item.value, type: 'button', role: 'menuitem', disabled: item.disabled,
         class: ['apple-menu-item', { 'apple-menu-item--danger': item.danger }],
         onClick: () => this.select(item),
@@ -567,7 +608,7 @@ export const AppleMenu = defineComponent({
         item.icon ? h(item.icon, { size: 18, 'aria-hidden': true }) : null,
         h('span', { class: 'apple-menu-copy' }, [h('span', item.label), item.description ? h('small', item.description) : null]),
         this.selected === item.value ? h(Check, { size: 17, 'aria-hidden': true }) : null,
-      ])),
+      ]), !item.disabled)),
     })
   },
 })
@@ -594,7 +635,7 @@ export const AppleActionSheet = defineComponent({
     }, {
       default: () => [
         this.message ? h('p', { class: 'apple-action-sheet-message' }, this.message) : null,
-        h('div', { class: 'apple-action-sheet-items' }, this.items.map(item => h('button', {
+        h('div', { class: 'apple-action-sheet-items' }, this.items.map(item => ripple(h('button', {
           key: item.value, type: 'button', disabled: item.disabled,
           class: ['apple-action-sheet-item', { 'apple-action-sheet-item--danger': item.danger }],
           onClick: () => {
@@ -602,11 +643,11 @@ export const AppleActionSheet = defineComponent({
             this.$emit('update:modelValue', false)
             this.$emit('close', item.value, 'select')
           },
-        }, [item.icon ? h(item.icon, { size: 21, 'aria-hidden': true }) : null, h('span', [item.label, item.description ? h('small', item.description) : null])]))),
-        this.cancelText ? h('button', {
-          type: 'button', class: 'apple-action-sheet-cancel',
+        }, [item.icon ? h(item.icon, { size: 21, 'aria-hidden': true }) : null, h('span', [item.label, item.description ? h('small', item.description) : null])]), !item.disabled))),
+        this.cancelText ? h(AppleButton, {
+          variant: 'secondary', class: 'apple-action-sheet-cancel',
           onClick: () => { this.$emit('update:modelValue', false); this.$emit('close', undefined, 'cancel') },
-        }, this.cancelText) : null,
+        }, { default: () => this.cancelText }) : null,
       ],
     })
   },
@@ -624,8 +665,8 @@ export const AppleImageViewer = defineComponent({
     loop: Boolean,
     motion: motionProp,
   },
-  emits: ['update:modelValue', 'update:index', 'change', 'close', 'error'],
-  data: () => ({ disposeLayer: null as (() => void) | null, depth: 0, isTop: false, current: 0 }),
+  emits: ['update:modelValue', 'update:index', 'change', 'close', 'after-close', 'error'],
+  data: () => ({ disposeLayer: null as (() => void) | null, depth: 0, isTop: false, current: 0, lastWheel: 0 }),
   computed: {
     safeIndex(): number { return Math.max(0, Math.min(this.index, this.images.length - 1)) },
     normalizedImages(): Array<string | { src: string; title?: string; alt?: string }> {
@@ -641,24 +682,39 @@ export const AppleImageViewer = defineComponent({
   beforeUnmount() { this.disposeLayer?.() },
   methods: {
     async syncLayer() {
-      if (!this.modelValue) { this.disposeLayer?.(); this.disposeLayer = null; return }
+      if (!this.modelValue) return
       this.current = this.safeIndex
       await nextTick()
       const panel = this.$refs.panel as HTMLElement | undefined
       if (!panel || !this.modelValue || this.disposeLayer) return
       this.disposeLayer = registerLayer({
         element: panel, restore: panel.ownerDocument.activeElement as HTMLElement | null,
-        close: this.close, persistent: () => false, modal: true, trap: true,
+        close: this.close, persistent: () => !this.modelValue, modal: true, trap: true,
         top: (value, depth) => { this.isTop = value; this.depth = depth },
         arrows: (event) => {
           event.preventDefault()
+          if (!this.modelValue) return
           const next = this.current + (event.key === 'ArrowRight' ? 1 : -1)
           const count = this.images.length
           if (count && (this.loop || next >= 0 && next < count)) this.change(this.current, (next + count) % count)
         },
       })
     },
-    close() { this.$emit('update:modelValue', false); this.$emit('close') },
+    afterClose() {
+      if (this.modelValue) return
+      this.disposeLayer?.(); this.disposeLayer = null
+      this.$emit('after-close')
+    },
+    close() { if (this.modelValue) { this.$emit('update:modelValue', false); this.$emit('close') } },
+    zoom(event: WheelEvent) {
+      if (!this.modelValue || !this.isTop || !event.deltaY) return
+      event.preventDefault()
+      if (Date.now() - this.lastWheel < 60) return
+      this.lastWheel = Date.now()
+      // The engine couples wheel zoom to its own body lock; reuse its zoom controls instead.
+      const panel = this.$refs.panel as HTMLElement | undefined
+      panel?.querySelector<HTMLButtonElement>(event.deltaY < 0 ? '[aria-label="放大"]' : '[aria-label="缩小"]')?.click()
+    },
     change(_previous: number, index: number) {
       if (index === this.current) return
       this.current = index
@@ -667,11 +723,12 @@ export const AppleImageViewer = defineComponent({
     },
   },
   render() {
-    if (!this.modelValue) return null
-    return portal(this, h('div', mergeProps(this.$attrs, {
+    const motion = motionOf(this, this.motion)
+    const viewer = this.modelValue ? h('div', mergeProps(this.$attrs, {
       ref: 'panel', class: 'apple-image-viewer', role: 'dialog', tabindex: -1,
       'aria-label': '图片预览', 'aria-modal': this.isTop ? 'true' : undefined,
-      'data-apple-motion': motionOf(this, this.motion), style: { zIndex: 1200 + this.depth * 20 },
+      'data-apple-motion': motion, style: { zIndex: 1200 + this.depth * 20, '--apple-overlay-duration': `${durationOf(motion)}ms` },
+      onWheel: this.zoom,
     }), [
       this.images.length ? h(VueEasyLightbox, {
         visible: true, imgs: this.normalizedImages, index: this.current, loop: this.loop,
@@ -691,7 +748,8 @@ export const AppleImageViewer = defineComponent({
         loading: () => h(LoaderCircle, { class: 'apple-overlay-spin', size: 32, 'aria-label': '图片加载中' }),
         onerror: () => h('div', { class: 'apple-viewer-error', role: 'status' }, [h(CircleAlert, { size: 28 }), h('p', '图片加载失败')]),
       }) : h('div', { class: 'apple-viewer-empty' }, [iconButton('关闭图片预览', X, this.close), h('p', '暂无图片')]),
-    ]))
+    ]) : null
+    return portal(this, presence('apple-viewer-presence', motion, viewer, this.afterClose))
   },
 })
 

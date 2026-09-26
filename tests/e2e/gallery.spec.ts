@@ -10,6 +10,7 @@ async function openComponent(page: Page, tag: string) {
     await navigationToggle.click()
   }
   await page.locator('.catalog-item').filter({ has: page.getByText(tag, { exact: true }) }).click()
+  await expect(page.locator('.gallery-page')).toHaveCount(1)
   await expect(page.locator('.detail-preview')).toBeVisible()
   await expect(page.locator('.detail-footer')).toContainText(`<${tag} />`)
 }
@@ -27,7 +28,7 @@ async function expectNoDocumentOverflow(page: Page) {
 
 async function loadOverviewImages(page: Page) {
   const images = page.locator('.overview .apple-image img')
-  expect(await images.count()).toBeGreaterThanOrEqual(2)
+  expect(await images.count()).toBeGreaterThanOrEqual(1)
   for (const image of await images.all()) {
     await image.scrollIntoViewIfNeeded()
     await expect.poll(() => image.evaluate(element => {
@@ -54,7 +55,7 @@ for (const viewport of [
     await expect(page.locator('.specimen')).toHaveCount(6)
     await loadOverviewImages(page)
     await expectNoDocumentOverflow(page)
-    await expect(page.locator('.product-title')).toContainText('AirPods Max')
+    await expect(page.locator('.specimen-product')).toHaveCount(0)
     await expect(page.getByRole('button', { name: '继续探索', exact: true })).toBeVisible()
     const screenshot = await page.screenshot({ path: `artifacts/${viewport.name}.png`, fullPage: true, animations: 'disabled' })
     expect(screenshot.byteLength).toBeGreaterThan(30_000)
@@ -75,7 +76,8 @@ test('theme changes immediately without navigation and supports named themes', a
   await page.screenshot({ path: 'artifacts/desktop-dark.png', fullPage: true, animations: 'disabled' })
   await page.getByRole('button', { name: '外观设置', exact: true }).click()
   const drawer = page.getByRole('dialog', { name: '外观与动效' })
-  await drawer.getByLabel('主题', { exact: true }).selectOption({ label: '玫瑰' })
+  await drawer.getByRole('combobox', { name: '主题', exact: true }).click()
+  await drawer.getByRole('option', { name: '玫瑰', exact: true }).click()
   await expect(provider).toHaveAttribute('data-apple-theme', 'rose')
   await page.keyboard.press('Escape')
   await expect(drawer).toHaveCount(0)
@@ -87,12 +89,14 @@ test('manual motion levels and operating-system reduced motion stop continuous a
   await openComponent(page, 'apple-spinner')
   await page.getByRole('button', { name: '外观设置', exact: true }).click()
   const drawer = page.getByRole('dialog', { name: '外观与动效' })
-  await drawer.getByLabel('动效等级', { exact: true }).selectOption({ label: '关闭' })
+  await drawer.getByRole('combobox', { name: '动效等级', exact: true }).click()
+  await drawer.getByRole('option', { name: '关闭', exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(page.locator('.apple-provider').first()).toHaveAttribute('data-apple-motion', 'none')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
   await page.getByRole('button', { name: '外观设置', exact: true }).click()
-  await drawer.getByLabel('动效等级', { exact: true }).selectOption({ label: '完整' })
+  await drawer.getByRole('combobox', { name: '动效等级', exact: true }).click()
+  await drawer.getByRole('option', { name: '完整', exact: true }).click()
   await page.keyboard.press('Escape')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('apple-spin')
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -114,7 +118,7 @@ for (const width of [1440, 320]) {
     })
     await page.getByRole('tab', { name: /^全部组件/ }).click()
     const tags = await page.locator('.catalog-item code').allTextContents()
-    expect(tags).toHaveLength(63)
+    expect(tags).toHaveLength(66)
     expect(new Set(tags).size).toBe(tags.length)
     for (const tag of tags) {
       await test.step(tag, async () => {
@@ -182,6 +186,10 @@ test('image lightbox loads real images, zooms, navigates, and returns focus afte
   await viewer.getByRole('button', { name: '下一张', exact: true }).click()
   await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 2')
   await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0 && image.src.includes('airpods')))).toBe(true)
+  await expect(viewer.locator('.vel-img')).toHaveAttribute('src', /airpods/)
+  await expect(viewer.locator('.vel-img')).toBeVisible()
+  await expect(viewer.locator('.vel-fade-enter-active, .vel-fade-leave-active')).toHaveCount(0)
+  await expect.poll(() => viewer.locator('.vel-img').evaluate(element => getComputedStyle(element).opacity)).toBe('1')
   await page.screenshot({ path: 'artifacts/lightbox.png', animations: 'disabled' })
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveCount(0)
@@ -269,7 +277,7 @@ test('mobile navigation and search can open, filter, select, and dismiss', async
   await openComponent(page, 'apple-tabs')
   await expect(page.locator('.sidebar')).not.toHaveClass(/is-open/)
   await page.locator('.component-demo').getByRole('tab', { name: '技术规格', exact: true }).click()
-  await expect(page.locator('.component-demo [role="tabpanel"]')).toContainText('这里是技术规格。')
+  await expect(page.locator('.component-demo [role="tabpanel"]:not([aria-hidden="true"])')).toContainText('这里是技术规格。')
   await expectNoDocumentOverflow(page)
   await page.getByRole('button', { name: '打开组件导航', exact: true }).click()
   await page.getByRole('button', { name: '清除搜索', exact: true }).click()

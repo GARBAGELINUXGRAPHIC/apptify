@@ -1,8 +1,12 @@
 # 组件 API 参考
 
-本页按 `src/index.ts` 合并的组件注册表列出当前 **64 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
+本页按 `src/index.ts` 合并的组件注册表列出当前 **67 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
 
 ## 公共约定
+
+`secondary` 与 `outline` 都是描边按钮，`ghost` 是纯文字按钮且始终不启用 Ripple。所有 API 可直接从 JavaScript 和普通 Vue `<script>` 使用，TypeScript 不是消费前提。
+
+Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ripple；保留选中指示器位移与内容切换动画。
 
 - `v-model` 表示 `modelValue` + `update:modelValue`；表格、树等命名模型在各行列出。
 - `motion`（下文记为 M）接受 `inherit | auto | full | reduced | none`，默认 `inherit`。全局与系统减少动态效果策略是上限，局部只能进一步收敛。表中未列 M 的静态组件不提供该 prop。
@@ -10,6 +14,17 @@
 - 表单选项类型为 `AppleOption = { label: string; value: string | number; disabled?: boolean }`。数字值不会被基础 Select 强制转成字符串。
 - 内容选项类型为 `AppleItem = { label; value; disabled?; description?; href?; content? }`；`value` 为唯一的 `string | number`。
 - 组件并非 Vuetify 同名组件的透传包装。只依赖这里声明的接口，不假设任意 `v-*` prop、slot 或事件都可直接使用。
+
+## 动效组件 · 2
+
+| 组件 | Props | 说明 |
+| --- | --- | --- |
+| `AppleAutoSize` | M；`axis=height`（height/both） | ResizeObserver 测量内容，通过实际像素尺寸连续动画；default slot。 |
+| `AppleTransition` | M；`name=slide-y`（page/slide-x/slide-y/fade）、`mode=out-in`、`appear=true` | Vue Transition 包装，用于局部内容切换；单根 default slot。 |
+
+全局入场使用 `v-apple-entrance="pageKey"` 放在一个页面容器上：首次挂载及 key 改变时整体由下向上 14px，不复制旧页、不执行离场、不改变透明度。不应嵌套应用到同一页面的多层内容。
+
+另提供 `v-apple-ripple` 和 `v-apple-selection`；后者移动到后代 `[data-apple-selected="true"]`，也可传 `{selector}`。全局 none/reduced 与系统减少动态效果限制同样生效。
 
 ## 基础组件 · 9
 
@@ -25,13 +40,13 @@
 | `AppleStack` | `direction=column`、`gap=16`、`align=stretch`、`wrap=true` | default slot；Flex 布局；数字 gap 按 px。 |
 | `AppleGrid` | `min=240`、`gap=20` | default slot；基于最小列宽的自适应网格，两项单位均为 px。 |
 
-## 表单组件 · 19
+## 表单组件 · 18
 
 | 组件 | 主要 Props | Events / Slots / 方法 |
 | --- | --- | --- |
 | `AppleInput` | F；`v-model: string/number`、`type=text`、`placeholder`、`clearable` | `change(value)`、`clear()`；prefix/suffix slots；`focus()`；输入事件实际返回字符串。password 类型带显隐按钮。 |
 | `AppleTextarea` | F；`v-model: string`、`placeholder`、`rows=4`、`maxlength`、`counter`、`resize=true` | `change(value)`；`focus()`；resize=true 允许纵向缩放。 |
-| `AppleSelect` | F；`v-model: string/number/null`、`items: AppleOption[]`、`placeholder='请选择'` | `change(value)`；原生 select；清空返回 null。 |
+| `AppleSelect` | F；`v-model: string/number/null`、`items: AppleOption[]`、`placeholder='请选择'` | `change(value)`；自绘半透明模糊下拉，支持键盘导航和 required 校验。 |
 | `AppleAutocomplete` | F；`v-model: string/number/null`、`items`、`placeholder`、`emptyText`、`clearable=true`、`filter(query,item)` | `change(value)`、`search(query)`；`focus()`；方向键/Enter/Escape；是单选过滤，不是多选标签输入。 |
 | `AppleCheckbox` | F；`v-model: boolean`、`indeterminate` | `change(checked)`；default slot 替代 label 文本。 |
 | `AppleRadioGroup` | F；`v-model: string/number/null`、`items`、`inline`、`name` | `change(value)`；原生 radio group。 |
@@ -39,9 +54,8 @@
 | `AppleSlider` | F；`v-model: number`、`min=0`、`max=100`、`step=1`、`showValue=true`、`formatValue(value)` | `change(value)`；单值原生 range，不是双滑块范围选择。 |
 | `AppleStepper` | F；`v-model: number`、`min=-Infinity`、`max=Infinity`、`step=1` | `change(value)`；减/加按钮及可编辑数值输入；提交时约束范围。 |
 | `AppleSegmentedControl` | F；`v-model: string/number/null`、`items`、`name` | `change(value)`；基于 radio 的单选分段控件，不是 tabs 内容容器。 |
-| `AppleDatePicker` | F；`v-model: string`、`min`、`max`、`type=date`（date/month/week/datetime-local） | `change(value)`；返回浏览器原生格式字符串；没有自绘日期区间日历。 |
-| `AppleTimePicker` | F；`v-model: string`、`min`、`max`、`step=60` | `change(value)`；原生 time；step 单位为秒。 |
-| `AppleColorPicker` | F；`v-model: string='#0071e3'`、`showValue=true` | `change(value)`；原生 color 输入。 |
+| `AppleDatePicker` | F；`v-model: string`、`min`、`max`、`format`、`granularity`、`type=date`（date/month/datetime-local） | `change(value)`；自绘分段输入、年月日历与时间页签；输入不自动跳段，占位时间在创建时冻结。 |
+| `AppleColorPicker` | F；`v-model: string='#0071e3'`、`showValue=true` | `change(value)`；自绘色板和 HEX 输入，不打开原生颜色弹窗。 |
 | `AppleUpload` | F；`v-model: File[]`、`accept`、`multiple`、`maxSize=Infinity`、`maxFiles=Infinity`、`capture=user/environment`、`buttonText` | `change(files)`、`reject({file,reason}[])`、`remove(file)`；default slot；maxSize 单位为字节；不发送网络请求。 |
 | `AppleForm` | M；`disabled`、`loading`、`validator(FormData): boolean/string/Promise` | `submit(FormData)`、`invalid({type,message?})`、`reset()`；default slot `{loading}`；实例方法 `validate(): Promise<boolean>`、`submit()`、`reset()`。 |
 | `AppleFormField` | F；`for` | default slot `{id,disabled,required,'aria-invalid','aria-describedby'}`；用于关联自定义输入及提示。 |
@@ -61,14 +75,17 @@
 
 validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示默认错误。原生约束校验通过后才执行自定义 validator。
 
-## 内容与移动交互 · 26
+日期格式示例：`YYYY/MM`、`YYYY/MM/DD`、`YYYY/MM/DD HH:mm`、`YYYY/MM/DD HH:mm:ss`、`HH:mm`、`HH:mm:ss`。显示格式与模型格式分离：模型依次返回 `YYYY-MM`、`YYYY-MM-DD`、`YYYY-MM-DDTHH:mm[:ss]` 或 `HH:mm[:ss]`。独立 `AppleTimePicker` 已移除，纯时间使用 `<apple-date-picker format="HH:mm" />`；不支持原生 ISO week 模式及日期范围选择。
+
+## 内容与移动交互 · 28
 
 以下组件均接受 M。
 
 | 组件 | 主要 Props | Events / Slots / 说明 |
 | --- | --- | --- |
 | `AppleTabs` | `v-model: string/number`、`items`、`label`、`disabled` | `change(value)`；`panel-${value}` slot `{item}` 或 default `{item,value}`；可非受控；方向键/Home/End。 |
-| `AppleBreadcrumbs` | `items`、`label='当前位置'` | 非最后项使用 item.href；最后项为当前页文本。 |
+| `AppleTabBar` | 与 AppleTabs 相同 | 顶角圆角页签，移动选中背景与内容滑动。 |
+| `AppleBreadcrumbs` | `items`、`label='当前位置'` | `click(item,event)`；非最后项使用 item.href 或按钮；最后项为当前页文本；无下划线。 |
 | `ApplePagination` | `v-model: number=1`、`total=0`、`pageSize=10`、`disabled`、`label` | `change(page)`；页码从 1 开始，total 是总条目数。 |
 | `AppleAccordion` | `v-model: string/number/array`、`items`、`multiple`、`disabled` | `change(value)`；`item-${value}` 或 item slot `{item,open}`；默认内容使用 item.content；multiple 时模型为数组。 |
 | `AppleTable` | `columns: AppleColumn[]`、`rows: Record[]`、`rowKey=id`、`label`、`selectable`、`v-model:selected`、`v-model:sort-by`、`v-model:sort-direction`、`v-model:page`、`pageSize=0`、`loading`、`disabled`、`emptyText` | `sort({key,direction})`、`row-click(row)`；`cell-${key}` slot `{row,value,index}`、empty slot；本地排序/分页；pageSize=0 不分页。 |
@@ -81,20 +98,23 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `AppleAlert` | `v-model: boolean=true`、`title`、`message`、`tone=info`（info/success/warning/danger）、`closable` | `close()`；default slot 替代 message。 |
 | `AppleProgress` | `modelValue: number=0`、`max=100`、`label`、`indeterminate`、`showValue`、`tone=accent` | 用 `:model-value` 传入只读进度，不主动发出 update；不定进度省略 aria-valuenow。 |
 | `AppleSpinner` | `size=22`、`label='正在加载'` | default slot；状态语义与无动效退化。 |
-| `AppleSkeleton` | `lines=3`、`avatar`、`animated=true`、`label` | lines 约束为 1–20。 |
+| `AppleSkeleton` | `variant=text`（text/avatar/card/list/table/image）、`lines=3`、`rows=3`、`columns=4`、`width`、`height`、`avatar`、`animated=true`、`label` | lines 约束为 1–20；尺寸为数字时按 px。 |
 | `AppleEmpty` | `title`、`description` | icon/default slots。 |
 | `AppleDivider` | `label`、`vertical` | default slot；水平或垂直分隔语义。 |
 | `AppleSteps` | `v-model: number=0`、`items`、`clickable`、`disabled`、`label` | `change(index)`；模型是从 0 开始的步骤位置，不是 item.value。 |
-| `AppleTimeline` | `items: AppleTimelineItem[]`、`label` | item slot `{item}`；选项增加 `time?` 和 `tone?: default/success/danger`。 |
+| `AppleTimeline` | `items: AppleTimelineItem[]`、`orientation=vertical`（horizontal/vertical）、`label` | item slot `{item}`；选项增加 `time?` 和 `tone?: default/success/danger`。 |
 | `AppleCarousel` | `items: AppleSlide[]`、`v-model: number`、`label`、`disabled` | `change(index)`；item slot `{item,index,active}`；选项增加 src/alt；滚动吸附与按钮/键盘，不自动播放。 |
 | `ApplePullRefresh` | `v-model: boolean`、`disabled`、`threshold=72`、`label` | `refresh(done)`；default slot `{refresh,refreshing}`；在滚动顶部下拉，也提供刷新按钮；完成必须调用 done 或将 model 设为 false。 |
 | `AppleInfiniteScroll` | `loading`、`error: boolean/string`、`finished`、`disabled`、`distance=120`、`finishedText` | `load(done)`、`retry(done)`；default slot；IntersectionObserver 及手动加载按钮；完成后调用 done，或令 loading 从 true 回到 false。 |
 | `AppleSwipeCell` | `v-model: boolean`、`disabled`、`label` | default、actions slot `{close}`；横向手势或操作按钮展开，Escape 关闭。 |
 | `AppleBackTop` | `target: CSS selector=''`、`threshold=300`、`label`、`disabled` | `click(event)`；default slot；空 target 使用 window，达到滚动阈值才显示。 |
+| `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区。 |
 | `AppleMarquee` | `text`、`duration=24`、`paused`、`label` | default slot；duration 单位为秒；带暂停按钮；减少动态效果时停止连续滚动。 |
 | `AppleStatistic` | 必填 `label`；`value: string/number`、`prefix`、`suffix`、`precision=0`、`locale=zh-CN`、`description` | default slot；数值本地化格式，不会自动请求统计数据。 |
 
-`AppleColumn = { key: string; label: string; sortable?: boolean; align?: 'left'|'center'|'right'; width?: string }`。表格 rows 应为每行提供稳定唯一的 `rowKey`；不会生成虚构 id，也没有大数据虚拟化。
+`AppleColumn = { key: string; label: string; sortable?: boolean; align?: 'left'|'center'|'right'; width?: number|string; minWidth?: number; maxWidth?: number; resizable?: boolean }`。表格 rows 应提供稳定唯一的 `rowKey`。
+
+Table 另支持 `virtual=false`、`height=360`、`rowHeight=48`、`overscan=5`、`resizable=true` 和 `column-resize({key,width})`。列分隔线可拖拽，也可键盘左右调整。虚拟模式基于 TanStack Virtual，采用固定行高；与分页同时启用时，只虚拟化当前页。大列表通常设置 `pageSize=0`。不支持自动测量变高行或服务端分页协议。
 
 ```vue
 <apple-table

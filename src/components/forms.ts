@@ -1,5 +1,10 @@
-import { defineComponent, h, useId, type PropType, type Slots, type VNodeChild } from 'vue'
+import { defineComponent, h, useId, withDirectives, Transition, type PropType, type Slots, type VNodeChild } from 'vue'
 import { Check, ChevronDown, Eye, EyeOff, LoaderCircle, Minus, Plus, Star, Upload, X } from 'lucide-vue-next'
+import { AppleSelection, ripple } from '../core/motion'
+import { AppleAutoSize } from './motion'
+import { AppleDatePicker } from './date-picker'
+
+export { AppleDatePicker } from './date-picker'
 
 export type AppleOptionValue = string | number
 export interface AppleOption { label: string; value: AppleOptionValue; disabled?: boolean }
@@ -51,6 +56,10 @@ function spinner() { return h(LoaderCircle, { size: 18, class: 'apple-control__s
 function numericValue(event: Event) { return Number((event.target as HTMLInputElement).value) }
 function stringValue(event: Event) { return (event.target as HTMLInputElement).value }
 
+function menuTransition(content: VNodeChild) {
+  return h(Transition, { name: 'apple-field-menu', onBeforeEnter: (element: Element) => { (element as HTMLElement).style.height = '0px' }, onEnter: (element: Element) => { const el = element as HTMLElement; void el.offsetHeight; el.style.height = `${el.scrollHeight}px` }, onAfterEnter: (element: Element) => { (element as HTMLElement).style.height = '' }, onBeforeLeave: (element: Element) => { const el = element as HTMLElement; el.style.height = `${el.getBoundingClientRect().height}px`; void el.offsetHeight }, onLeave: (element: Element) => { (element as HTMLElement).style.height = '0px' } }, { default: () => content })
+}
+
 export const AppleInput = defineComponent({
   name: 'AppleInput', inheritAttrs: false,
   props: { ...fieldProps, modelValue: { type: [String, Number], default: '' }, type: { type: String, default: 'text' }, placeholder: String, clearable: Boolean },
@@ -64,8 +73,8 @@ export const AppleInput = defineComponent({
         onInput: (event: Event) => this.$emit('update:modelValue', stringValue(event)), onChange: (event: Event) => this.$emit('change', stringValue(event)),
       }),
       this.loading ? spinner() : null,
-      this.clearable && String(this.modelValue).length ? h('button', { type: 'button', class: 'apple-field__icon', disabled: this.disabled || this.loading, 'aria-label': '清空', title: '清空', onClick: () => { this.$emit('update:modelValue', ''); this.$emit('clear'); this.focus() } }, h(X, { size: 16 })) : null,
-      this.type === 'password' ? h('button', { type: 'button', class: 'apple-field__icon', disabled: this.disabled || this.loading, 'aria-label': this.passwordVisible ? '隐藏密码' : '显示密码', title: this.passwordVisible ? '隐藏密码' : '显示密码', 'aria-pressed': this.passwordVisible, onClick: () => { this.passwordVisible = !this.passwordVisible } }, h(this.passwordVisible ? EyeOff : Eye, { size: 18 })) : null,
+      this.clearable && String(this.modelValue).length ? ripple(h('button', { type: 'button', class: 'apple-field__icon', disabled: this.disabled || this.loading, 'aria-label': '清空', title: '清空', onClick: () => { this.$emit('update:modelValue', ''); this.$emit('clear'); this.focus() } }, h(X, { size: 16 }))) : null,
+      this.type === 'password' ? ripple(h('button', { type: 'button', class: 'apple-field__icon', disabled: this.disabled || this.loading, 'aria-label': this.passwordVisible ? '隐藏密码' : '显示密码', title: this.passwordVisible ? '隐藏密码' : '显示密码', 'aria-pressed': this.passwordVisible, onClick: () => { this.passwordVisible = !this.passwordVisible } }, h(this.passwordVisible ? EyeOff : Eye, { size: 18 }))) : null,
       this.$slots.suffix ? h('span', { class: 'apple-input__affix' }, this.$slots.suffix()) : null,
     ]))
   },
@@ -86,13 +95,39 @@ export const AppleSelect = defineComponent({
   name: 'AppleSelect', inheritAttrs: false,
   props: { ...fieldProps, ...optionProps, placeholder: { type: String, default: '请选择' } },
   emits: ['update:modelValue', 'change'],
-  data() { return { inputId: useId() } },
+  data() { return { inputId: useId(), opened: false, activeIndex: -1, outside: null as ((event: PointerEvent) => void) | null } },
+  watch: { modelValue() { this.syncValidity() }, required() { this.syncValidity() }, items: { deep: true, handler() { this.syncValidity() } }, disabled(value: boolean) { if (value) this.opened = false }, loading(value: boolean) { if (value) this.opened = false } },
+  mounted() {
+    this.syncValidity()
+    this.outside = (event: PointerEvent) => { if (!(this.$el as HTMLElement).contains(event.target as Node)) this.opened = false }
+    document.addEventListener('pointerdown', this.outside)
+  },
+  beforeUnmount() { if (this.outside) document.removeEventListener('pointerdown', this.outside) },
+  methods: {
+    focus() { (this.$refs.trigger as HTMLButtonElement)?.focus() },
+    syncValidity() { (this.$refs.validation as HTMLInputElement)?.setCustomValidity(this.required && !this.items.some(item => item.value === this.modelValue && !item.disabled) ? '请选择一个选项' : '') },
+    choose(item: AppleOption) { if (item.disabled || this.disabled || this.loading) return; this.$emit('update:modelValue', item.value); this.$emit('change', item.value); this.opened = false; this.focus() },
+    onKeydown(event: KeyboardEvent) {
+      if (event.key === 'Escape') { event.preventDefault(); this.opened = false; return }
+      if (event.key === 'Tab') { this.opened = false; return }
+      if (this.opened && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); const item = this.items[this.activeIndex]; if (item) this.choose(item); return }
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+      event.preventDefault(); this.opened = true
+      const available = this.items.map((item, index) => item.disabled ? -1 : index).filter(index => index >= 0)
+      if (!available.length) return
+      const current = available.indexOf(this.activeIndex)
+      this.activeIndex = event.key === 'Home' ? available[0]! : event.key === 'End' ? available[available.length - 1]! : current < 0 ? available[event.key === 'ArrowDown' ? 0 : available.length - 1]! : available[(current + (event.key === 'ArrowDown' ? 1 : -1) + available.length) % available.length]!
+      this.$nextTick(() => (this.$refs[`option-${this.activeIndex}`] as HTMLElement)?.scrollIntoView?.({ block: 'nearest' }))
+    },
+  },
   render() {
-    const index = this.items.findIndex(item => item.value === this.modelValue)
-    return field(this, h('div', { class: 'apple-select-wrap' }, [
-      h('select', { ...controlAttrs(this), name: undefined, class: ['apple-control', 'apple-select', this.$attrs.class], value: index < 0 ? '' : String(index), onChange: (event: Event) => { const value = stringValue(event); const selected = value === '' ? null : this.items[Number(value)]?.value; this.$emit('update:modelValue', selected); this.$emit('change', selected) } }, [h('option', { value: '', disabled: this.required }, this.placeholder), ...this.items.map((item, i) => h('option', { value: String(i), disabled: item.disabled, key: `${typeof item.value}:${item.value}` }, item.label))]),
+    const selected = this.items.find(item => item.value === this.modelValue)
+    return field(this, h('div', { class: 'apple-select-wrap', 'data-apple-popup-open': this.opened ? true : undefined, onFocusout: (event: FocusEvent) => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.opened = false } }, [
+      ripple(h('button', { ...controlAttrs(this), ref: 'trigger', type: 'button', name: undefined, class: ['apple-control', 'apple-select', this.$attrs.class], role: 'combobox', 'aria-expanded': this.opened, 'aria-haspopup': 'listbox', 'aria-controls': `${this.inputId}-list`, 'aria-activedescendant': this.opened && this.activeIndex >= 0 ? `${this.inputId}-option-${this.activeIndex}` : undefined, onClick: () => { this.opened = !this.opened; this.activeIndex = this.items.findIndex(item => item.value === this.modelValue) }, onKeydown: this.onKeydown }, h('span', { class: { 'is-placeholder': !selected } }, selected?.label || this.placeholder))),
+      h('input', { ref: 'validation', class: 'apple-visually-hidden', tabindex: -1, 'aria-hidden': true, value: selected?.label || '', required: this.required, disabled: this.disabled || this.loading, onInvalid: (event: Event) => { event.preventDefault(); this.focus() } }),
       this.$attrs.name ? h('input', { type: 'hidden', name: this.$attrs.name, value: this.modelValue ?? '', disabled: this.disabled || this.loading }) : null,
-      this.loading ? spinner() : h(ChevronDown, { size: 17, class: 'apple-select__chevron', 'aria-hidden': true }),
+      this.loading ? spinner() : h(ChevronDown, { size: 17, class: ['apple-select__chevron', { 'is-open': this.opened }], 'aria-hidden': true }),
+      menuTransition(this.opened && !this.disabled && !this.loading ? h('div', { class: 'apple-field-menu' }, [h(AppleAutoSize, {}, { default: () => h('ul', { id: `${this.inputId}-list`, role: 'listbox', class: 'apple-autocomplete__list', 'aria-label': this.label || this.$attrs['aria-label'] || '选项' }, this.items.map((item, index) => ripple(h('li', { id: `${this.inputId}-option-${index}`, ref: `option-${index}`, role: 'option', key: `${typeof item.value}:${item.value}`, 'aria-selected': item.value === this.modelValue, 'aria-disabled': item.disabled || undefined, class: ['apple-autocomplete__option', { 'is-active': index === this.activeIndex, 'is-disabled': item.disabled }], onMousedown: (event: MouseEvent) => event.preventDefault(), onMouseenter: () => { if (!item.disabled) this.activeIndex = index }, onClick: () => this.choose(item) }, [h('span', item.label), item.value === this.modelValue ? h(Check, { size: 16, 'aria-hidden': true }) : null]), !item.disabled))) })]) : null),
     ]))
   },
 })
@@ -130,16 +165,16 @@ export const AppleAutocomplete = defineComponent({
     },
   },
   render() {
-    return field(this, h('div', { class: 'apple-autocomplete', onFocusout: (event: FocusEvent) => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.close() } }, [
+    return field(this, h('div', { class: 'apple-autocomplete', 'data-apple-popup-open': this.opened ? true : undefined, onFocusout: (event: FocusEvent) => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.close() } }, [
       h('div', { class: 'apple-input-wrap' }, [
         h('input', { ...controlAttrs(this), ref: 'input', name: undefined, required: false, 'aria-required': this.required || undefined, class: ['apple-control', this.$attrs.class], role: 'combobox', autocomplete: 'off', placeholder: this.placeholder, value: this.query, 'aria-expanded': this.opened, 'aria-controls': `${this.inputId}-list`, 'aria-autocomplete': 'list', 'aria-activedescendant': this.opened && this.activeIndex >= 0 ? `${this.inputId}-option-${this.activeIndex}` : undefined,
           onFocus: () => { this.opened = true; this.query = ''; this.activeIndex = -1 },
           onInput: (event: Event) => { this.query = stringValue(event); this.opened = true; this.activeIndex = -1; if (this.modelValue !== null) this.$emit('update:modelValue', null); this.$emit('search', this.query) }, onKeydown: this.onKeydown,
         }),
-        this.loading ? spinner() : this.clearable && this.modelValue !== null ? h('button', { type: 'button', class: 'apple-field__icon', 'aria-label': '清空', title: '清空', disabled: this.disabled, onClick: () => { this.$emit('update:modelValue', null); this.$emit('change', null); this.query = ''; this.focus() } }, h(X, { size: 16 })) : h(ChevronDown, { size: 17, class: 'apple-select__chevron', 'aria-hidden': true }),
+        this.loading ? spinner() : this.clearable && this.modelValue !== null ? ripple(h('button', { type: 'button', class: 'apple-field__icon', 'aria-label': '清空', title: '清空', disabled: this.disabled, onClick: () => { this.$emit('update:modelValue', null); this.$emit('change', null); this.query = ''; this.focus() } }, h(X, { size: 16 }))) : h(ChevronDown, { size: 17, class: 'apple-select__chevron', 'aria-hidden': true }),
       ]),
       this.$attrs.name ? h('input', { type: 'hidden', name: this.$attrs.name, value: this.modelValue ?? '', disabled: this.disabled || this.loading }) : null,
-      this.opened && !this.disabled ? h('ul', { id: `${this.inputId}-list`, role: 'listbox', class: 'apple-autocomplete__list', 'aria-label': this.label || this.$attrs['aria-label'] || '选项' }, this.filteredItems.length ? this.filteredItems.map((item, index) => h('li', { id: `${this.inputId}-option-${index}`, ref: `option-${index}`, role: 'option', key: `${typeof item.value}:${item.value}`, 'aria-selected': item.value === this.modelValue, 'aria-disabled': item.disabled || undefined, class: ['apple-autocomplete__option', { 'is-active': index === this.activeIndex, 'is-disabled': item.disabled }], onMousedown: (event: MouseEvent) => event.preventDefault(), onMouseenter: () => { if (!item.disabled) this.activeIndex = index }, onClick: () => this.choose(item) }, [h('span', item.label), item.value === this.modelValue ? h(Check, { size: 16, 'aria-hidden': true }) : null])) : [h('li', { class: 'apple-autocomplete__empty', role: 'presentation' }, this.emptyText)]) : null,
+      menuTransition(this.opened && !this.disabled && !this.loading ? h('div', { class: 'apple-field-menu' }, [h(AppleAutoSize, {}, { default: () => h('ul', { id: `${this.inputId}-list`, role: 'listbox', class: 'apple-autocomplete__list', 'aria-label': this.label || this.$attrs['aria-label'] || '选项' }, this.filteredItems.length ? this.filteredItems.map((item, index) => ripple(h('li', { id: `${this.inputId}-option-${index}`, ref: `option-${index}`, role: 'option', key: `${typeof item.value}:${item.value}`, 'aria-selected': item.value === this.modelValue, 'aria-disabled': item.disabled || undefined, class: ['apple-autocomplete__option', { 'is-active': index === this.activeIndex, 'is-disabled': item.disabled }], onMousedown: (event: MouseEvent) => event.preventDefault(), onMouseenter: () => { if (!item.disabled) this.activeIndex = index }, onClick: () => this.choose(item) }, [h('span', item.label), item.value === this.modelValue ? h(Check, { size: 16, 'aria-hidden': true }) : null]), !item.disabled)) : [h('li', { class: 'apple-autocomplete__empty', role: 'presentation' }, this.emptyText)]) })]) : null),
     ]))
   },
 })
@@ -198,9 +233,9 @@ export const AppleStepper = defineComponent({
   },
   render() {
     return field(this, h('div', { class: 'apple-stepper' }, [
-      h('button', { type: 'button', class: 'apple-stepper__button', disabled: this.disabled || this.loading || this.modelValue <= this.min, 'aria-label': '减少', title: '减少', onClick: () => this.update(this.modelValue - this.step) }, h(Minus, { size: 18 })),
+      ripple(h('button', { type: 'button', class: 'apple-stepper__button', disabled: this.disabled || this.loading || this.modelValue <= this.min, 'aria-label': '减少', title: '减少', onClick: () => this.update(this.modelValue - this.step) }, h(Minus, { size: 18 }))),
       h('input', { ...controlAttrs(this), class: ['apple-control', this.$attrs.class], type: 'number', inputmode: 'decimal', value: this.modelValue, min: Number.isFinite(this.min) ? this.min : undefined, max: Number.isFinite(this.max) ? this.max : undefined, step: this.step, onInput: (event: Event) => { const value = numericValue(event); if (stringValue(event).trim() && Number.isFinite(value) && value >= this.min && value <= this.max) this.$emit('update:modelValue', value) }, onChange: (event: Event) => { if (stringValue(event).trim()) this.update(numericValue(event)) } }),
-      h('button', { type: 'button', class: 'apple-stepper__button', disabled: this.disabled || this.loading || this.modelValue >= this.max, 'aria-label': '增加', title: '增加', onClick: () => this.update(this.modelValue + this.step) }, h(Plus, { size: 18 })),
+      ripple(h('button', { type: 'button', class: 'apple-stepper__button', disabled: this.disabled || this.loading || this.modelValue >= this.max, 'aria-label': '增加', title: '增加', onClick: () => this.update(this.modelValue + this.step) }, h(Plus, { size: 18 }))),
     ]))
   },
 })
@@ -210,30 +245,49 @@ export const AppleSegmentedControl = defineComponent({
   props: { ...fieldProps, ...optionProps, name: String }, emits: ['update:modelValue', 'change'],
   data() { return { inputId: useId() } },
   render() {
-    return field(this, h('div', { ...controlAttrs(this), role: 'radiogroup', class: ['apple-segmented', this.$attrs.class] }, this.items.map(item => h('label', { class: ['apple-segmented__item', { 'is-selected': item.value === this.modelValue, 'is-disabled': this.disabled || this.loading || item.disabled }] }, [h('input', { type: 'radio', class: 'apple-visually-hidden', name: this.name || this.inputId, checked: item.value === this.modelValue, value: item.value, required: this.required, disabled: this.disabled || this.loading || item.disabled, onChange: () => { this.$emit('update:modelValue', item.value); this.$emit('change', item.value) } }), h('span', item.label)]))))
+    return field(this, withDirectives(h('div', { ...controlAttrs(this), role: 'radiogroup', class: ['apple-segmented', this.$attrs.class] }, this.items.map(item => h('label', { key: `${typeof item.value}:${item.value}`, 'data-apple-selected': item.value === this.modelValue, class: ['apple-segmented__item', { 'is-selected': item.value === this.modelValue, 'is-disabled': this.disabled || this.loading || item.disabled }] }, [h('input', { type: 'radio', class: 'apple-visually-hidden', name: this.name || this.inputId, checked: item.value === this.modelValue, value: item.value, required: this.required, disabled: this.disabled || this.loading || item.disabled, onChange: () => { this.$emit('update:modelValue', item.value); this.$emit('change', item.value) } }), h('span', item.label)]))), [[AppleSelection]]))
   },
-})
-
-export const AppleDatePicker = defineComponent({
-  name: 'AppleDatePicker', inheritAttrs: false,
-  props: { ...fieldProps, modelValue: { type: String, default: '' }, min: String, max: String, type: { type: String as PropType<'date' | 'month' | 'week' | 'datetime-local'>, default: 'date' } },
-  emits: ['update:modelValue', 'change'], data() { return { inputId: useId() } },
-  render() { return field(this, h('input', { ...controlAttrs(this), class: ['apple-control', 'apple-date-input', this.$attrs.class], type: this.type, min: this.min, max: this.max, value: this.modelValue, onInput: (event: Event) => this.$emit('update:modelValue', stringValue(event)), onChange: (event: Event) => this.$emit('change', stringValue(event)) })) },
-})
-
-export const AppleTimePicker = defineComponent({
-  name: 'AppleTimePicker', inheritAttrs: false,
-  props: { ...fieldProps, modelValue: { type: String, default: '' }, min: String, max: String, step: { type: Number, default: 60 } },
-  emits: ['update:modelValue', 'change'], data() { return { inputId: useId() } },
-  render() { return field(this, h('input', { ...controlAttrs(this), class: ['apple-control', 'apple-date-input', this.$attrs.class], type: 'time', min: this.min, max: this.max, step: this.step, value: this.modelValue, onInput: (event: Event) => this.$emit('update:modelValue', stringValue(event)), onChange: (event: Event) => this.$emit('change', stringValue(event)) })) },
 })
 
 export const AppleColorPicker = defineComponent({
   name: 'AppleColorPicker', inheritAttrs: false,
   props: { ...fieldProps, modelValue: { type: String, default: '#0071e3' }, showValue: { type: Boolean, default: true } },
-  emits: ['update:modelValue', 'change'], data() { return { inputId: useId() } },
-  render() { return field(this, h('div', { class: 'apple-color-row' }, [h('input', { ...controlAttrs(this), class: ['apple-color-picker', this.$attrs.class], type: 'color', value: this.modelValue, onInput: (event: Event) => this.$emit('update:modelValue', stringValue(event)), onChange: (event: Event) => this.$emit('change', stringValue(event)) }), this.showValue ? h('output', { for: fieldId(this), class: 'apple-color__value' }, this.modelValue.toUpperCase()) : null])) },
+  emits: ['update:modelValue', 'change'],
+  data() { return { inputId: useId(), opened: false, draft: this.modelValue, hsv: hexToHsv(this.modelValue), dragging: false, outside: null as ((event: PointerEvent) => void) | null } },
+  watch: { modelValue(value: string) { this.draft = value; const next = hexToHsv(value); if (next.s > 0 && next.v > 0) this.hsv.h = next.h; this.hsv.s = next.s; this.hsv.v = next.v }, disabled(value: boolean) { if (value) this.opened = false }, loading(value: boolean) { if (value) this.opened = false } },
+  mounted() { this.outside = (event: PointerEvent) => { if (!(this.$el as HTMLElement).contains(event.target as Node)) this.opened = false }; document.addEventListener('pointerdown', this.outside) },
+  beforeUnmount() { if (this.outside) document.removeEventListener('pointerdown', this.outside) },
+  methods: {
+    update(hex: string, commit = false) { if (this.disabled || this.loading) return; const value = hex.trim().replace(/^#?([\da-f]{3})$/i, (_, short: string) => `#${[...short].map(char => char + char).join('')}`).replace(/^([\da-f]{6})$/i, '#$1'); if (!/^#[\da-f]{6}$/i.test(value)) return; this.draft = value; this.$emit('update:modelValue', value.toLowerCase()); if (commit) this.$emit('change', value.toLowerCase()) },
+    plane(event: PointerEvent) { if (this.disabled || this.loading) return; if (event.type === 'pointerdown') { this.dragging = true; (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId) }; if (!this.dragging) return; const rect = (event.currentTarget as HTMLElement).getBoundingClientRect(); if (!rect.width || !rect.height) return; this.hsv.s = Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)); this.hsv.v = Math.max(0, Math.min(100, 100 - (event.clientY - rect.top) / rect.height * 100)); this.update(hsvToHex(this.hsv)) },
+    planeKey(event: KeyboardEvent) { if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return; event.preventDefault(); const step = event.shiftKey ? 10 : 1; if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') this.hsv.s = Math.max(0, Math.min(100, this.hsv.s + (event.key === 'ArrowRight' ? step : -step))); else this.hsv.v = Math.max(0, Math.min(100, this.hsv.v + (event.key === 'ArrowUp' ? step : -step))); this.update(hsvToHex(this.hsv), true) },
+  },
+  render() {
+    return field(this, h('div', { class: 'apple-color-row', 'data-apple-popup-open': this.opened ? true : undefined, onKeydown: (event: KeyboardEvent) => { if (event.key === 'Escape') this.opened = false }, onFocusout: (event: FocusEvent) => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.opened = false } }, [
+      h('button', { ...controlAttrs(this), type: 'button', name: undefined, class: ['apple-color-picker', this.$attrs.class], 'aria-expanded': this.opened, 'aria-haspopup': 'dialog', style: { '--apple-picked-color': this.modelValue }, onClick: () => { this.opened = !this.opened } }, h('span', { 'aria-hidden': true })),
+      this.showValue ? h('span', { class: 'apple-color__value' }, this.modelValue.toUpperCase()) : null,
+      this.$attrs.name ? h('input', { type: 'hidden', name: this.$attrs.name, value: this.modelValue, disabled: this.disabled || this.loading }) : null,
+      menuTransition(this.opened ? h('div', { class: 'apple-field-menu apple-color-menu', role: 'dialog', 'aria-label': this.label || '选择颜色' }, [
+        h('div', { class: 'apple-color-plane', role: 'slider', tabindex: 0, 'aria-label': '饱和度与亮度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(this.hsv.s), 'aria-valuetext': `饱和度 ${Math.round(this.hsv.s)}%，亮度 ${Math.round(this.hsv.v)}%`, style: { backgroundColor: `hsl(${this.hsv.h} 100% 50%)` }, onPointerdown: this.plane, onPointermove: this.plane, onPointerup: () => { this.dragging = false; this.update(hsvToHex(this.hsv), true) }, onPointercancel: () => { this.dragging = false }, onKeydown: this.planeKey }, h('span', { class: 'apple-color-plane__thumb', style: { left: `${this.hsv.s}%`, top: `${100 - this.hsv.v}%`, backgroundColor: hsvToHex(this.hsv) } })),
+        h('input', { type: 'range', min: 0, max: 360, step: 1, class: 'apple-color-hue', 'aria-label': '色相', value: this.hsv.h, onInput: (event: Event) => { this.hsv.h = numericValue(event); this.update(hsvToHex(this.hsv)) }, onChange: () => this.update(hsvToHex(this.hsv), true) }),
+        h('label', { class: 'apple-color-hex' }, [h('span', 'HEX'), h('input', { type: 'text', class: 'apple-control', 'aria-label': 'HEX 颜色', maxlength: 7, spellcheck: false, value: this.draft, onInput: (event: Event) => { this.draft = stringValue(event); this.update(this.draft) }, onChange: () => { this.update(this.draft, true); this.draft = this.modelValue } })]),
+        h('div', { class: 'apple-color-swatches' }, ['#0071e3', '#34c759', '#ff9f0a', '#ff453a', '#bf5af2', '#1d1d1f', '#86868b', '#ffffff'].map(color => h('button', { type: 'button', class: 'apple-color-swatch', 'aria-label': color, 'aria-pressed': this.modelValue.toLowerCase() === color, style: { backgroundColor: color }, onClick: () => { this.hsv = hexToHsv(color); this.update(color, true) } }))),
+      ]) : null),
+    ]))
+  },
 })
+
+function hexToHsv(hex: string) {
+  const normalized = /^#[\da-f]{6}$/i.test(hex) ? hex.slice(1) : '0071e3'
+  const [r = 0, g = 0, b = 0] = [0, 2, 4].map(index => parseInt(normalized.slice(index, index + 2), 16) / 255)
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), difference = max - min
+  const hue = difference === 0 ? 0 : max === r ? ((g - b) / difference) % 6 : max === g ? (b - r) / difference + 2 : (r - g) / difference + 4
+  return { h: (hue * 60 + 360) % 360, s: max ? difference / max * 100 : 0, v: max * 100 }
+}
+function hsvToHex({ h: hue, s: saturation, v: value }: { h: number; s: number; v: number }) {
+  const s = saturation / 100, v = value / 100
+  return '#' + [5, 3, 1].map(offset => { const k = (offset + hue / 60) % 6; return Math.round((v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255).toString(16).padStart(2, '0') }).join('')
+}
 
 function acceptsFile(file: File, accept: string): boolean {
   if (!accept.trim()) return true
@@ -349,11 +403,11 @@ export const AppleCascader = defineComponent({
     levels(): AppleCascaderOption[][] { const levels: AppleCascaderOption[][] = [this.items]; let items = this.items; for (const value of this.modelValue) { const selected = items.find(item => item.value === value); if (!selected?.children?.length) break; items = selected.children; levels.push(items) } return levels },
   },
   methods: {
-    choose(level: number, optionIndex: string) { const option = this.levels[level]?.[Number(optionIndex)]; const path = this.modelValue.slice(0, level); if (optionIndex !== '' && option && !option.disabled) path.push(option.value); this.$emit('update:modelValue', path); this.$emit('change', path); if (optionIndex !== '' && option && !option.children?.length) this.$emit('complete', path) },
+    choose(level: number, value: AppleOptionValue | null) { const option = this.levels[level]?.find(item => item.value === value); const path = this.modelValue.slice(0, level); if (option && !option.disabled) path.push(option.value); this.$emit('update:modelValue', path); this.$emit('change', path); if (option && !option.children?.length) this.$emit('complete', path) },
   },
   render() {
     return field(this, h('div', { class: ['apple-cascader', this.$attrs.class], role: 'group', 'aria-label': this.label || this.$attrs['aria-label'] }, [
-      ...this.levels.map((items, level) => { const selectedIndex = items.findIndex(item => item.value === this.modelValue[level]); return h('div', { class: 'apple-select-wrap', key: level }, [h('select', { ...controlAttrs(this), id: level === 0 ? fieldId(this) : `${fieldId(this)}-${level}`, class: 'apple-control apple-select', name: undefined, value: selectedIndex < 0 ? '' : String(selectedIndex), 'aria-label': this.levelLabels[level] || `${this.label || this.$attrs['aria-label'] || '级联选择'} 第 ${level + 1} 级`, onChange: (event: Event) => this.choose(level, stringValue(event)) }, [h('option', { value: '', disabled: this.required }, this.levelLabels[level] || this.placeholder), ...items.map((item, index) => h('option', { value: String(index), disabled: item.disabled, key: `${typeof item.value}:${item.value}` }, item.label))]), this.name ? h('input', { type: 'hidden', name: `${this.name}[${level}]`, value: this.modelValue[level] ?? '', disabled: this.disabled || this.loading }) : null, h(ChevronDown, { size: 17, class: 'apple-select__chevron', 'aria-hidden': true })]) }),
+      ...this.levels.map((items, level) => h(AppleSelect, { key: level, items, modelValue: this.modelValue[level] ?? null, id: level === 0 ? fieldId(this) : `${fieldId(this)}-${level}`, name: this.name ? `${this.name}[${level}]` : undefined, disabled: this.disabled, loading: this.loading, required: this.required, motion: this.motion, placeholder: this.levelLabels[level] || this.placeholder, 'aria-label': this.levelLabels[level] || `${this.label || this.$attrs['aria-label'] || '级联选择'} 第 ${level + 1} 级`, 'onUpdate:modelValue': (value: AppleOptionValue | null) => this.choose(level, value) })),
     ]))
   },
 })
@@ -361,17 +415,17 @@ export const AppleCascader = defineComponent({
 export const AppleRate = defineComponent({
   name: 'AppleRate', inheritAttrs: false,
   props: { ...fieldProps, label: { type: String, default: '评分' }, modelValue: { type: Number, default: 0 }, max: { type: Number, default: 5 }, readonly: Boolean, allowClear: { type: Boolean, default: true }, name: String },
-  emits: ['update:modelValue', 'change'], data() { return { inputId: useId(), hovered: 0 } },
+  emits: ['update:modelValue', 'change'], data() { return { inputId: useId() } },
   methods: {
     update(value: number) { if (this.disabled || this.loading || this.readonly) return; this.$emit('update:modelValue', value); this.$emit('change', value) },
     onKeydown(event: KeyboardEvent, value: number) { if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 1 : event.key === 'End' ? this.max : Math.max(1, Math.min(this.max, value + (event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 1 : -1))); this.update(next); (this.$refs[`rating-${next}`] as HTMLButtonElement)?.focus() },
   },
   render() {
-    return field(this, h('div', { ...controlAttrs(this), class: ['apple-rate', this.$attrs.class], role: 'radiogroup', 'aria-readonly': this.readonly || undefined, onMouseleave: () => { this.hovered = 0 } }, [
-      ...Array.from({ length: Math.max(1, Math.min(10, this.max)) }, (_, index) => { const value = index + 1; return h('button', { type: 'button', ref: `rating-${value}`, class: ['apple-rate__star', { 'is-filled': value <= (this.hovered || this.modelValue) }], role: 'radio', 'aria-label': `${value} 星`, title: `${value} 星`, 'aria-checked': value === this.modelValue, disabled: this.disabled || this.loading, 'aria-disabled': this.readonly || undefined, tabindex: this.readonly ? -1 : value === (this.modelValue || 1) ? 0 : -1, onMouseenter: () => { if (!this.disabled && !this.loading && !this.readonly) this.hovered = value }, onClick: () => this.update(this.allowClear && value === this.modelValue ? 0 : value), onKeydown: (event: KeyboardEvent) => this.onKeydown(event, value) }, h(Star, { size: 26, 'aria-hidden': true })) }),
+    return field(this, h('div', { ...controlAttrs(this), class: ['apple-rate', this.$attrs.class], role: 'radiogroup', 'aria-readonly': this.readonly || undefined }, [
+      ...Array.from({ length: Math.max(1, Math.min(10, this.max)) }, (_, index) => { const value = index + 1; return h('button', { type: 'button', ref: `rating-${value}`, class: ['apple-rate__star', { 'is-filled': value <= this.modelValue }], role: 'radio', 'aria-label': `${value} 星`, title: `${value} 星`, 'aria-checked': value === this.modelValue, disabled: this.disabled || this.loading, 'aria-disabled': this.readonly || undefined, tabindex: this.readonly ? -1 : value === (this.modelValue || 1) ? 0 : -1, onClick: () => this.update(this.allowClear && value === this.modelValue ? 0 : value), onKeydown: (event: KeyboardEvent) => this.onKeydown(event, value) }, h(Star, { size: 26, 'aria-hidden': true })) }),
       this.name ? h('input', { type: 'hidden', name: this.name, value: this.modelValue, disabled: this.disabled || this.loading }) : null,
     ]))
   },
 })
 
-export const formComponents = { AppleInput, AppleTextarea, AppleSelect, AppleAutocomplete, AppleCheckbox, AppleRadioGroup, AppleSwitch, AppleSlider, AppleStepper, AppleSegmentedControl, AppleDatePicker, AppleTimePicker, AppleColorPicker, AppleUpload, AppleForm, AppleFormField, AppleOtpInput, AppleCascader, AppleRate }
+export const formComponents = { AppleInput, AppleTextarea, AppleSelect, AppleAutocomplete, AppleCheckbox, AppleRadioGroup, AppleSwitch, AppleSlider, AppleStepper, AppleSegmentedControl, AppleDatePicker, AppleColorPicker, AppleUpload, AppleForm, AppleFormField, AppleOtpInput, AppleCascader, AppleRate }

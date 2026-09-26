@@ -12,7 +12,7 @@ const light: ThemeTokens = {
 }
 export const builtInThemes: Record<string, AppleTheme> = {
   light: { scheme: 'light', tokens: light },
-  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#242426', 'surface-alt': '#323235', text: '#f5f5f7', secondary: '#aaaab0', border: '#49494d', accent: '#2997ff', danger: '#ff716b', success: '#66d58a', warning: '#eac25b', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
+  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', accent: '#2997ff', danger: '#ff716b', success: '#66d58a', warning: '#eac25b', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
   graphite: { scheme: 'light', tokens: { ...light, bg: '#f3f4f4', 'surface-alt': '#e9eceb', accent: '#3f5152', 'accent-text': '#ffffff' } },
   rose: { scheme: 'light', tokens: { ...light, bg: '#faf7f8', 'surface-alt': '#f4edf0', accent: '#a83b65', 'accent-text': '#ffffff' } },
 }

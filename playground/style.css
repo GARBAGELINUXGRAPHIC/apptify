@@ -1,4 +1,7 @@
 html { scroll-behavior: smooth; }
+.gallery-page,.gallery-view { position: relative; min-width: 0; }
+.main-content { position: relative; overflow-x: clip; }
+.apple-auto-size__inner { position: relative; }
 body { margin: 0; }
 button, a, input { -webkit-tap-highlight-color: transparent; }
 button { font: inherit; }
@@ -14,15 +17,20 @@ button { font: inherit; }
 .vue-badge > span { width: 5px; height: 5px; background: #42b883; border-radius: 50%; }
 .top-actions .apple-button { color: var(--apple-secondary); }
 .mobile-nav-toggle { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; background: none; color: var(--apple-text); border: 0; }
-.sidebar { width: 220px; position: fixed; top: 64px; bottom: 0; left: 0; z-index: 40; padding: 30px 16px 20px; border-right: 1px solid color-mix(in srgb,var(--apple-border) 50%,transparent); background: var(--apple-surface); overflow: auto; display: flex; flex-direction: column; }
-.sidebar .apple-search { min-height: 35px; font-size: 12px; border-radius: 6px; margin: 0 2px 24px; }
+.sidebar { width: 220px; position: fixed; top: 64px; bottom: 0; left: 0; z-index: 40; padding: 30px 0 20px; border-right: 1px solid color-mix(in srgb,var(--apple-border) 50%,transparent); background: var(--apple-surface); overflow: auto; display: flex; flex-direction: column; }
+.sidebar .apple-search { min-height: 35px; font-size: 12px; border-radius: 6px; margin: 0 18px 24px; }
 .sidebar .apple-search input { padding: 8px 0; }
 .sidebar-label { font-size: 10px; color: var(--apple-secondary); padding: 0 12px; margin: 0 0 10px; }
-.nav-item { border: 0; background: transparent; display: flex; align-items: center; gap: 11px; color: var(--apple-secondary); width: 100%; padding: 11px 12px; border-radius: 6px; font-size: 13px; text-align: left; flex-shrink: 0; }
+.nav-item { position: relative; overflow: hidden; border: 0; background: transparent; display: flex; align-items: center; gap: 11px; color: var(--apple-secondary); width: 100%; padding: 11px 28px; border-radius: 0; font-size: 13px; text-align: left; flex-shrink: 0; }
 .nav-item span { flex: 1; }
 .nav-item small { font-size: 10px; opacity: .65; font-variant-numeric: tabular-nums; }
-.nav-item:hover { background: var(--apple-bg); }
-.nav-item.active { color: var(--apple-accent); background: color-mix(in srgb,var(--apple-accent) 8%,var(--apple-surface)); font-weight: 550; }
+.nav-item:hover { background: color-mix(in srgb,var(--apple-text) 4%,transparent); }
+.nav-item:active { background: color-mix(in srgb,var(--apple-text) 10%,transparent); }
+.nav-item.active { color: var(--apple-text); background: var(--apple-selected); font-weight: 550; }
+.nav-item.active:active { background: var(--apple-pressed); }
+.sidebar-groups { flex-shrink: 0; }
+.sidebar-label { padding-inline: 28px; }
+.sidebar-footer { padding-inline: 28px; }
 .secondary-label { margin-top: 32px; }
 .sidebar-footer { margin-top: auto; padding: 68px 12px 0; display: flex; flex-direction: column; gap: 5px; }
 .footer-monogram { font-family: Georgia,serif; font-size: 26px; color: var(--apple-secondary); margin-bottom: 7px; }
@@ -31,6 +39,8 @@ button { font: inherit; }
 .main-content { margin-left: 220px; padding: 29px 42px 0; min-height: calc(100vh - 64px); max-width: 1800px; }
 .page-eyebrow { display: flex; gap: 8px; align-items: center; color: var(--apple-secondary); font-size: 10px; margin-bottom: 26px; }
 .page-eyebrow svg { opacity: .4; }
+.page-eyebrow button { background: none; border: 0; padding: 4px 0; color: inherit; font: inherit; }
+.page-eyebrow button:hover { color: var(--apple-text); }
 .page-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin-bottom: 26px; }
 .page-heading h1 { font-size: 38px; line-height: 1.2; font-weight: 650; margin: 0; }
 .page-heading h1 > span { color: var(--apple-secondary); }
@@ -39,7 +49,8 @@ button { font: inherit; }
 .workspace-toolbar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--apple-border); margin-bottom: 28px; min-height: 47px; gap: 12px; }
 .view-tabs { display: flex; align-self: stretch; gap: 24px; }
 .view-tabs button { padding: 10px 0 14px; border: 0; border-bottom: 2px solid transparent; color: var(--apple-secondary); background: transparent; font-size: 12px; display: flex; align-items: center; gap: 7px; }
-.view-tabs button.active { color: var(--apple-text); border-color: var(--apple-text); font-weight: 550; }
+.view-tabs button.active { color: var(--apple-text); font-weight: 550; }
+.view-tabs .apple-selection-indicator { top: auto; bottom: 0; height: 2px !important; background: var(--apple-text); border-radius: 0; }
 .view-tabs small { font-size: 9px; padding: 1px 5px; border-radius: 4px; background: var(--apple-surface-alt); color: var(--apple-secondary); }
 .preview-controls { display: flex; gap: 5px; align-items: center; padding-bottom: 8px; }
 .preview-controls button { width: 31px; height: 31px; display: grid; place-items: center; color: var(--apple-secondary); background: none; border: 0; border-radius: 5px; }
@@ -141,6 +152,15 @@ pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); borde
 .quickstart h3 { font-size: 17px; margin: 24px 0 8px; }
 .quickstart p { font-size: 13px; color: var(--apple-secondary); line-height: 1.7; }
 .nav-scrim { display: none; }
+.topbar button,.sidebar button,.workspace-toolbar button,.catalog-item,.page-eyebrow button,.theme-options button { transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast), box-shadow var(--apple-fast); }
+.preview-controls button:active,.theme-options button:active { color: var(--apple-text); background: var(--apple-pressed); }
+.top-nav button:hover,.view-tabs button:hover { color: color-mix(in srgb,var(--apple-text) 75%,var(--apple-secondary)); background: transparent; }
+.top-nav button:active,.view-tabs button:active { color: var(--apple-text); background: transparent; }
+.catalog-item:active { background: var(--apple-pressed); border-color: var(--apple-secondary); }
+.detail-preview,.overview { transition: max-width var(--apple-duration) var(--apple-ease); }
+.overview { max-width: 1500px; }
+.overview.mobile-preview { max-width: 390px; }
+.specimen > .apple-search { margin-bottom: 12px; }
 @media(min-width:1600px) { .main-content { padding-inline: 60px; } .specimen-grid { gap: 24px; } .specimen { padding: 25px 30px; } .specimen-product .apple-image { max-height: 230px; } }
 @media(max-width:1180px) { .main-content { padding-inline: 26px; } .sidebar { width: 196px; } .main-content { margin-left: 196px; } .specimen-grid { grid-template-columns: 1fr 1fr; } .specimen-product .apple-image { max-height: 225px; } .specimen { min-height: 350px; } .catalog-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:800px) { .topbar { padding-inline: 20px; } .top-nav { gap: 22px; } .sidebar { width: 176px; padding-inline: 10px; } .main-content { margin-left: 176px; padding-inline: 22px; } .specimen-grid { grid-template-columns: 1fr; } .specimen { min-height: 0; padding: 24px; } .specimen-product .apple-image { max-height: 260px; } .page-heading h1 { font-size: 31px; } .page-heading > .apple-button { display: none; } .token-grid { grid-template-columns: 1fr 1fr; } .detail-preview { padding: 25px; } .page-footer { flex-direction: column; } }
@@ -160,3 +180,4 @@ pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); borde
   .code-view { padding: 15px; } pre { padding: 15px; font-size: 11px; } .demo-slide { height: 200px; }
 }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } }
+.sidebar { padding-inline: 0; }

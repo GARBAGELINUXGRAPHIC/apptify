@@ -5,13 +5,14 @@ import {
   AppleAutocomplete, AppleCascader, AppleCheckbox, AppleColorPicker,
   AppleDatePicker, AppleForm, AppleFormField, AppleInput, AppleOtpInput,
   AppleRadioGroup, AppleRate, AppleSegmentedControl, AppleSelect,
-  AppleSlider, AppleStepper, AppleSwitch, AppleTextarea, AppleTimePicker,
+  AppleSlider, AppleStepper, AppleSwitch, AppleTextarea,
   AppleUpload, formComponents,
 } from '../src/components/forms'
 
 describe('Apple form controls', () => {
-  it('exports all 19 real components', () => {
-    expect(Object.keys(formComponents)).toHaveLength(19)
+  it('exports 18 controls with time selection integrated into the calendar', () => {
+    expect(Object.keys(formComponents)).toHaveLength(18)
+    expect(formComponents).not.toHaveProperty('AppleTimePicker')
     for (const [name, component] of Object.entries(formComponents)) {
       expect(component.name).toBe(name)
       expect(component.render).toBeTypeOf('function')
@@ -51,11 +52,13 @@ describe('Apple form controls', () => {
 
   it('preserves numeric select values and serializes the actual value', async () => {
     const wrapper = mount(AppleSelect, { props: { label: '容量', modelValue: 256, items: [{ label: '256 GB', value: 256 }, { label: '512 GB', value: 512 }] }, attrs: { name: 'capacity' } })
-    await wrapper.get('select').setValue('1')
+    await wrapper.get('button[role=combobox]').trigger('click')
+    await wrapper.findAll('[role=option]')[1]!.trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([512])
     expect(wrapper.get('input[type=hidden]').attributes('name')).toBe('capacity')
     expect((wrapper.get('input[type=hidden]').element as HTMLInputElement).value).toBe('256')
-    expect(wrapper.get('select').attributes('name')).toBeUndefined()
+    expect(wrapper.get('button[role=combobox]').attributes('name')).toBeUndefined()
+    expect(wrapper.find('select').exists()).toBe(false)
   })
 
   it('supports combobox search, disabled options and keyboard selection', async () => {
@@ -109,6 +112,10 @@ describe('Apple form controls', () => {
       await radios[1]!.setValue(true)
       expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['delivery'])
       expect((radios[2]!.element as HTMLInputElement).disabled).toBe(true)
+      if (component === AppleSegmentedControl) {
+        await wrapper.get('.apple-segmented__item').trigger('mousedown')
+        expect(wrapper.find('.v-ripple__container').exists()).toBe(false)
+      }
     }
   })
 
@@ -125,16 +132,17 @@ describe('Apple form controls', () => {
     expect(stepper.emitted('update:modelValue')?.at(-1)).toEqual([0.3])
   })
 
-  it('uses platform date, time and color pickers with v-model', async () => {
-    const date = mount(AppleDatePicker, { props: { label: '日期', min: '2026-01-01' } })
-    await date.get('input').setValue('2026-09-26')
-    expect(date.emitted('update:modelValue')?.at(-1)).toEqual(['2026-09-26'])
-    const time = mount(AppleTimePicker, { props: { label: '时间' } })
-    await time.get('input').setValue('12:30')
-    expect(time.emitted('update:modelValue')?.at(-1)).toEqual(['12:30'])
+  it('offers a rounded custom HEX-only color control without native mode switches', async () => {
     const color = mount(AppleColorPicker, { props: { label: '颜色' } })
-    await color.get('input').setValue('#ff0000')
+    expect(color.find('input[type=color]').exists()).toBe(false)
+    await color.get('button').trigger('click')
+    await color.get('input[aria-label="HEX 颜色"]').setValue('#ff0000')
     expect(color.emitted('update:modelValue')?.at(-1)).toEqual(['#ff0000'])
+    await color.get('input[aria-label="HEX 颜色"]').setValue('f80')
+    expect(color.emitted('update:modelValue')?.at(-1)).toEqual(['#ff8800'])
+    await color.get('input[aria-label="HEX 颜色"]').setValue('rgb(1)')
+    expect(color.emitted('update:modelValue')?.at(-1)).toEqual(['#ff8800'])
+    expect(color.findAll('input[type=range]')).toHaveLength(1)
   })
 
   it('validates file types, size, counts and removal without uploading data', async () => {
@@ -211,13 +219,15 @@ describe('Apple form controls', () => {
 
   it('replaces cascader descendants when a parent changes', async () => {
     const wrapper = mount(AppleCascader, { props: { label: '地区', name: 'region', modelValue: ['zj', 'hz'], items: [{ label: '浙江', value: 'zj', children: [{ label: '杭州', value: 'hz' }] }, { label: '上海', value: 'sh', children: [{ label: '浦东', value: 'pd' }] }] } })
-    expect(wrapper.findAll('select')).toHaveLength(2)
+    expect(wrapper.findAll('[role=combobox]')).toHaveLength(2)
     expect(wrapper.findAll('input[type=hidden]')[1]!.attributes('name')).toBe('region[1]')
-    await wrapper.findAll('select')[0]!.setValue('1')
+    await wrapper.findAll('[role=combobox]')[0]!.trigger('click')
+    await wrapper.findAll('[role=option]')[1]!.trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([['sh']])
     await wrapper.setProps({ modelValue: ['sh'] })
-    expect(wrapper.findAll('select')[1]!.text()).toContain('浦东')
-    await wrapper.findAll('select')[1]!.setValue('0')
+    await wrapper.findAll('[role=combobox]')[1]!.trigger('click')
+    expect(wrapper.get('[role=option]').text()).toContain('浦东')
+    await wrapper.get('[role=option]').trigger('click')
     expect(wrapper.emitted('complete')?.at(-1)).toEqual([['sh', 'pd']])
   })
 
@@ -231,5 +241,24 @@ describe('Apple form controls', () => {
     await wrapper.setProps({ readonly: true })
     await wrapper.findAll('button')[1]!.trigger('click')
     expect(wrapper.emitted('update:modelValue')).toHaveLength(2)
+  })
+
+  it('does not preview or animate different rating values on hover', async () => {
+    const wrapper = mount(AppleRate, { props: { modelValue: 2 } })
+    await wrapper.findAll('button')[4]!.trigger('mouseenter')
+    expect(wrapper.findAll('.is-filled')).toHaveLength(2)
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
+
+  it('selects with the keyboard, skips disabled options, and enforces required selection', async () => {
+    const wrapper = mount(AppleSelect, { props: { required: true, items: [{ label: '禁用', value: 'a', disabled: true }, { label: '可用', value: 'b' }] } })
+    expect((wrapper.get('input:not([type=hidden])').element as HTMLInputElement).checkValidity()).toBe(false)
+    const trigger = wrapper.get('[role=combobox]')
+    await trigger.trigger('keydown', { key: 'ArrowDown' })
+    expect(trigger.attributes('aria-activedescendant')).toContain('option-1')
+    await trigger.trigger('keydown', { key: 'Enter' })
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['b'])
+    await wrapper.setProps({ modelValue: 'b' })
+    expect((wrapper.get('input:not([type=hidden])').element as HTMLInputElement).checkValidity()).toBe(true)
   })
 })

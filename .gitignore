@@ -3,6 +3,5 @@ dist/
 site/
 playwright-report/
 test-results/
-artifacts/consumer/
-artifacts/*.tgz
+artifacts/
 .DS_Store

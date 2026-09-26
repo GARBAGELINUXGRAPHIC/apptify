@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import { AppleAccordion, AppleAvatar, AppleBackTop, AppleBadge, AppleCarousel, AppleInfiniteScroll, AppleMarquee, ApplePagination, AppleProgress, ApplePullRefresh, AppleSwipeCell, AppleTable, AppleTabs, AppleTree } from '../src/components/content'
+import { h, nextTick } from 'vue'
+import { AppleAccordion, AppleAvatar, AppleBackTop, AppleBadge, AppleBreadcrumbs, AppleCarousel, AppleFloatingGroup, AppleInfiniteScroll, AppleList, AppleMarquee, ApplePagination, AppleProgress, ApplePullRefresh, AppleSkeleton, AppleSwipeCell, AppleTable, AppleTabBar, AppleTabs, AppleTimeline, AppleTree } from '../src/components/content'
 
 const items = [
   { label: '概览', value: 'overview', content: '概览内容' },
@@ -36,6 +36,26 @@ describe('AppleCarousel lifecycle', () => {
 })
 
 describe('AppleTabs', () => {
+  it('does not attach Ripple to either tab variant', async () => {
+    for (const component of [AppleTabs, AppleTabBar]) {
+      const wrapper = keep(mount(component, { props: { items }, attachTo: document.body }))
+      await wrapper.get('[role="tab"]').trigger('mousedown')
+      expect(wrapper.find('.v-ripple__container').exists()).toBe(false)
+      await wrapper.get('[role="tab"]').trigger('mouseup')
+      await wrapper.get('[role="tab"]').trigger('keydown', { key: 'Enter' })
+      expect(wrapper.find('.v-ripple__container').exists()).toBe(false)
+    }
+  })
+  it('shares keyboard behavior with the top-rounded tab bar and renders the item content fallback', async () => {
+    const wrapper = keep(mount(AppleTabBar, { props: { items } }))
+    expect(wrapper.find('.apple-tabs--bar').exists()).toBe(true)
+    expect(wrapper.get('[role="tabpanel"]').text()).toBe('概览内容')
+    await wrapper.get('[role="tab"]').trigger('keydown', { key: 'ArrowRight' })
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['details'])
+    expect(wrapper.get('[role="tabpanel"]').text()).toBe('参数内容')
+    expect(wrapper.find('.apple-selection-indicator').exists()).toBe(true)
+  })
+
   it('uses one focusable tab, skips disabled items and supports wrapping keyboard navigation', async () => {
     const wrapper = keep(mount(AppleTabs, { props: { items }, attachTo: document.body, slots: { default: ({ value }: { value: string }) => `当前：${value}` } }))
     const tabs = wrapper.findAll('[role="tab"]')
@@ -77,6 +97,20 @@ describe('AppleAccordion and ApplePagination', () => {
     await buttons[2]!.trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([['overview', 'details']])
     expect(buttons[1]!.attributes('disabled')).toBeDefined()
+  })
+
+  it('keeps collapse content mounted for height transitions but removes it from focus and accessibility when closed', async () => {
+    const wrapper = keep(mount(AppleAccordion, { props: { items: items.slice(0, 1) }, slots: { item: '<button>内容动作</button>' } }))
+    const region = wrapper.get('[role="region"]')
+    expect(region.attributes('hidden')).toBeUndefined()
+    expect(region.attributes('inert')).toBeDefined()
+    expect(region.attributes('aria-hidden')).toBe('true')
+    await wrapper.get('h3 button').trigger('click')
+    expect(region.attributes('inert')).toBeUndefined()
+    expect(region.attributes('aria-hidden')).toBe('false')
+    await wrapper.get('h3 button').trigger('click')
+    expect(region.find('button').exists()).toBe(true)
+    expect(region.attributes('inert')).toBeDefined()
   })
 
   it('bounds pages, shows gaps, and never emits out-of-range changes', async () => {
@@ -127,9 +161,40 @@ describe('AppleTable', () => {
     await wrapper.get('.apple-table__sort').trigger('click')
     expect(wrapper.emitted('sort')).toBeUndefined()
   })
+
+  it('resizes columns with keyboard input, enforces min/max, and allows opting out per column', async () => {
+    const wrapper = keep(mount(AppleTable, { props: { rows, columns: [{ key: 'name', label: '名称', width: 120, minWidth: 110, maxWidth: 130 }, { key: 'price', label: '价格', resizable: false }] } }))
+    expect(wrapper.findAll('[role="separator"]')).toHaveLength(1)
+    const handle = wrapper.get('[role="separator"]')
+    await handle.trigger('keydown', { key: 'ArrowRight' })
+    await handle.trigger('keydown', { key: 'ArrowRight' })
+    expect(handle.attributes('aria-valuenow')).toBe('130')
+    await handle.trigger('keydown', { key: 'ArrowLeft' })
+    await handle.trigger('keydown', { key: 'ArrowLeft' })
+    await handle.trigger('keydown', { key: 'ArrowLeft' })
+    expect(handle.attributes('aria-valuenow')).toBe('110')
+    expect(wrapper.emitted('column-resize')?.at(-1)).toEqual([{ key: 'name', width: 110 }])
+    await wrapper.setProps({ disabled: true })
+    await handle.trigger('keydown', { key: 'ArrowRight' })
+    expect(handle.attributes('aria-valuenow')).toBe('110')
+  })
 })
 
 describe('AppleTree', () => {
+  it('expands and selects through the entire row rather than requiring the chevron', async () => {
+    const wrapper = keep(mount(AppleTree, { props: { items: [{ label: '项目', value: 'root', children: [{ label: '组件', value: 'child' }] }, { label: '不可用', value: 'off', disabled: true }] } }))
+    await wrapper.get('.apple-tree__row').trigger('click')
+    expect(wrapper.emitted('update:expanded')?.at(-1)).toEqual([['root']])
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['root'])
+    expect(wrapper.findAll('[role="treeitem"]')).toHaveLength(3)
+    expect(wrapper.get('.apple-tree__row').attributes('data-apple-selected')).toBe('true')
+    expect(wrapper.find('.apple-selection-indicator').exists()).toBe(true)
+    await wrapper.get('.apple-tree__row').trigger('click')
+    expect(wrapper.emitted('update:expanded')?.at(-1)).toEqual([[]])
+    await wrapper.get('.is-disabled').trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(2)
+  })
+
   it('expands with arrow keys, roves focus, selects a child, and returns to its parent', async () => {
     const wrapper = keep(mount(AppleTree, { attachTo: document.body, props: { items: [{ label: '项目', value: 'root', children: [{ label: '组件', value: 'child' }, { label: '隐藏', value: 'off', disabled: true }] }, { label: '归档', value: 'archive' }] } }))
     await wrapper.get('[role="treeitem"]').trigger('keydown', { key: 'ArrowRight' })
@@ -247,9 +312,11 @@ describe('Mobile patterns', () => {
 
   it('offers a keyboard-operable swipe action entry and honors disabled', async () => {
     const wrapper = keep(mount(AppleSwipeCell, { slots: { default: '订单', actions: '<button type="button">删除</button>' } }))
-    expect(wrapper.get('.apple-swipe-cell__actions').attributes('hidden')).toBeDefined()
+    expect(wrapper.get('.apple-swipe-cell__actions').attributes('inert')).toBeDefined()
+    expect(wrapper.get('.apple-swipe-cell__actions').attributes('aria-hidden')).toBe('true')
     await wrapper.get('[aria-label="更多操作"]').trigger('click')
-    expect(wrapper.get('.apple-swipe-cell__actions').attributes('hidden')).toBeUndefined()
+    expect(wrapper.get('.apple-swipe-cell__actions').attributes('inert')).toBeUndefined()
+    expect(wrapper.get('.apple-swipe-cell__actions').attributes('aria-hidden')).toBe('false')
     await wrapper.trigger('keydown', { key: 'Escape' })
     expect(wrapper.get('[aria-label="更多操作"]').attributes('aria-expanded')).toBe('false')
     await wrapper.setProps({ disabled: true })
@@ -260,6 +327,50 @@ describe('Mobile patterns', () => {
 })
 
 describe('Status and utility components', () => {
+  it('emits breadcrumb navigation with its original item and event without requiring href', async () => {
+    const wrapper = keep(mount(AppleBreadcrumbs, { props: { items } }))
+    await wrapper.get('button').trigger('click')
+    expect(wrapper.emitted('click')?.[0]?.[0]).toEqual(items[0])
+    expect(wrapper.emitted('click')?.[0]?.[1]).toBeInstanceOf(MouseEvent)
+    expect(wrapper.get('[aria-current="page"]').text()).toBe('详细参数')
+    expect(wrapper.findAll('button')).toHaveLength(1)
+  })
+
+  it('supports horizontal timelines and structured skeleton variants', () => {
+    const timeline = keep(mount(AppleTimeline, { props: { items, orientation: 'horizontal' } }))
+    expect(timeline.classes()).toContain('apple-timeline--horizontal')
+    const table = keep(mount(AppleSkeleton, { props: { variant: 'table', rows: 2, columns: 3 } }))
+    expect(table.findAll('.apple-skeleton__table-row')).toHaveLength(3)
+    expect(table.findAll('.apple-skeleton__block')).toHaveLength(9)
+    const list = keep(mount(AppleSkeleton, { props: { variant: 'list', rows: 2, lines: 2 } }))
+    expect(list.findAll('.apple-skeleton__row')).toHaveLength(2)
+    expect(list.findAll('.apple-skeleton__avatar')).toHaveLength(2)
+    const card = keep(mount(AppleSkeleton, { props: { variant: 'card', width: 320 } }))
+    expect(card.find('.apple-skeleton__image').exists()).toBe(true)
+    expect(card.attributes('style')).toContain('width: 320px')
+  })
+
+  it('retains list selection events when a filtered list changes size', async () => {
+    const wrapper = keep(mount(AppleList, { props: { items, selectable: true } }))
+    await wrapper.findAll('button')[2]!.trigger('click')
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['details'])
+    await wrapper.setProps({ items: [items[2]!] })
+    expect(wrapper.findAll('li')).toHaveLength(1)
+    expect(wrapper.find('.apple-list-size').exists()).toBe(true)
+  })
+
+  it('positions back-to-top after floating actions without double fixed positioning', async () => {
+    const wrapper = keep(mount(AppleFloatingGroup, { props: { threshold: 0 }, slots: { default: () => h('button', '帮助') } }))
+    await nextTick()
+    expect(wrapper.findAll('button').at(-1)?.attributes('aria-label')).toBe('回到顶部')
+    expect(wrapper.get('.apple-back-top').classes()).not.toContain('apple-back-top--fixed')
+    const standalone = keep(mount(AppleBackTop, { props: { threshold: 0 } }))
+    await nextTick()
+    expect(standalone.get('button').classes()).toContain('apple-back-top--fixed')
+    await wrapper.setProps({ backTop: false })
+    expect(wrapper.find('.apple-back-top').exists()).toBe(false)
+  })
+
   it('falls back after an avatar error and resets when src changes', async () => {
     const wrapper = keep(mount(AppleAvatar, { props: { src: '/missing.png', name: '张三' } }))
     await wrapper.get('img').trigger('error')

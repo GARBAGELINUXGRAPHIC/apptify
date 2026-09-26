@@ -5,33 +5,51 @@
 .apple-tabs :focus-visible, .apple-pagination :focus-visible, .apple-breadcrumbs :focus-visible, .apple-accordion :focus-visible, .apple-table :focus-visible, .apple-tree :focus-visible, .apple-list :focus-visible, .apple-tag :focus-visible, .apple-alert :focus-visible, .apple-steps :focus-visible, .apple-carousel :focus-visible, .apple-pull-refresh :focus-visible, .apple-infinite-scroll :focus-visible, .apple-swipe-cell :focus-visible, .apple-back-top:focus-visible, .apple-marquee :focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 3px; }
 .apple-content-icon-button { display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; color: inherit; background: transparent; border: 0; border-radius: 50%; }
 .apple-content-icon-button:hover:not(:disabled) { background: color-mix(in srgb, var(--apple-text) 6%, transparent); }
+.apple-content-icon-button, .apple-tag button, .apple-carousel__arrows button, .apple-pull-refresh__button, .apple-infinite-scroll__status button { transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
+.apple-content-icon-button:active:not(:disabled), .apple-tag button:active:not(:disabled), .apple-carousel__arrows button:active:not(:disabled), .apple-pull-refresh__button:active:not(:disabled), .apple-infinite-scroll__status button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-tone-neutral { --apple-tone: var(--apple-secondary); }
 .apple-tone-accent, .apple-tone-info { --apple-tone: var(--apple-accent); }
 .apple-tone-danger { --apple-tone: var(--apple-danger); }
 .apple-tone-success { --apple-tone: var(--apple-success); }
 .apple-tone-warning { --apple-tone: var(--apple-warning); }
 
-.apple-tabs__list { display: flex; align-items: stretch; gap: 28px; overflow-x: auto; overscroll-behavior-inline: contain; border-bottom: 1px solid var(--apple-border); scrollbar-width: none; }
+.apple-tabs__list { position: relative; display: flex; align-items: stretch; gap: 28px; overflow-x: auto; overscroll-behavior-inline: contain; border-bottom: 1px solid var(--apple-border); scrollbar-width: none; }
 .apple-tabs__list::-webkit-scrollbar { display: none; }
 .apple-tabs__tab { position: relative; flex: 0 0 auto; min-height: 48px; max-width: 100%; padding: 10px 0 13px; border: 0; background: transparent; color: var(--apple-secondary); font-size: 14px !important; font-weight: 500 !important; overflow-wrap: anywhere; }
-.apple-tabs__tab::after { position: absolute; inset: auto 0 0; height: 2px; content: ''; background: transparent; transition: background var(--apple-duration) var(--apple-ease); }
+.apple-tabs__tab { transition: color var(--apple-fast), background-color var(--apple-fast); }
 .apple-tabs__tab.is-active { color: var(--apple-text); }
-.apple-tabs__tab.is-active::after { background: var(--apple-text); }
+.apple-tabs__tab:hover:not(:disabled) { color: color-mix(in srgb,var(--apple-text) 75%,var(--apple-secondary)); }
+.apple-tabs__tab:active:not(:disabled) { color: var(--apple-text); }
+.apple-tabs--underline .apple-selection-indicator { background: transparent; border-radius: 0; }
+.apple-tabs--underline .apple-selection-indicator::after { position: absolute; inset: auto 0 0; height: 2px; background: var(--apple-text); content: ''; }
+.apple-tabs--bar .apple-tabs__list { gap: 0; border: 0; border-radius: 8px 8px 0 0; background: var(--apple-surface-alt); }
+.apple-tabs--bar .apple-tabs__tab { flex: 1 0 auto; padding-inline: 18px; }
+.apple-tabs--bar .apple-selection-indicator { border-radius: 8px 8px 0 0; }
 .apple-tabs__tab:focus-visible { outline-offset: -4px; border-radius: 4px; }
 .apple-tabs__panel { min-width: 0; padding-top: 20px; }
 .apple-tabs__panel:empty { padding-top: 0; }
+.apple-tabs__viewport { overflow: hidden; }
+.apple-tabs__viewport > div { position: relative; }
+.apple-tab-panel-enter-active, .apple-tab-panel-leave-active { transition: transform var(--apple-duration) var(--apple-ease); }
+.apple-tab-panel-leave-active { position: absolute; top: 0; width: 100%; }
+.apple-tab-panel-enter-from, .apple-tabs.is-backward .apple-tab-panel-leave-to { transform: translateX(100%); }
+.apple-tab-panel-leave-to, .apple-tabs.is-backward .apple-tab-panel-enter-from { transform: translateX(-100%); }
 
 .apple-breadcrumbs { font-size: 13px; color: var(--apple-secondary); }
 .apple-breadcrumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; padding: 0; margin: 0; list-style: none; }
 .apple-breadcrumbs li { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
-.apple-breadcrumbs a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
-.apple-breadcrumbs a:hover { text-decoration: underline; color: var(--apple-text); }
+.apple-breadcrumbs a, .apple-breadcrumbs button { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; font: inherit; color: inherit; text-decoration: none; cursor: pointer; transition: color var(--apple-fast); }
+.apple-breadcrumbs a:hover, .apple-breadcrumbs button:hover { text-decoration: none; color: var(--apple-text); }
+.apple-breadcrumbs a:active, .apple-breadcrumbs button:active { color: var(--apple-accent); }
 .apple-breadcrumbs [aria-current] { color: var(--apple-text); }
 .apple-breadcrumbs svg { flex-shrink: 0; opacity: .5; }
 .apple-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; max-width: 100%; }
-.apple-pagination button { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 44px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; color: var(--apple-secondary); font-size: 13px; font-variant-numeric: tabular-nums; transition: background var(--apple-duration) var(--apple-ease); }
+.apple-pagination button { display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--apple-secondary); font-size: 13px; font-variant-numeric: tabular-nums; transition: background-color var(--apple-fast), color var(--apple-fast); }
 .apple-pagination button:hover:not(:disabled) { background: var(--apple-surface-alt); }
+.apple-pagination button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-pagination button.is-active { background: var(--apple-accent); color: var(--apple-accent-text); }
+.apple-pagination button.is-active:hover:not(:disabled) { background: color-mix(in srgb, var(--apple-accent) 92%, var(--apple-text)); }
+.apple-pagination button.is-active:active:not(:disabled) { background: color-mix(in srgb, var(--apple-accent) 80%, var(--apple-text)); }
 .apple-pagination__gap { display: inline-flex; justify-content: center; align-items: center; width: 12px; color: var(--apple-secondary); }
 
 .apple-accordion__item { border-bottom: 1px solid var(--apple-border); }
@@ -42,37 +60,61 @@
 .apple-accordion h3 svg { flex-shrink: 0; color: var(--apple-secondary); transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-accordion__item.is-open h3 svg { transform: rotate(180deg); }
 .apple-accordion__content { padding: 0 32px 24px 0; color: var(--apple-secondary); font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.apple-accordion__region { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--apple-duration) var(--apple-ease); }
+.apple-accordion__item.is-open .apple-accordion__region { grid-template-rows: 1fr; }
+.apple-accordion__clip { min-height: 0; overflow: hidden; }
+.apple-accordion h3 button { padding-inline: 12px; transition: color var(--apple-fast), background-color var(--apple-fast); }
+.apple-accordion h3 button:hover:not(:disabled) { background: var(--apple-hover); }
+.apple-accordion h3 button:active:not(:disabled) { background: var(--apple-pressed); }
+.apple-accordion__content { padding-left: 12px; }
 
 .apple-table { font-size: 13px; }
 .apple-table__scroll { overflow-x: auto; overscroll-behavior-inline: contain; }
-.apple-table table { width: 100%; border-collapse: collapse; text-align: left; }
-.apple-table th { height: 48px; padding: 8px 16px; border-bottom: 1px solid var(--apple-border); background: var(--apple-surface-alt); font-weight: 500; color: var(--apple-secondary); white-space: nowrap; }
+.apple-table table { width: 100%; min-width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; text-align: left; }
+.apple-table th { position: relative; box-sizing: border-box; height: 48px; padding: 0 16px; border-bottom: 1px solid var(--apple-border); background: var(--apple-surface-alt); font-weight: 500; color: var(--apple-secondary); white-space: nowrap; }
 .apple-table td { padding: 14px 16px; border-bottom: 1px solid var(--apple-border); line-height: 1.5; overflow-wrap: anywhere; }
-.apple-table tbody tr.is-selected { background: color-mix(in srgb, var(--apple-accent) 7%, transparent); }
-.apple-table tbody tr:hover { background: color-mix(in srgb, var(--apple-text) 3%, transparent); }
+.apple-table tbody tr { transition: background-color var(--apple-fast); }
+.apple-table tbody tr.is-selected { background: var(--apple-selected); }
+.apple-table tbody tr:hover { background: var(--apple-hover); }
+.apple-table tbody tr:active { background: var(--apple-pressed); }
 .apple-table .apple-table__select { width: 44px; padding: 0 12px; }
 .apple-table__select input { display: block; width: 18px; height: 18px; accent-color: var(--apple-accent); cursor: pointer; }
 .apple-table__select input:disabled { cursor: not-allowed; }
-.apple-table__sort { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; color: inherit; background: transparent; border: 0; text-align: inherit; }
+.apple-table__sort { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; max-width: 100%; padding: 0 8px; margin-inline: -8px; color: inherit; background: transparent; border: 0; border-radius: 4px; text-align: inherit; transition: color var(--apple-fast), background-color var(--apple-fast); }
+.apple-table__sort:hover:not(:disabled) { color: var(--apple-text); background: var(--apple-hover); }
+.apple-table__sort:active:not(:disabled) { color: var(--apple-text); background: var(--apple-pressed); }
 .apple-table__sort svg { transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-table__sort svg.is-ascending { transform: rotate(180deg); }
 .apple-table__sort svg.is-unsorted { opacity: .35; }
 .apple-table td.apple-table__empty { height: 140px; text-align: center; color: var(--apple-secondary); }
 .apple-table__footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; color: var(--apple-secondary); }
+.apple-table__resize { position: absolute; z-index: 2; top: 0; right: -4px; width: 10px; height: 100%; cursor: col-resize; touch-action: none; }
+.apple-table__resize::after { position: absolute; top: 12px; bottom: 12px; left: 4px; width: 2px; background: var(--apple-border); content: ''; transition: background-color var(--apple-fast); }
+.apple-table__resize:hover::after, .apple-table__resize:focus-visible::after { background: var(--apple-secondary); }
+.apple-table__resize:active::after { background: var(--apple-text); }
+.apple-table__resize[aria-disabled] { cursor: not-allowed; }
+.apple-table--virtual .apple-table__scroll { overflow: auto; }
+.apple-table--virtual thead th { position: sticky; z-index: 3; top: 0; }
+.apple-table--virtual td { box-sizing: border-box; height: var(--apple-row-height); padding-block: 0; }
+.apple-table--virtual .apple-table__cell { max-height: calc(var(--apple-row-height) - 2px); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.apple-table .apple-table__spacer, .apple-table .apple-table__spacer:hover { background: transparent; }
+.apple-table .apple-table__spacer td { height: 0; padding: 0; border: 0; }
 
 .apple-tree, .apple-tree ul { padding: 0; margin: 0; list-style: none; }
 .apple-tree li { border-radius: 6px; }
 .apple-tree li:focus-visible { outline: none; }
 .apple-tree li:focus-visible > .apple-tree__row { outline: 3px solid var(--apple-accent); outline-offset: -2px; }
-.apple-tree__row { display: flex; align-items: center; gap: 4px; min-height: 44px; padding-block: 2px; padding-inline-end: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.apple-tree__row { position: relative; display: flex; align-items: center; gap: 4px; min-height: 44px; padding-block: 2px; padding-inline-end: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background-color var(--apple-fast), color var(--apple-fast); }
 .apple-tree__row > span:last-child { min-width: 0; overflow-wrap: anywhere; }
-.apple-tree__row:hover:not(.is-disabled) { background: var(--apple-surface-alt); }
-.apple-tree__row.is-selected { color: var(--apple-accent); background: color-mix(in srgb, var(--apple-accent) 8%, transparent); }
+.apple-tree__row:hover:not(.is-disabled) { background: var(--apple-hover); }
+.apple-tree__row:active:not(.is-disabled) { background: var(--apple-pressed); }
+.apple-tree__row.is-selected { color: var(--apple-text); }
+.apple-tree > .apple-selection-indicator { border-radius: 6px; }
 .apple-tree__row.is-disabled { opacity: .45; cursor: not-allowed; }
 .apple-tree__toggle, .apple-tree__spacer { display: inline-flex; flex: 0 0 36px; align-items: center; justify-content: center; width: 36px; height: 40px; padding: 0; border: 0; background: transparent; color: var(--apple-secondary); }
 .apple-tree__toggle svg { transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-tree__toggle.is-open svg { transform: rotate(90deg); }
-.apple-list { padding: 0; margin: 0; list-style: none; }
+.apple-list { position: relative; padding: 0; margin: 0; list-style: none; }
 .apple-list > li + li { border-top: 1px solid var(--apple-border); }
 .apple-list__item { display: flex; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box; width: 100%; min-height: 60px; padding: 12px 2px; border: 0; background: transparent; text-decoration: none; color: var(--apple-text); text-align: left; }
 button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(in srgb, var(--apple-text) 3%, transparent); }
@@ -81,6 +123,12 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 .apple-list__label { font-size: 14px; overflow-wrap: anywhere; }
 .apple-list__description { color: var(--apple-secondary); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .apple-list__item > svg { flex-shrink: 0; color: var(--apple-secondary); }
+.apple-list__item { position: relative; padding-inline: 8px; transition: background-color var(--apple-fast), color var(--apple-fast); }
+.apple-list__item:active:not(:disabled) { background: var(--apple-pressed); }
+.apple-list-row-enter-active, .apple-list-row-leave-active, .apple-list-row-move { transition: transform var(--apple-duration) var(--apple-ease); }
+.apple-list-row-enter-from { transform: translateY(24px); }
+.apple-list-row-leave-to { transform: translateX(100%); }
+.apple-list-row-leave-active { position: absolute; width: 100%; }
 
 .apple-avatar { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden; vertical-align: middle; border-radius: 50%; background: var(--apple-surface-alt); color: var(--apple-secondary); font-weight: 600; line-height: 1; }
 .apple-avatar--square { border-radius: 8px; }
@@ -109,11 +157,26 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 .apple-progress.is-indeterminate .apple-progress__fill { width: 35%; animation: apple-progress 1.4s ease-in-out infinite; }
 .apple-spinner { display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: var(--apple-secondary); vertical-align: middle; font-size: 13px; }
 .apple-spinner > svg { flex-shrink: 0; animation: apple-spin 1s linear infinite; }
-.apple-skeleton { display: flex; align-items: flex-start; gap: 14px; }
+.apple-skeleton { min-width: 0; }
+.apple-skeleton__layout { display: flex; align-items: flex-start; gap: 14px; width: 100%; height: 100%; }
 .apple-skeleton__avatar { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; background: var(--apple-surface-alt); }
 .apple-skeleton__lines { display: flex; flex: 1; flex-direction: column; gap: 10px; min-width: 0; padding-top: 3px; }
 .apple-skeleton__lines span { display: block; height: 12px; border-radius: 4px; background: var(--apple-surface-alt); }
-.apple-skeleton.is-animated .apple-skeleton__avatar, .apple-skeleton.is-animated .apple-skeleton__lines span { animation: apple-skeleton 1.8s ease-in-out infinite; }
+.apple-skeleton__block { display: block; flex-shrink: 0; background: var(--apple-surface-alt); border-radius: 4px; }
+.apple-skeleton__avatar { border-radius: 50%; }
+.apple-skeleton--avatar { width: 44px; height: 44px; }
+.apple-skeleton--avatar .apple-skeleton__avatar { width: 100%; height: 100%; }
+.apple-skeleton--avatar .apple-skeleton__layout { display: block; }
+.apple-skeleton--card .apple-skeleton__layout, .apple-skeleton--list .apple-skeleton__layout, .apple-skeleton--table .apple-skeleton__layout { flex-direction: column; }
+.apple-skeleton--card .apple-skeleton__lines { width: 100%; }
+.apple-skeleton__image { width: 100%; aspect-ratio: 16 / 10; border-radius: 8px; }
+.apple-skeleton--image .apple-skeleton__image { height: 100%; }
+.apple-skeleton__row { display: flex; gap: 14px; width: 100%; padding-block: 8px; }
+.apple-skeleton__table-row { display: grid; gap: 24px; width: 100%; padding: 12px 0; border-bottom: 1px solid var(--apple-border); }
+.apple-skeleton__table-row .apple-skeleton__block { height: 12px; }
+.apple-skeleton__table-row:first-child { background: var(--apple-surface-alt); }
+.apple-skeleton__table-row:first-child .apple-skeleton__block { background: var(--apple-border); }
+.apple-skeleton.is-animated .apple-skeleton__block { animation: apple-skeleton 1.8s ease-in-out infinite; }
 .apple-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 44px 20px; text-align: center; color: var(--apple-secondary); }
 .apple-empty > svg { margin-bottom: 2px; opacity: .7; }
 .apple-empty h3 { margin: 0; color: var(--apple-text); font-size: 16px; font-weight: 600; }
@@ -125,16 +188,22 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 .apple-divider--vertical { display: inline-flex; align-self: stretch; width: 1px; min-height: 20px; margin: 0 12px; vertical-align: middle; background: var(--apple-border); }
 .apple-divider--vertical::before, .apple-divider--vertical::after { display: none; }
 
-.apple-steps { display: flex; align-items: flex-start; gap: 12px; padding: 0; margin: 0; list-style: none; }
-.apple-steps > li { position: relative; flex: 1; min-width: 0; }
-.apple-steps > li:not(:last-child)::after { position: absolute; z-index: 0; top: 17px; left: 40px; right: 0; height: 1px; content: ''; background: var(--apple-border); }
-.apple-steps > li > div, .apple-steps > li > button { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 9px; max-width: 100%; padding: 0; border: 0; background: transparent; text-align: left; color: var(--apple-secondary); }
-.apple-steps__number { z-index: 1; display: flex; flex: 0 0 34px; align-items: center; justify-content: center; box-sizing: border-box; width: 34px; height: 34px; border: 1px solid var(--apple-border); border-radius: 50%; background: var(--apple-surface); font-size: 13px; }
+.apple-steps { display: flex; align-items: flex-start; padding: 0; margin: 0; list-style: none; overflow-x: auto; }
+.apple-steps > li { position: relative; flex: 1 0 84px; min-width: 0; }
+.apple-steps > li:not(:last-child)::after { position: absolute; z-index: 0; top: 17px; left: calc(50% + 22px); right: calc(-50% + 22px); height: 1px; content: ''; background: var(--apple-border); }
+.apple-steps > li > div, .apple-steps > li > button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 0 6px 8px; border: 0; background: transparent; text-align: center; color: var(--apple-secondary); }
+.apple-steps > li > button { transition: color var(--apple-fast), background-color var(--apple-fast); }
+.apple-steps > li > button:hover:not(:disabled) { background: var(--apple-hover); }
+.apple-steps > li > button:active:not(:disabled) { background: var(--apple-pressed); }
+.apple-steps__number { z-index: 1; display: flex; flex: 0 0 34px; align-items: center; justify-content: center; box-sizing: border-box; width: 34px; height: 34px; border: 1px solid var(--apple-border); border-radius: 50%; background: var(--apple-surface); font-size: 13px; transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
+.apple-steps__number > span { display: inline-flex; align-items: center; justify-content: center; }
+.apple-step-symbol-enter-active, .apple-step-symbol-leave-active { transition: opacity var(--apple-fast); }
+.apple-step-symbol-enter-from, .apple-step-symbol-leave-to { opacity: 0; }
 .apple-steps .is-current .apple-steps__number { border-color: var(--apple-accent); background: var(--apple-accent); color: var(--apple-accent-text); }
 .apple-steps .is-complete .apple-steps__number { border-color: transparent; background: color-mix(in srgb, var(--apple-accent) 10%, var(--apple-surface)); color: var(--apple-accent); }
 .apple-steps .is-current .apple-steps__copy strong { color: var(--apple-text); }
-.apple-steps__copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
-.apple-steps__copy strong { font-size: 13px; font-weight: 500; }
+.apple-steps__copy { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; max-width: 100%; text-align: center; overflow-wrap: anywhere; }
+.apple-steps__copy strong { font-size: 13px; font-weight: 500; transition: color var(--apple-fast); }
 .apple-steps__copy > span { font-size: 11px; line-height: 1.5; }
 .apple-timeline { padding: 0; margin: 0; list-style: none; }
 .apple-timeline > li { position: relative; display: flex; gap: 16px; min-height: 70px; padding-bottom: 26px; }
@@ -145,6 +214,9 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 .apple-timeline time { color: var(--apple-secondary); font-size: 11px; }
 .apple-timeline strong { font-size: 14px; font-weight: 500; }
 .apple-timeline p { margin: 0; color: var(--apple-secondary); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.apple-timeline--horizontal { display: flex; overflow-x: auto; overscroll-behavior-inline: contain; }
+.apple-timeline--horizontal > li { flex: 1 0 150px; flex-direction: column; gap: 12px; min-width: 0; padding: 0 20px 0 0; }
+.apple-timeline--horizontal > li:not(:last-child)::before { top: 10px; bottom: auto; left: 15px; width: calc(100% - 18px); height: 1px; }
 
 .apple-carousel__track { position: relative; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; overscroll-behavior-inline: contain; border-radius: 8px; }
 .apple-carousel__track::-webkit-scrollbar { display: none; }
@@ -170,8 +242,17 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 .apple-swipe-cell { overflow: hidden; border-bottom: 1px solid var(--apple-border); }
 .apple-swipe-cell__content { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 8px 0; }
 .apple-swipe-cell__content > :not(button) { min-width: 0; overflow-wrap: anywhere; }
-.apple-swipe-cell__actions:not([hidden]) { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 0 12px; }
-.apple-back-top { position: fixed; z-index: 25; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--apple-border); border-radius: 50%; background: var(--apple-surface); color: var(--apple-text); box-shadow: var(--apple-shadow); }
+.apple-swipe-cell__actions { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--apple-duration) var(--apple-ease); }
+.apple-swipe-cell.is-open .apple-swipe-cell__actions { grid-template-rows: 1fr; }
+.apple-swipe-cell__clip { min-height: 0; overflow: hidden; }
+.apple-swipe-cell__buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 0 12px; }
+.apple-floating-group { position: fixed; z-index: 25; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 10px; max-height: calc(100dvh - 40px); }
+.apple-back-top { position: relative; order: 1000; display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--apple-border); border-radius: 50%; background: var(--apple-surface); color: var(--apple-text); box-shadow: var(--apple-shadow); transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
+.apple-back-top--fixed { position: fixed; z-index: 25; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); }
+.apple-back-top:hover:not(:disabled) { background: var(--apple-surface-alt); }
+.apple-back-top:active:not(:disabled) { background: var(--apple-pressed); }
+.apple-floating-action-enter-active, .apple-floating-action-leave-active { transition: transform var(--apple-duration) var(--apple-ease), opacity var(--apple-fast); }
+.apple-floating-action-enter-from, .apple-floating-action-leave-to { transform: translateY(24px); opacity: 0; }
 .apple-marquee { display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; min-height: 44px; background: var(--apple-surface-alt); border-radius: 6px; font-size: 12px; }
 .apple-marquee__viewport { flex: 1; min-width: 0; overflow: hidden; }
 .apple-marquee__track { display: flex; width: max-content; animation: apple-marquee var(--apple-marquee-duration) linear infinite; }
@@ -198,14 +279,9 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 @media (max-width: 480px) {
   .apple-tabs__list { gap: 22px; }
   .apple-pagination { gap: 2px; }
-  .apple-pagination button { min-width: 32px; padding-inline: 6px; }
   .apple-table th, .apple-table td { padding-inline: 12px; }
   .apple-table__footer { flex-direction: column; align-items: stretch; }
   .apple-table__footer > span { font-size: 12px; }
-  .apple-steps { flex-direction: column; gap: 20px; }
-  .apple-steps > li { width: 100%; }
-  .apple-steps > li > div, .apple-steps > li > button { flex-direction: row; align-items: center; gap: 12px; min-height: 44px; }
-  .apple-steps > li:not(:last-child)::after { top: 40px; bottom: -24px; left: 16px; right: auto; width: 1px; height: auto; }
   .apple-carousel__caption h3 { font-size: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {

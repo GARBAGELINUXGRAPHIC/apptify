@@ -1,8 +1,9 @@
-import { defineComponent, h, shallowRef, withDirectives, type PropType, type Component, type CSSProperties } from 'vue'
-import { Ripple } from 'vuetify/directives/ripple'
-import { ArrowUpRight, LoaderCircle, ImageOff, ZoomIn, X, Search } from 'lucide-vue-next'
+import { defineComponent, h, shallowRef, type PropType, type Component, type CSSProperties } from 'vue'
+import { ArrowUpRight, ImageOff, ZoomIn, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, AppleImageViewer } from './overlays'
+import { AppleButton } from './button'
+export { AppleButton } from './button'
 
 const providerKey: symbol = Symbol('apple-provider-scope')
 
@@ -42,34 +43,6 @@ export const AppleProvider = defineComponent({
       'data-apple-theme': this.context.theme.resolved,
       'data-apple-motion': resolveMotion('inherit', this.context.motion.mode, this.context.motion.reduced),
     }, [this.$slots.default?.(), h('div', { ref: 'portals', 'data-apple-portals': '' }), h(AppleOverlayHost)])
-  },
-})
-
-export const AppleButton = defineComponent({
-  name: 'AppleButton', inheritAttrs: false,
-  inject: { apple: { from: appleKey, default: null } },
-  props: {
-    ...motionProps,
-    variant: { type: String as PropType<'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'>, default: 'primary' },
-    size: { type: String as PropType<'small' | 'medium' | 'large'>, default: 'medium' },
-    icon: [Object, Function] as PropType<Component>, iconOnly: Boolean, label: String,
-    disabled: Boolean, loading: Boolean, ripple: { type: Boolean, default: true }, href: String,
-    type: { type: String as PropType<'button' | 'submit' | 'reset'>, default: 'button' },
-  },
-  emits: ['click'],
-  render() {
-    const context = this.apple as AppleContext | null
-    const motion = resolveMotion(this.motion, context?.motion.mode, context?.motion.reduced)
-    const blocked = this.disabled || this.loading
-    const node = h(this.href && !blocked ? 'a' : 'button', {
-      ...this.$attrs, class: ['apple-button', `apple-button--${this.variant}`, `apple-button--${this.size}`, { 'apple-button--icon': this.iconOnly }, this.$attrs.class],
-      type: this.href && !blocked ? undefined : this.type, href: blocked ? undefined : this.href,
-      disabled: blocked, 'aria-disabled': blocked || undefined, 'aria-busy': this.loading || undefined,
-      'aria-label': this.label ?? this.$attrs['aria-label'], title: this.iconOnly ? this.label : undefined,
-      'data-apple-motion': motion,
-      onClick: (event: MouseEvent) => { if (blocked) event.preventDefault(); else this.$emit('click', event) },
-    }, [this.loading ? h(LoaderCircle, { size: 18, class: 'apple-spin', 'aria-hidden': true }) : this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null, this.$slots.default?.()])
-    return withDirectives(node, [[Ripple, this.ripple && !blocked && motion === 'full']])
   },
 })
 
