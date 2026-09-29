@@ -77,14 +77,19 @@ export const AppleCard = defineComponent({
 })
 
 export const AppleImage = defineComponent({
+  inject: { apple: { from: appleKey, default: null } },
   name: 'AppleImage', props: { ...motionProps, src: { type: String, required: true }, alt: { type: String, required: true }, preview: { type: Boolean, default: true }, gallery: { type: Array as PropType<string[]>, default: () => [] }, index: { type: Number, default: 0 }, squared: Boolean, aspectRatio: { type: [String, Number], default: '4/3' }, fit: { type: String as PropType<'contain' | 'cover'>, default: 'cover' } },
   data: () => ({ open: false, failed: false, loaded: false }),
   watch: { src() { this.failed = false; this.loaded = false } },
   render() {
     const images = this.gallery.length ? this.gallery : [{ src: this.src, alt: this.alt }]
     const index = Math.max(0, Math.min(this.index, images.length - 1))
-    return h('figure', { class: 'apple-image', style: { aspectRatio: this.squared ? '1' : String(this.aspectRatio) } }, [
-      h(this.preview && !this.failed ? 'button' : 'div', { class: 'apple-image__trigger', type: this.preview ? 'button' : undefined, 'aria-label': this.preview ? `放大图片：${this.alt}` : undefined, onClick: () => { if (this.preview && !this.failed) this.open = true } }, this.failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', { src: this.src, alt: this.alt, loading: 'lazy', style: { objectFit: this.fit }, onError: () => { this.failed = true }, onLoad: () => { this.loaded = true } }), this.preview ? h('span', { class: 'apple-image__zoom' }, h(ZoomIn, { size: 18 })) : null]),
+    const ctx = this.apple as AppleContext | null
+    const mode = resolveMotion(this.motion, ctx?.motion.mode, ctx?.motion.reduced)
+    return h('figure', { class: ['apple-image', { 'apple-image--loaded': this.loaded && !this.failed && !this.open }], 'data-apple-motion': mode, style: { aspectRatio: this.squared ? '1' : String(this.aspectRatio) } }, [
+      h('div', { class: 'apple-image__surface' }, [
+        h(this.preview && !this.failed ? 'button' : 'div', { class: 'apple-image__trigger', type: this.preview ? 'button' : undefined, 'aria-label': this.preview ? `放大图片：${this.alt}` : undefined, onClick: () => { if (this.preview && !this.failed) this.open = true } }, this.failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', { src: this.src, alt: this.alt, loading: 'lazy', style: { objectFit: this.fit }, onError: () => { this.failed = true }, onLoad: () => { this.loaded = true } }), this.preview ? h('span', { class: 'apple-image__zoom' }, h(ZoomIn, { size: 18 })) : null]),
+      ]),
       h(AppleImageViewer, { modelValue: this.open, 'onUpdate:modelValue': (value: boolean) => { this.open = value }, images, index, motion: this.motion }),
       this.$slots.caption ? h('figcaption', this.$slots.caption()) : null,
     ])

@@ -4,7 +4,7 @@
 
 设计借鉴 Apple 网站的排版、留白、层次与交互节奏；不是 Apple 官方产品，也不声称全部控件都与 Apple 网站逐像素一致。表格、级联选择、验证码、下拉刷新等能力是在同一套视觉语言下的扩展。
 
-当前导出并注册 **67 个组件**：基础 9 个、表单 18 个、内容与移动交互 28 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 66 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
+当前导出并注册 **68 个组件**：基础 9 个、表单 18 个、内容与移动交互 29 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 67 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
 
 ## 本地运行与安装
 
@@ -33,7 +33,7 @@ npm install /absolute/path/apptify/apptify-0.1.0.tgz
 npm install vue@^3.5 vuetify@^3.9
 ```
 
-Vue 与 Vuetify 是 peer dependencies。图标使用 `lucide-vue-next`，图片预览使用 `vue-easy-lightbox`。本库没有要求安装 Vuetify 插件或导入其完整样式，也不需要 `<v-app>`。
+Vue 与 Vuetify 是 peer dependencies。图标使用 `lucide-vue-next`，图片预览的缩放与手势使用 `@panzoom/panzoom`。本库没有要求安装 Vuetify 插件或导入其完整样式，也不需要 `<v-app>`。
 
 ## 接入应用
 

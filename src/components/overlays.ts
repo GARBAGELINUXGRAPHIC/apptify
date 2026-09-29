@@ -1,12 +1,12 @@
 import {
-  Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, mergeProps, nextTick,
+  Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, markRaw, mergeProps, nextTick,
   type Component, type PropType, type VNode,
 } from 'vue'
 import {
   Check, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, Info, LoaderCircle,
   RotateCcw, X, ZoomIn, ZoomOut,
 } from 'lucide-vue-next'
-import VueEasyLightbox from 'vue-easy-lightbox'
+import Panzoom, { type PanzoomObject } from '@panzoom/panzoom'
 import { appleKey, resolveMotion, type AppleContext, type OverlayEntry } from '../core/context'
 import { ripple } from '../core/motion'
 import { AppleButton } from './button'
@@ -666,21 +666,46 @@ export const AppleImageViewer = defineComponent({
     motion: motionProp,
   },
   emits: ['update:modelValue', 'update:index', 'change', 'close', 'after-close', 'error'],
-  data: () => ({ disposeLayer: null as (() => void) | null, depth: 0, isTop: false, current: 0, lastWheel: 0 }),
+  data: () => ({
+    disposeLayer: null as (() => void) | null, depth: 0, isTop: false, current: 0,
+    panzoom: null as PanzoomObject | null, loaded: false, failed: false, rotation: 0,
+    pointerStart: null as { x: number; y: number } | null,
+  }),
   computed: {
     safeIndex(): number { return Math.max(0, Math.min(this.index, this.images.length - 1)) },
-    normalizedImages(): Array<string | { src: string; title?: string; alt?: string }> {
-      return this.images.map(image => typeof image === 'string' ? image : { src: image.src, title: image.title ?? image.alt, alt: image.alt })
+    currentImage(): AppleViewerImage | undefined {
+      const image = this.images[this.current]
+      return typeof image === 'string' ? { src: image } : image
     },
   },
   watch: {
-    modelValue() { void this.syncLayer() },
+    modelValue() { this.resetImage(); void this.syncLayer() },
     safeIndex(value: number) { this.current = value },
+    'currentImage.src'() { this.resetImage() },
     'images.length'() { this.current = Math.max(0, Math.min(this.current, this.images.length - 1)) },
   },
   mounted() { this.current = this.safeIndex; void this.syncLayer() },
-  beforeUnmount() { this.disposeLayer?.() },
+  beforeUnmount() { this.panzoom?.destroy(); this.disposeLayer?.() },
   methods: {
+    resetImage() {
+      this.panzoom?.destroy(); this.panzoom = null
+      this.loaded = false; this.failed = false; this.rotation = 0
+    },
+    imageLoaded() {
+      const canvas = this.$refs.canvas as HTMLElement | undefined
+      if (!canvas || !this.modelValue) return
+      this.loaded = true
+      this.panzoom?.destroy()
+      this.panzoom = markRaw(Panzoom(canvas, { minScale: 0.1, maxScale: 10, animate: false, cursor: 'grab' }))
+    },
+    stepZoom(direction: number) {
+      this.panzoom?.zoom(this.panzoom.getScale() * Math.exp(direction * 0.2), { animate: false })
+    },
+    navigate(direction: number) {
+      const next = this.current + direction
+      const count = this.images.length
+      if (count && (this.loop || next >= 0 && next < count)) this.change(this.current, (next + count) % count)
+    },
     async syncLayer() {
       if (!this.modelValue) return
       this.current = this.safeIndex
@@ -694,9 +719,7 @@ export const AppleImageViewer = defineComponent({
         arrows: (event) => {
           event.preventDefault()
           if (!this.modelValue) return
-          const next = this.current + (event.key === 'ArrowRight' ? 1 : -1)
-          const count = this.images.length
-          if (count && (this.loop || next >= 0 && next < count)) this.change(this.current, (next + count) % count)
+          this.navigate(event.key === 'ArrowRight' ? 1 : -1)
         },
       })
     },
@@ -707,13 +730,19 @@ export const AppleImageViewer = defineComponent({
     },
     close() { if (this.modelValue) { this.$emit('update:modelValue', false); this.$emit('close') } },
     zoom(event: WheelEvent) {
-      if (!this.modelValue || !this.isTop || !event.deltaY) return
+      if (!this.modelValue || !this.isTop || !Number.isFinite(event.deltaY) || !event.deltaY) return
       event.preventDefault()
-      if (Date.now() - this.lastWheel < 60) return
-      this.lastWheel = Date.now()
-      // The engine couples wheel zoom to its own body lock; reuse its zoom controls instead.
       const panel = this.$refs.panel as HTMLElement | undefined
-      panel?.querySelector<HTMLButtonElement>(event.deltaY < 0 ? '[aria-label="放大"]' : '[aria-label="缩小"]')?.click()
+      if (!panel || !this.panzoom) return
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? panel.clientHeight || window.innerHeight : 1
+      // Use distance, not Panzoom's fixed wheel step. Every fractional delta contributes.
+      const scale = Math.max(0.1, Math.min(10, this.panzoom.getScale() * Math.exp(-event.deltaY * unit * 0.002)))
+      const bounds = panel.getBoundingClientRect()
+      // The canvas fills the panel. Its untransformed center stays valid between animation frames.
+      this.panzoom.zoom(scale, { animate: false, focal: {
+        x: (event.clientX - bounds.left - bounds.width / 2) * scale,
+        y: (event.clientY - bounds.top - bounds.height / 2) * scale,
+      } })
     },
     change(_previous: number, index: number) {
       if (index === this.current) return
@@ -729,25 +758,36 @@ export const AppleImageViewer = defineComponent({
       'aria-label': '图片预览', 'aria-modal': this.isTop ? 'true' : undefined,
       'data-apple-motion': motion, style: { zIndex: 1200 + this.depth * 20, '--apple-overlay-duration': `${durationOf(motion)}ms` },
       onWheel: this.zoom,
+      onPointerdownCapture: (event: PointerEvent) => { this.pointerStart = { x: event.clientX, y: event.clientY } },
     }), [
-      this.images.length ? h(VueEasyLightbox, {
-        visible: true, imgs: this.normalizedImages, index: this.current, loop: this.loop,
-        scrollDisabled: false, escDisabled: true, maskClosable: this.isTop,
-        onHide: this.close, onOnIndexChange: this.change,
-        onOnError: (event: Event) => this.$emit('error', event),
-      }, {
-        'close-btn': ({ close }: { close: () => void }) => iconButton('关闭图片预览', X, close, { class: 'apple-overlay-icon apple-viewer-close' }),
-        'prev-btn': ({ prev }: { prev: () => void }) => this.images.length > 1 ? iconButton('上一张', ChevronLeft, prev, { class: 'apple-overlay-icon apple-viewer-prev', disabled: !this.loop && this.current <= 0 }) : null,
-        'next-btn': ({ next }: { next: () => void }) => this.images.length > 1 ? iconButton('下一张', ChevronRight, next, { class: 'apple-overlay-icon apple-viewer-next', disabled: !this.loop && this.current >= this.images.length - 1 }) : null,
-        toolbar: ({ toolbarMethods }: { toolbarMethods: { zoomIn: () => void; zoomOut: () => void; rotateLeft: () => void } }) => h('div', { class: 'apple-viewer-toolbar' }, [
-          iconButton('缩小', ZoomOut, toolbarMethods.zoomOut),
+      this.currentImage ? [
+        h('div', {
+          key: this.currentImage.src, ref: 'canvas', class: 'apple-viewer-canvas',
+          onClick: (event: MouseEvent) => {
+            if (event.target === event.currentTarget && this.isTop && (!this.pointerStart || Math.hypot(event.clientX - this.pointerStart.x, event.clientY - this.pointerStart.y) < 4)) this.close()
+          },
+        }, [h('img', {
+          class: 'apple-viewer-image', src: this.currentImage.src, alt: this.currentImage.alt ?? '', draggable: false,
+          style: { visibility: this.loaded ? 'visible' : 'hidden', transform: `rotate(${this.rotation}deg)` },
+          onLoad: this.imageLoaded,
+          onError: (event: Event) => { this.failed = true; this.loaded = false; this.$emit('error', event) },
+          onDragstart: (event: DragEvent) => event.preventDefault(),
+          onDblclick: () => this.panzoom?.getScale() === 1 ? this.panzoom.zoom(2, { animate: false }) : this.panzoom?.reset({ animate: false }),
+        })]),
+        iconButton('关闭图片预览', X, this.close, { class: 'apple-overlay-icon apple-viewer-close' }),
+        this.images.length > 1 ? iconButton('上一张', ChevronLeft, () => this.navigate(-1), { class: 'apple-overlay-icon apple-viewer-prev', disabled: !this.loop && this.current <= 0 }) : null,
+        this.images.length > 1 ? iconButton('下一张', ChevronRight, () => this.navigate(1), { class: 'apple-overlay-icon apple-viewer-next', disabled: !this.loop && this.current >= this.images.length - 1 }) : null,
+        h('div', { class: 'apple-viewer-toolbar' }, [
+          iconButton('缩小', ZoomOut, () => this.stepZoom(-1), { disabled: !this.loaded }),
           h('span', { class: 'apple-viewer-count', 'aria-live': 'polite' }, `${this.current + 1} / ${this.images.length}`),
-          iconButton('放大', ZoomIn, toolbarMethods.zoomIn),
-          iconButton('旋转', RotateCcw, toolbarMethods.rotateLeft),
+          iconButton('放大', ZoomIn, () => this.stepZoom(1), { disabled: !this.loaded }),
+          iconButton('旋转', RotateCcw, () => { this.rotation -= 90 }, { disabled: !this.loaded }),
         ]),
-        loading: () => h(LoaderCircle, { class: 'apple-overlay-spin', size: 32, 'aria-label': '图片加载中' }),
-        onerror: () => h('div', { class: 'apple-viewer-error', role: 'status' }, [h(CircleAlert, { size: 28 }), h('p', '图片加载失败')]),
-      }) : h('div', { class: 'apple-viewer-empty' }, [iconButton('关闭图片预览', X, this.close), h('p', '暂无图片')]),
+        this.loaded && (this.currentImage.title || this.currentImage.alt) ? h('div', { class: 'apple-viewer-title' }, this.currentImage.title || this.currentImage.alt) : null,
+        !this.loaded ? h('div', { class: 'apple-viewer-status', role: 'status' }, this.failed
+          ? [h(CircleAlert, { size: 28 }), h('p', '图片加载失败')]
+          : [h(LoaderCircle, { class: 'apple-overlay-spin', size: 32, 'aria-label': '图片加载中' })]) : null,
+      ] : h('div', { class: 'apple-viewer-empty' }, [iconButton('关闭图片预览', X, this.close), h('p', '暂无图片')]),
     ]) : null
     return portal(this, presence('apple-viewer-presence', motion, viewer, this.afterClose))
   },

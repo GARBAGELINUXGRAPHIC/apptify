@@ -188,7 +188,7 @@ describe('AppleTree', () => {
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['root'])
     expect(wrapper.findAll('[role="treeitem"]')).toHaveLength(3)
     expect(wrapper.get('.apple-tree__row').attributes('data-apple-selected')).toBe('true')
-    expect(wrapper.find('.apple-selection-indicator').exists()).toBe(true)
+    expect(wrapper.find('.apple-selection-indicator').exists()).toBe(false)
     await wrapper.get('.apple-tree__row').trigger('click')
     expect(wrapper.emitted('update:expanded')?.at(-1)).toEqual([[]])
     await wrapper.get('.is-disabled').trigger('click')

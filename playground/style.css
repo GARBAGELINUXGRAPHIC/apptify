@@ -5,13 +5,9 @@ html { scroll-behavior: smooth; }
 body { margin: 0; }
 button, a, input { -webkit-tap-highlight-color: transparent; }
 button { font: inherit; }
-.topbar { height: 64px; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid color-mix(in srgb,var(--apple-border) 50%,transparent); background: color-mix(in srgb,var(--apple-surface) 90%,transparent); backdrop-filter: blur(20px); }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--apple-text); text-decoration: none; font-weight: 650; font-size: 20px; }
 .brand-symbol { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--apple-text); color: var(--apple-surface); font-weight: 600; font-size: 24px; line-height: 1; padding-bottom: 4px; font-family: Georgia,serif; }
 .version { color: var(--apple-secondary); font-size: 10px; font-weight: 400; border: 1px solid var(--apple-border); border-radius: 5px; padding: 1px 5px; margin-left: 1px; }
-.top-nav { align-self: stretch; display: flex; gap: 35px; }
-.top-nav button { display: flex; align-items: center; gap: 4px; padding: 1px 0 0; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--apple-secondary); font-size: 13px; }
-.top-nav button.active { color: var(--apple-text); border-color: var(--apple-text); }
 .top-actions { display: flex; align-items: center; gap: 17px; }
 .vue-badge { display: flex; align-items: center; gap: 6px; color: var(--apple-secondary); font-size: 11px; }
 .vue-badge > span { width: 5px; height: 5px; background: #42b883; border-radius: 50%; }
@@ -152,10 +148,10 @@ pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); borde
 .quickstart h3 { font-size: 17px; margin: 24px 0 8px; }
 .quickstart p { font-size: 13px; color: var(--apple-secondary); line-height: 1.7; }
 .nav-scrim { display: none; }
-.topbar button,.sidebar button,.workspace-toolbar button,.catalog-item,.page-eyebrow button,.theme-options button { transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast), box-shadow var(--apple-fast); }
+.sidebar button,.workspace-toolbar button,.catalog-item,.page-eyebrow button,.theme-options button { transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast), box-shadow var(--apple-fast); }
 .preview-controls button:active,.theme-options button:active { color: var(--apple-text); background: var(--apple-pressed); }
-.top-nav button:hover,.view-tabs button:hover { color: color-mix(in srgb,var(--apple-text) 75%,var(--apple-secondary)); background: transparent; }
-.top-nav button:active,.view-tabs button:active { color: var(--apple-text); background: transparent; }
+.view-tabs button:hover { color: color-mix(in srgb,var(--apple-text) 75%,var(--apple-secondary)); background: transparent; }
+.view-tabs button:active { color: var(--apple-text); background: transparent; }
 .catalog-item:active { background: var(--apple-pressed); border-color: var(--apple-secondary); }
 .detail-preview,.overview { transition: max-width var(--apple-duration) var(--apple-ease); }
 .overview { max-width: 1500px; }
@@ -163,9 +159,9 @@ pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); borde
 .specimen > .apple-search { margin-bottom: 12px; }
 @media(min-width:1600px) { .main-content { padding-inline: 60px; } .specimen-grid { gap: 24px; } .specimen { padding: 25px 30px; } .specimen-product .apple-image { max-height: 230px; } }
 @media(max-width:1180px) { .main-content { padding-inline: 26px; } .sidebar { width: 196px; } .main-content { margin-left: 196px; } .specimen-grid { grid-template-columns: 1fr 1fr; } .specimen-product .apple-image { max-height: 225px; } .specimen { min-height: 350px; } .catalog-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media(max-width:800px) { .topbar { padding-inline: 20px; } .top-nav { gap: 22px; } .sidebar { width: 176px; padding-inline: 10px; } .main-content { margin-left: 176px; padding-inline: 22px; } .specimen-grid { grid-template-columns: 1fr; } .specimen { min-height: 0; padding: 24px; } .specimen-product .apple-image { max-height: 260px; } .page-heading h1 { font-size: 31px; } .page-heading > .apple-button { display: none; } .token-grid { grid-template-columns: 1fr 1fr; } .detail-preview { padding: 25px; } .page-footer { flex-direction: column; } }
+@media(max-width:800px) { .sidebar { width: 176px; padding-inline: 10px; } .main-content { margin-left: 176px; padding-inline: 22px; } .specimen-grid { grid-template-columns: 1fr; } .specimen { min-height: 0; padding: 24px; } .specimen-product .apple-image { max-height: 260px; } .page-heading h1 { font-size: 31px; } .page-heading > .apple-button { display: none; } .token-grid { grid-template-columns: 1fr 1fr; } .detail-preview { padding: 25px; } .page-footer { flex-direction: column; } }
 @media(max-width:640px) {
-  .topbar { height: 58px; padding-inline: 17px; } .brand { font-size: 19px; } .brand-symbol { width: 26px; height: 26px; } .top-nav,.vue-badge { display: none; } .top-actions { gap: 1px; } .mobile-nav-toggle { display: flex; }
+  .brand { font-size: 19px; } .brand-symbol { width: 26px; height: 26px; } .vue-badge { display: none; } .top-actions { gap: 1px; } .mobile-nav-toggle { display: flex; }
   .sidebar { width: 240px; top: 58px; padding: 22px 15px; transform: translateX(-100%); transition: transform var(--apple-duration) var(--apple-ease); z-index: 60; }
   .sidebar.is-open { transform: none; } .sidebar .nav-item { min-height: 44px; }
   .nav-scrim { display: block; position: fixed; inset: 58px 0 0; border: 0; background: rgb(0 0 0 / .3); z-index: 55; }

@@ -101,15 +101,15 @@
 .apple-table .apple-table__spacer td { height: 0; padding: 0; border: 0; }
 
 .apple-tree, .apple-tree ul { padding: 0; margin: 0; list-style: none; }
-.apple-tree li { border-radius: 6px; }
+.apple-tree li { border-radius: 0; }
 .apple-tree li:focus-visible { outline: none; }
 .apple-tree li:focus-visible > .apple-tree__row { outline: 3px solid var(--apple-accent); outline-offset: -2px; }
-.apple-tree__row { position: relative; display: flex; align-items: center; gap: 4px; min-height: 44px; padding-block: 2px; padding-inline-end: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background-color var(--apple-fast), color var(--apple-fast); }
+.apple-tree__row { position: relative; display: flex; align-items: center; gap: 4px; min-height: 44px; padding-block: 2px; padding-inline-end: 8px; border-radius: 0; color: var(--apple-secondary); cursor: pointer; font-size: 14px; transition: background-color var(--apple-fast), color var(--apple-fast); }
 .apple-tree__row > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .apple-tree__row:hover:not(.is-disabled) { background: var(--apple-hover); }
 .apple-tree__row:active:not(.is-disabled) { background: var(--apple-pressed); }
-.apple-tree__row.is-selected { color: var(--apple-text); }
-.apple-tree > .apple-selection-indicator { border-radius: 6px; }
+.apple-tree__row.is-selected { color: var(--apple-text); background: var(--apple-selected); font-weight: 550; }
+.apple-tree__row.is-selected:active:not(.is-disabled) { background: var(--apple-pressed); }
 .apple-tree__row.is-disabled { opacity: .45; cursor: not-allowed; }
 .apple-tree__toggle, .apple-tree__spacer { display: inline-flex; flex: 0 0 36px; align-items: center; justify-content: center; width: 36px; height: 40px; padding: 0; border: 0; background: transparent; color: var(--apple-secondary); }
 .apple-tree__toggle svg { transition: transform var(--apple-duration) var(--apple-ease); }

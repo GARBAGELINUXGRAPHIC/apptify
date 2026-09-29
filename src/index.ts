@@ -5,11 +5,13 @@ import { formComponents } from './components/forms'
 import { contentComponents } from './components/content'
 import { overlayComponents } from './components/overlays'
 import { motionComponents } from './components/motion'
+import { navigationComponents } from './components/navibar'
 import { AppleEntrance, AppleRipple, AppleSelection } from './core/motion'
 import './styles/base.css'
 import './styles/forms.css'
 import './styles/date-picker.css'
 import './styles/content.css'
+import './styles/navibar.css'
 import './styles/overlays.css'
 
 export * from './core/context'
@@ -18,9 +20,10 @@ export * from './components/forms'
 export * from './components/content'
 export * from './components/overlays'
 export * from './components/motion'
+export * from './components/navibar'
 export * from './core/motion'
 
-export const components = { ...foundationComponents, ...formComponents, ...contentComponents, ...overlayComponents, ...motionComponents }
+export const components = { ...foundationComponents, ...formComponents, ...contentComponents, ...overlayComponents, ...motionComponents, ...navigationComponents }
 
 export function createAppleUI(options: AppleOptions = {}) {
   const context = createApple(options)

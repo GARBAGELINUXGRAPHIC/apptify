@@ -276,7 +276,7 @@ export const AppleTree = defineComponent({
       })
     },
   },
-  render() { return h(AppleAutoSize, { motion: this.motion, class: 'apple-tree-size' }, { default: () => withDirectives(h('ul', { class: 'apple-tree', role: 'tree', 'aria-label': this.label, 'data-motion': this.motion }, this.renderItems(this.items)), [[AppleSelection, this.selectedValue]]) }) },
+  render() { return h(AppleAutoSize, { motion: this.motion, class: 'apple-tree-size' }, { default: () => h('ul', { class: 'apple-tree', role: 'tree', 'aria-label': this.label, 'data-motion': this.motion }, this.renderItems(this.items)) }) },
 })
 
 export const AppleList = defineComponent({

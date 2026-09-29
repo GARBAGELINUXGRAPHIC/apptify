@@ -41,28 +41,27 @@ test('virtual table keeps a bounded DOM, scrolls through all records, and resize
   await page.screenshot({ path: 'artifacts/content-virtual-table.png' })
 })
 
-test('tree row clicks expand and the neutral selection indicator moves vertically', async ({ page }) => {
+test('tree row clicks expand and selection uses a static flat background like the sidebar', async ({ page }) => {
   await openComponent(page, 'apple-tree')
   const tree = page.getByRole('tree')
   await tree.locator('.apple-tree__row').filter({ hasText: '设计资源' }).click()
   await expect(tree.getByRole('treeitem', { name: '组件', exact: true })).toBeVisible()
-  const indicator = tree.locator(':scope > .apple-selection-indicator')
-  await expect(indicator).toBeVisible()
-  const start = await indicator.evaluate(element => new DOMMatrix(getComputedStyle(element).transform).m42)
+  await expect(tree.locator('.apple-selection-indicator')).toHaveCount(0)
   const sampling = await tree.evaluate(async element => {
     const target = [...element.querySelectorAll<HTMLElement>('.apple-tree__row')].find(row => row.textContent === '项目文件')!
     target.click()
     await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
-    const marker = element.querySelector<HTMLElement>(':scope > .apple-selection-indicator')!
-    const style = getComputedStyle(marker)
-    return { y: new DOMMatrix(style.transform).m42, transition: style.transitionProperty, color: style.backgroundColor, opacity: style.opacity }
+    const style = getComputedStyle(target)
+    return { transform: style.transform, transition: style.transitionProperty, radius: style.borderRadius }
   })
-  expect(sampling.transition).toContain('transform')
-  expect(sampling.y).toBeGreaterThan(start)
-  expect(sampling.opacity).toBe('1')
-  const rgb = sampling.color.match(/[\d.]+/g)!.slice(0, 3).map(Number)
-  expect(Math.max(...rgb) - Math.min(...rgb)).toBeLessThan(12)
+  expect(sampling.transition).not.toContain('transform')
+  expect(sampling.transform).toBe('none')
+  expect(sampling.radius).toBe('0px')
   await expect(tree.getByRole('treeitem', { name: '项目文件', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(tree.locator('.is-selected')).toHaveCount(1)
+  const sidebarColor = await page.locator('.sidebar .nav-item.active').evaluate(element => getComputedStyle(element).backgroundColor)
+  await expect(tree.locator('.is-selected')).toHaveCSS('background-color', sidebarColor)
+  await expect(tree.locator('.apple-selection-indicator')).toHaveCount(0)
   await tree.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => undefined))) })
   await page.screenshot({ path: 'artifacts/content-tree-selection.png', animations: 'disabled' })
 })

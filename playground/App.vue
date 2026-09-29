@@ -1,10 +1,10 @@
 <template>
   <apple-provider>
-    <header class="topbar">
-      <a class="brand" href="#" @click.prevent="reset"><span class="brand-symbol">a</span>Apptify<span class="version">0.1</span></a>
-      <nav class="top-nav" aria-label="主导航"><button :class="{active:view==='components'}" @click="view='components'">组件</button><button :class="{active:view==='foundations'}" @click="view='foundations';selected=null">设计基础</button><button @click="quickstart=true">使用指南<ArrowUpRight :size="13" /></button></nav>
-      <div class="top-actions"><span class="vue-badge"><span />Vue 3</span><apple-button variant="ghost" icon-only :icon="settingsIcon" label="外观设置" @click="preferences=true" /><button class="mobile-nav-toggle" aria-label="打开组件导航" @click="mobileNav=!mobileNav"><Menu :size="20" /></button></div>
-    </header>
+    <apple-navibar :model-value="view" :items="mainNavigation" @change="navigateMain" @toggle="mobileNav=false">
+      <template #brand><a class="brand" href="#" @click.prevent="reset"><span class="brand-symbol">a</span>Apptify<span class="version">0.1</span></a></template>
+      <template #item="{item}">{{ item.label }}<ArrowUpRight v-if="item.value==='guide'" :size="13" /></template>
+      <template #actions="{close}"><div class="top-actions"><span class="vue-badge"><span />Vue 3</span><apple-button variant="ghost" icon-only :icon="settingsIcon" label="外观设置" @click="close();preferences=true" /><button class="mobile-nav-toggle" aria-label="打开组件导航" title="组件导航" @click="close();mobileNav=!mobileNav"><PanelLeft :size="20" /></button></div></template>
+    </apple-navibar>
     <aside class="sidebar" :class="{'is-open':mobileNav}" aria-label="组件导航">
       <apple-search v-model="query" placeholder="搜索组件" label="搜索组件" @search="view='components'" />
       <div class="sidebar-label">组件库</div>
@@ -67,16 +67,17 @@
 
 <script lang="ts">
 import { defineComponent, markRaw } from 'vue'
-import { ArrowRight, ArrowLeft, ArrowUpRight, Bell, BookOpen, Box, Check, ChevronRight, Code2, Copy, Download, Heart, LayoutGrid, Layers, Menu, Monitor, Moon, MousePointer2, Palette, Plus, SlidersHorizontal, Smartphone, Sun, Table2, TextCursorInput } from 'lucide-vue-next'
+import { ArrowRight, ArrowLeft, ArrowUpRight, Bell, BookOpen, Box, Check, ChevronRight, Code2, Copy, Download, Heart, LayoutGrid, Layers, PanelLeft, Monitor, Moon, MousePointer2, Palette, Plus, SlidersHorizontal, Smartphone, Sun, Table2, TextCursorInput } from 'lucide-vue-next'
 import { components, type Motion } from '../src'
 import { catalog, groups, type CatalogItem } from './catalog'
 import ComponentDemo from './ComponentDemo.vue'
 export default defineComponent({
-  components: { ComponentDemo, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight, Menu, Monitor, Moon, Palette, SlidersHorizontal, Smartphone, Sun },
+  components: { ComponentDemo, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight, PanelLeft, Monitor, Moon, Palette, SlidersHorizontal, Smartphone, Sun },
   data() { return {
     catalog, groups, componentCount:Object.keys(components).length - 1, groupIcons:markRaw({'全部组件':LayoutGrid,'基础':Box,'表单':TextCursorInput,'导航':MousePointer2,'数据展示':Table2,'反馈':Bell,'移动交互':Smartphone}) as Record<string,unknown>,
     settingsIcon:markRaw(SlidersHorizontal), codeIcon:markRaw(Code2), copyIcon:markRaw(Copy), backIcon:markRaw(ArrowLeft), arrowIcon:markRaw(ArrowRight), plusIcon:markRaw(Plus), heartIcon:markRaw(Heart), downloadIcon:markRaw(Download),
     activeGroup:'全部组件', view:'components', query:'', selected:null as CatalogItem|null, showCode:false, previewMode:'desktop', preferences:false, quickstart:false, mobileNav:false,
+    mainNavigation:[{label:'组件',value:'components'},{label:'设计基础',value:'foundations'},{label:'使用指南',value:'guide'}],
     period:'month', periods:[{label:'日',value:'day'},{label:'周',value:'week'},{label:'月',value:'month'}], notices:true, sync:false, agreed:true, volume:64, progress:68, name:'', email:'', liked:false, accent:'#0071e3',
     settingQuery:'', setting:'profile', overviewSettings:[{label:'个人资料',value:'profile',description:'姓名、头像和联系方式'},{label:'通知',value:'notices',description:'推送和邮件偏好'},{label:'隐私与安全',value:'privacy',description:'管理你的账户安全设置'}],
     themeOptions:[{label:'跟随系统',value:'system',color:'#b9bac0'},{label:'浅色',value:'light',color:'#f5f5f7'},{label:'深色',value:'dark',color:'#242426'},{label:'石墨',value:'graphite',color:'#3f5152'},{label:'玫瑰',value:'rose',color:'#a83b65'}],
@@ -88,6 +89,7 @@ export default defineComponent({
   computed: { filtered():CatalogItem[] { const query=this.query.toLowerCase();return this.catalog.filter(item=>(this.activeGroup==='全部组件'||item.group===this.activeGroup)&&(!query||`${item.label} ${item.name} ${this.kebab(item.name)}`.toLowerCase().includes(query))) } },
   watch: { query() { this.selected=null;this.view='components' } },
   methods: {
+    navigateMain(value: string | number) { this.mobileNav=false;if(value==='guide'){this.quickstart=true;return}this.view=String(value);if(value==='foundations')this.selected=null },
     kebab(name:string) { return name.replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase() },
     reset() { this.view='components';this.activeGroup='全部组件';this.selected=null;this.query='';this.showCode=false;this.mobileNav=false },
     chooseGroup(group:string) { this.activeGroup=group;this.selected=null;this.view='components';this.showCode=false;this.mobileNav=false },

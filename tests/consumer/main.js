@@ -1,11 +1,12 @@
 import { createApp, defineComponent, h } from 'vue'
-import { AppleProvider, AppleButton, AppleInput, AppleDialog } from 'apptify'
+import { AppleProvider, AppleButton, AppleInput, AppleDialog, AppleNavibar } from 'apptify'
 import 'apptify/style.css'
 
 const App = defineComponent({
   data: () => ({ open: false, name: '' }),
   render() {
     return h(AppleProvider, null, { default: () => [
+      h(AppleNavibar, { brand: 'Consumer', fixed: false, items: [{ label: 'Home', value: 'home' }] }),
       h('h1', 'Package consumer'),
       h(AppleInput, { modelValue: this.name, label: 'Name', 'onUpdate:modelValue': value => { this.name = value } }),
       h(AppleButton, { onClick: () => { this.open = true } }, () => 'Open dialog'),

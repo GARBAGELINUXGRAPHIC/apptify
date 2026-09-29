@@ -1,6 +1,6 @@
 # 组件 API 参考
 
-本页按 `src/index.ts` 合并的组件注册表列出当前 **67 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
+本页按 `src/index.ts` 合并的组件注册表列出当前 **68 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
 
 ## 公共约定
 
@@ -77,12 +77,13 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 
 日期格式示例：`YYYY/MM`、`YYYY/MM/DD`、`YYYY/MM/DD HH:mm`、`YYYY/MM/DD HH:mm:ss`、`HH:mm`、`HH:mm:ss`。显示格式与模型格式分离：模型依次返回 `YYYY-MM`、`YYYY-MM-DD`、`YYYY-MM-DDTHH:mm[:ss]` 或 `HH:mm[:ss]`。独立 `AppleTimePicker` 已移除，纯时间使用 `<apple-date-picker format="HH:mm" />`；不支持原生 ISO week 模式及日期范围选择。
 
-## 内容与移动交互 · 28
+## 内容与移动交互 · 29
 
 以下组件均接受 M。
 
 | 组件 | 主要 Props | Events / Slots / 说明 |
 | --- | --- | --- |
+| `AppleNavibar` | `v-model: string/number`、`items: AppleItem[]`、`brand`、`brandHref='/'`、`label='主导航'`、`fixed=true`、`breakpoint=640` | `change(value,item)`、`toggle(open)`；brand、item `{item,active}`、actions `{close}` slots。固定模式自带占位；栏宽不超过 breakpoint 时折叠为三横杠菜单；选择、Escape、外部点击或焦点移出后收起。`fixed=false` 可嵌入容器。 |
 | `AppleTabs` | `v-model: string/number`、`items`、`label`、`disabled` | `change(value)`；`panel-${value}` slot `{item}` 或 default `{item,value}`；可非受控；方向键/Home/End。 |
 | `AppleTabBar` | 与 AppleTabs 相同 | 顶角圆角页签，移动选中背景与内容滑动。 |
 | `AppleBreadcrumbs` | `items`、`label='当前位置'` | `click(item,event)`；非最后项使用 item.href 或按钮；最后项为当前页文本；无下划线。 |
@@ -147,7 +148,7 @@ Table 另支持 `virtual=false`、`height=360`、`rowHeight=48`、`overscan=5`�
 | `AppleTooltip` | 必填 `text`；`placement=top`、`disabled` | default slot 为触发元素；悬停/焦点显示，Escape 关闭；短文本提示。 |
 | `AppleMenu` | `v-model?: boolean`、`label='操作'`、`items: AppleMenuItem[]`、`selected`、`disabled` | `select(value,item)`；activator slot 同 Popover、item slot `{item}`；选择后关闭，方向键/Home/End。 |
 | `AppleActionSheet` | `v-model: boolean`、`title`、`message`、`items: AppleMenuItem[]`、`cancelText='取消'` | `select(value,item)`、`close(value,reason)`；选择返回条目 value。 |
-| `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop` | `change(index)`、`close()`、`error(event)`；图片变换与手势来自 vue-easy-lightbox。 |
+| `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop` | `change(index)`、`close()`、`error(event)`；缩放与手势来自 @panzoom/panzoom，滚轮按实际滚动量连续缩放并保持鼠标焦点。 |
 
 Modal 公共属性：`title`、`message`、`ariaLabel='对话框'`、`persistent`、`loading`、`closeOnConfirm=true`、`confirmText='确定'`、`cancelText='取消'`、`showFooter`、`closable=true`、`width`、`tone=default`。Dialog 默认 width 为 480px。空按钮文本会隐藏对应按钮。
 

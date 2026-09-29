@@ -56,8 +56,10 @@
 .apple-action-sheet-item--danger { color: var(--apple-danger, #d93025); }
 .apple-action-sheet-cancel { width: 100%; margin-top: 12px; }
 .apple-image-viewer { position: fixed; inset: 0; color: #fff; background: rgb(0 0 0 / 92%); outline: 0; }
-.apple-image-viewer .vel-modal { position: absolute; z-index: 0; background: transparent; }
-.apple-image-viewer .vel-img-title { max-width: calc(100vw - 48px); padding-inline: 16px; overflow-wrap: anywhere; }
+.apple-viewer-canvas { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; touch-action: none; }
+.apple-viewer-image { display: block; width: auto !important; height: auto !important; max-width: calc(100% - 64px); max-height: calc(100% - 160px); object-fit: contain; user-select: none; }
+.apple-viewer-title { position: absolute; top: max(20px, env(safe-area-inset-top)); left: 64px; right: 64px; text-align: center; overflow-wrap: anywhere; pointer-events: none; }
+.apple-viewer-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
 .apple-image-viewer .apple-overlay-icon { color: #fff; background: rgb(32 32 34 / 80%); }
 .apple-viewer-close { position: absolute; right: max(16px, env(safe-area-inset-right)); top: max(16px, env(safe-area-inset-top)); z-index: 2; }
 .apple-viewer-prev, .apple-viewer-next { position: absolute; top: calc(50% - 22px); z-index: 2; }

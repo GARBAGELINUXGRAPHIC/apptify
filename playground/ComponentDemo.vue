@@ -80,6 +80,7 @@
     <apple-form-field v-else-if="name === 'AppleFormField'" label="个人网站" :error="website && !website.startsWith('https://') ? '请输入以 https:// 开头的网址' : ''" hint="你的公开主页">
       <template #default="field"><input v-bind="field" v-model="website" class="apple-control" type="url" placeholder="https://example.com" /></template>
     </apple-form-field>
+    <apple-navibar v-else-if="name === 'AppleNavibar'" v-model="tab" brand="Apptify" :fixed="false" :items="tabs" label="示例导航"><template #actions><apple-button variant="ghost" :icon="icons.Bell" icon-only label="通知" @click="notify('暂无新通知')" /></template></apple-navibar>
     <apple-tabs v-else-if="name === 'AppleTabs'" v-model="tab" :items="tabs"><template #default="{ value }"><p class="demo-copy">{{ value === 'overview' ? '这里是产品概览。' : value === 'spec' ? '这里是技术规格。' : '你的服务与支持。' }}</p></template></apple-tabs>
     <apple-tab-bar v-else-if="name === 'AppleTabBar'" v-model="tab" :items="tabs"><template #default="{ value }"><p class="demo-copy">{{ value === 'overview' ? '这里是产品概览。' : value === 'spec' ? '这里是技术规格。' : '你的服务与支持。' }}</p></template></apple-tab-bar>
     <apple-breadcrumbs v-else-if="name === 'AppleBreadcrumbs'" :items="[{label:'组件',value:'home'},{label:'导航',value:'nav'},{label:'面包屑',value:'current'}]" @click="item=>$emit('navigate',item.value==='home'?'全部组件':'导航')" />

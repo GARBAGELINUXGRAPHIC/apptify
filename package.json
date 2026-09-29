@@ -1,6 +1,6 @@
 {
   "name": "apptify",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An Apple-inspired, responsive Vue 3 component library with Vuetify ripple.",
   "type": "module",
   "license": "MIT",
@@ -35,10 +35,10 @@
     "vuetify": "^3.9.0"
   },
   "dependencies": {
+    "@panzoom/panzoom": "^4.6.2",
     "@tanstack/virtual-core": "^3.17.11",
     "date-fns": "^4.4.0",
-    "lucide-vue-next": "^0.468.0",
-    "vue-easy-lightbox": "^1.19.0"
+    "lucide-vue-next": "^0.468.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
