@@ -1,6 +1,6 @@
 {
   "name": "apptify",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "An Apple-inspired, responsive Vue 3 component library with Vuetify ripple.",
   "type": "module",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "vite",
     "build": "vue-tsc --noEmit && vite build && vite build --config vite.lib.config.ts && vue-tsc -p tsconfig.lib.json",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",

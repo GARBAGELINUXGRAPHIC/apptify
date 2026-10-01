@@ -363,6 +363,38 @@ describe('menus and tooltips', () => {
     expect(wrapper.emitted('select')?.[0]?.[0]).toBe('camera')
     expect(wrapper.emitted('close')).toEqual([['camera', 'select']])
   })
+
+  it('accepts a content template with selection and close callbacks', async () => {
+    const camera = { label: '相机', value: 'camera' }
+    const wrapper = mounted(mount(AppleActionSheet, {
+      props: { modelValue: true, items: [{ label: '默认条目', value: 'fallback' }] },
+      slots: { default: ({ select, close }) => [
+        h('button', { class: 'custom-select', onClick: () => select(camera) }, '拍摄照片'),
+        h('button', { class: 'custom-close', onClick: () => close('done') }, '完成'),
+      ] }, attachTo: document.body,
+    }))
+    await settle()
+    expect(wrapper.find('.apple-sheet-handle').exists()).toBe(false)
+    expect(wrapper.find('.apple-action-sheet-items').exists()).toBe(false)
+    expect(wrapper.find('.apple-action-sheet-cancel').exists()).toBe(true)
+    await wrapper.find('.custom-select').trigger('click')
+    expect(wrapper.emitted('select')).toEqual([['camera', camera]])
+    expect(wrapper.emitted('update:modelValue')).toEqual([[false]])
+    await wrapper.find('.custom-close').trigger('click')
+    expect(wrapper.emitted('close')).toEqual([['camera', 'select'], ['done', 'close']])
+  })
+
+  it('ignores disabled actions selected through a template', async () => {
+    const wrapper = mounted(mount(AppleActionSheet, {
+      props: { modelValue: true },
+      slots: { default: ({ select }) => h('button', { onClick: () => select({ label: '不可用', value: 'disabled', disabled: true }) }, '选择') },
+      attachTo: document.body,
+    }))
+    await settle()
+    await wrapper.find('.apple-modal-body button').trigger('click')
+    expect(wrapper.emitted('select')).toBeUndefined()
+    expect(wrapper.emitted('close')).toBeUndefined()
+  })
 })
 
 describe('image viewer', () => {

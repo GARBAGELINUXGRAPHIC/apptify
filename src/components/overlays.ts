@@ -250,7 +250,6 @@ function createModal(name: string, kind: ModalKind) {
         class: ['apple-modal', `apple-${kind}`, `apple-${kind}--${this.placement}`, `apple-overlay-tone--${this.tone}`],
         style: { '--apple-overlay-width': typeof this.width === 'number' ? `${this.width}px` : this.width },
       }), [
-        kind === 'sheet' ? h('div', { class: 'apple-sheet-handle', 'aria-hidden': true }) : null,
         heading || this.closable ? h('header', { class: 'apple-modal-header' }, [
           h('div', { class: 'apple-modal-heading' }, heading ? [h('h2', heading)] : []),
           this.closable ? iconButton('关闭', X, () => this.dismiss(), { disabled: this.loading }) : null,
@@ -625,6 +624,18 @@ export const AppleActionSheet = defineComponent({
     motion: motionProp,
   },
   emits: ['update:modelValue', 'select', 'close'],
+  methods: {
+    select(item: AppleMenuItem) {
+      if (item.disabled) return
+      this.$emit('select', item.value, item)
+      this.$emit('update:modelValue', false)
+      this.$emit('close', item.value, 'select')
+    },
+    close(value?: unknown) {
+      this.$emit('update:modelValue', false)
+      this.$emit('close', value, 'close')
+    },
+  },
   render() {
     return h(AppleSheet, {
       ...this.$attrs, modelValue: this.modelValue, title: this.title,
@@ -635,14 +646,10 @@ export const AppleActionSheet = defineComponent({
     }, {
       default: () => [
         this.message ? h('p', { class: 'apple-action-sheet-message' }, this.message) : null,
-        h('div', { class: 'apple-action-sheet-items' }, this.items.map(item => ripple(h('button', {
+        this.$slots.default?.({ select: this.select, close: this.close }) ?? h('div', { class: 'apple-action-sheet-items' }, this.items.map(item => ripple(h('button', {
           key: item.value, type: 'button', disabled: item.disabled,
           class: ['apple-action-sheet-item', { 'apple-action-sheet-item--danger': item.danger }],
-          onClick: () => {
-            this.$emit('select', item.value, item)
-            this.$emit('update:modelValue', false)
-            this.$emit('close', item.value, 'select')
-          },
+          onClick: () => this.select(item),
         }, [item.icon ? h(item.icon, { size: 21, 'aria-hidden': true }) : null, h('span', [item.label, item.description ? h('small', item.description) : null])]), !item.disabled))),
         this.cancelText ? h(AppleButton, {
           variant: 'secondary', class: 'apple-action-sheet-cancel',

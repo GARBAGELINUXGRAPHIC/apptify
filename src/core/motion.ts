@@ -44,7 +44,7 @@ function enter(element: HTMLElement) {
   entrances.get(element)?.cancel()
   const duration = motionDuration(element)
   if (duration <= 80 || !element.animate) return
-  const animation = element.animate([{ transform: 'translateY(14px)' }, { transform: 'translateY(0)' }], { duration, easing: 'cubic-bezier(.2,.65,.3,1)' })
+  const animation = element.animate([{ transform: 'translateY(14px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration, easing: 'cubic-bezier(.2,.65,.3,1)' })
   entrances.set(element, animation)
   animation.onfinish = () => entrances.delete(element)
 }

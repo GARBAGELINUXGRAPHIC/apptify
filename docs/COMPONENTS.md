@@ -147,7 +147,7 @@ Table 另支持 `virtual=false`、`height=360`、`rowHeight=48`、`overscan=5`�
 | `ApplePopover` | `v-model?: boolean`、`label='更多'`、`disabled`、`placement=bottom`（top/bottom/left/right）、`align=start`（start/center/end）、`width=280`、`role=dialog`、`openOnHover`、`trapFocus=true`、`panelClass` | `open()`、`close()`；activator `{props,open,close,isOpen}`、default `{close}`；支持非受控模式与屏幕边缘避让。 |
 | `AppleTooltip` | 必填 `text`；`placement=top`、`disabled` | default slot 为触发元素；悬停/焦点显示，Escape 关闭；短文本提示。 |
 | `AppleMenu` | `v-model?: boolean`、`label='操作'`、`items: AppleMenuItem[]`、`selected`、`disabled` | `select(value,item)`；activator slot 同 Popover、item slot `{item}`；选择后关闭，方向键/Home/End。 |
-| `AppleActionSheet` | `v-model: boolean`、`title`、`message`、`items: AppleMenuItem[]`、`cancelText='取消'` | `select(value,item)`、`close(value,reason)`；选择返回条目 value。 |
+| `AppleActionSheet` | `v-model: boolean`、`title`、`message`、`items: AppleMenuItem[]`、`cancelText='取消'` | `select(value,item)`、`close(value,reason)`；默认插槽支持自定义模板，提供 `select(item)`、`close(value)`，覆盖 items 内容；取消按钮保留。无拖拽指示条。 |
 | `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop` | `change(index)`、`close()`、`error(event)`；缩放与手势来自 @panzoom/panzoom，滚轮按实际滚动量连续缩放并保持鼠标焦点。 |
 
 Modal 公共属性：`title`、`message`、`ariaLabel='对话框'`、`persistent`、`loading`、`closeOnConfirm=true`、`confirmText='确定'`、`cancelText='取消'`、`showFooter`、`closable=true`、`width`、`tone=default`。Dialog 默认 width 为 480px。空按钮文本会隐藏对应按钮。

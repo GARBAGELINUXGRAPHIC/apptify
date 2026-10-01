@@ -3,7 +3,7 @@
     <apple-navibar :model-value="view" :items="mainNavigation" @change="navigateMain" @toggle="mobileNav=false">
       <template #brand><a class="brand" href="#" @click.prevent="reset"><span class="brand-symbol">a</span>Apptify<span class="version">0.1</span></a></template>
       <template #item="{item}">{{ item.label }}<ArrowUpRight v-if="item.value==='guide'" :size="13" /></template>
-      <template #actions="{close}"><div class="top-actions"><span class="vue-badge"><span />Vue 3</span><apple-button variant="ghost" icon-only :icon="settingsIcon" label="外观设置" @click="close();preferences=true" /><button class="mobile-nav-toggle" aria-label="打开组件导航" title="组件导航" @click="close();mobileNav=!mobileNav"><PanelLeft :size="20" /></button></div></template>
+      <template #actions="{close}"><div class="top-actions"><button class="mobile-nav-toggle" aria-label="打开组件导航" title="组件导航" @click="close();mobileNav=!mobileNav"><PanelLeft :size="20" /></button></div></template>
     </apple-navibar>
     <aside class="sidebar" :class="{'is-open':mobileNav}" aria-label="组件导航">
       <apple-search v-model="query" placeholder="搜索组件" label="搜索组件" @search="view='components'" />
@@ -75,7 +75,7 @@ export default defineComponent({
   components: { ComponentDemo, ArrowRight, ArrowUpRight, BookOpen, Check, ChevronRight, PanelLeft, Monitor, Moon, Palette, SlidersHorizontal, Smartphone, Sun },
   data() { return {
     catalog, groups, componentCount:Object.keys(components).length - 1, groupIcons:markRaw({'全部组件':LayoutGrid,'基础':Box,'表单':TextCursorInput,'导航':MousePointer2,'数据展示':Table2,'反馈':Bell,'移动交互':Smartphone}) as Record<string,unknown>,
-    settingsIcon:markRaw(SlidersHorizontal), codeIcon:markRaw(Code2), copyIcon:markRaw(Copy), backIcon:markRaw(ArrowLeft), arrowIcon:markRaw(ArrowRight), plusIcon:markRaw(Plus), heartIcon:markRaw(Heart), downloadIcon:markRaw(Download),
+    codeIcon:markRaw(Code2), copyIcon:markRaw(Copy), backIcon:markRaw(ArrowLeft), arrowIcon:markRaw(ArrowRight), plusIcon:markRaw(Plus), heartIcon:markRaw(Heart), downloadIcon:markRaw(Download),
     activeGroup:'全部组件', view:'components', query:'', selected:null as CatalogItem|null, showCode:false, previewMode:'desktop', preferences:false, quickstart:false, mobileNav:false,
     mainNavigation:[{label:'组件',value:'components'},{label:'设计基础',value:'foundations'},{label:'使用指南',value:'guide'}],
     period:'month', periods:[{label:'日',value:'day'},{label:'周',value:'week'},{label:'月',value:'month'}], notices:true, sync:false, agreed:true, volume:64, progress:68, name:'', email:'', liked:false, accent:'#0071e3',

@@ -9,9 +9,6 @@ button { font: inherit; }
 .brand-symbol { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--apple-text); color: var(--apple-surface); font-weight: 600; font-size: 24px; line-height: 1; padding-bottom: 4px; font-family: Georgia,serif; }
 .version { color: var(--apple-secondary); font-size: 10px; font-weight: 400; border: 1px solid var(--apple-border); border-radius: 5px; padding: 1px 5px; margin-left: 1px; }
 .top-actions { display: flex; align-items: center; gap: 17px; }
-.vue-badge { display: flex; align-items: center; gap: 6px; color: var(--apple-secondary); font-size: 11px; }
-.vue-badge > span { width: 5px; height: 5px; background: #42b883; border-radius: 50%; }
-.top-actions .apple-button { color: var(--apple-secondary); }
 .mobile-nav-toggle { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; background: none; color: var(--apple-text); border: 0; }
 .sidebar { width: 220px; position: fixed; top: 64px; bottom: 0; left: 0; z-index: 40; padding: 30px 0 20px; border-right: 1px solid color-mix(in srgb,var(--apple-border) 50%,transparent); background: var(--apple-surface); overflow: auto; display: flex; flex-direction: column; }
 .sidebar .apple-search { min-height: 35px; font-size: 12px; border-radius: 6px; margin: 0 18px 24px; }
@@ -161,7 +158,7 @@ pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); borde
 @media(max-width:1180px) { .main-content { padding-inline: 26px; } .sidebar { width: 196px; } .main-content { margin-left: 196px; } .specimen-grid { grid-template-columns: 1fr 1fr; } .specimen-product .apple-image { max-height: 225px; } .specimen { min-height: 350px; } .catalog-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:800px) { .sidebar { width: 176px; padding-inline: 10px; } .main-content { margin-left: 176px; padding-inline: 22px; } .specimen-grid { grid-template-columns: 1fr; } .specimen { min-height: 0; padding: 24px; } .specimen-product .apple-image { max-height: 260px; } .page-heading h1 { font-size: 31px; } .page-heading > .apple-button { display: none; } .token-grid { grid-template-columns: 1fr 1fr; } .detail-preview { padding: 25px; } .page-footer { flex-direction: column; } }
 @media(max-width:640px) {
-  .brand { font-size: 19px; } .brand-symbol { width: 26px; height: 26px; } .vue-badge { display: none; } .top-actions { gap: 1px; } .mobile-nav-toggle { display: flex; }
+  .brand { font-size: 19px; } .brand-symbol { width: 26px; height: 26px; } .top-actions { gap: 1px; } .mobile-nav-toggle { display: flex; }
   .sidebar { width: 240px; top: 58px; padding: 22px 15px; transform: translateX(-100%); transition: transform var(--apple-duration) var(--apple-ease); z-index: 60; }
   .sidebar.is-open { transform: none; } .sidebar .nav-item { min-height: 44px; }
   .nav-scrim { display: block; position: fixed; inset: 58px 0 0; border: 0; background: rgb(0 0 0 / .3); z-index: 55; }

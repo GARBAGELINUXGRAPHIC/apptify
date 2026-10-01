@@ -105,7 +105,18 @@
     <apple-tooltip v-else-if="name === 'AppleTooltip'" text="添加到收藏"><apple-button variant="secondary" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></apple-tooltip>
     <apple-menu v-else-if="name === 'AppleMenu'" :items="actions" label="更多操作" @select="notify('操作已完成')" />
     <apple-stack v-else-if="name === 'AppleImageViewer'"><apple-image :src="images[viewerIndex]" :alt="viewerIndex === 0 ? '山间湖泊与小屋' : '橙色 AirPods Max 耳机'" :preview="false" aspect-ratio="16/9" /><apple-button :icon="icons.ZoomIn" @click="imageViewer = true">浏览照片</apple-button><apple-image-viewer v-model="imageViewer" v-model:index="viewerIndex" :images="images" loop /></apple-stack>
-    <template v-else-if="name === 'AppleActionSheet'"><apple-button @click="actionSheet = true">选择操作</apple-button><apple-action-sheet v-model="actionSheet" title="这张照片" :items="actions" @select="notify('操作已完成')" /></template>
+    <template v-else-if="name === 'AppleActionSheet'">
+      <apple-button @click="actionSheet = true">选择操作</apple-button>
+      <apple-action-sheet v-model="actionSheet" title="山间的一刻" message="收藏这份灵感，或与朋友分享。" @select="notify('操作已完成')">
+        <template #default="{ select }">
+          <div class="apple-action-sheet-items">
+            <button v-for="action in photoActions" :key="action.value" v-apple-ripple type="button" class="apple-action-sheet-item" :class="{'apple-action-sheet-item--danger':action.danger}" @click="select(action)">
+              <component :is="action.icon" :size="21" aria-hidden="true" /><span>{{ action.label }}<small>{{ action.description }}</small></span>
+            </button>
+          </div>
+        </template>
+      </apple-action-sheet>
+    </template>
     <apple-carousel v-else-if="name === 'AppleCarousel'" :items="slides"><template #item="{ item }"><img :src="item.src" :alt="item.label" class="demo-slide" /></template></apple-carousel>
     <apple-pull-refresh v-else-if="name === 'ApplePullRefresh'" @refresh="refresh"><apple-list :items="[{label:'最新内容',value:'latest',description:refreshText},{label:'最近更新',value:'recent',description:'所有内容已同步'}]" /></apple-pull-refresh>
     <apple-infinite-scroll v-else-if="name === 'AppleInfiniteScroll'" :finished="itemsCount >= 12" @load="loadMore"><apple-list :items="Array.from({length:itemsCount}, (_, i) => ({label:`灵感收藏 ${i+1}`, value:i, description:'刚刚更新'}))" /></apple-infinite-scroll>
@@ -120,7 +131,7 @@
 
 <script lang="ts">
 import { defineComponent, h, markRaw } from 'vue'
-import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn } from 'lucide-vue-next'
+import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Share2, Trash2 } from 'lucide-vue-next'
 import { AppleButton } from '../src'
 export default defineComponent({
   name: 'ComponentDemo', props: { name: { type: String, required: true } }, emits: ['navigate'],
@@ -142,6 +153,7 @@ export default defineComponent({
     settings: [{label:'个人资料',value:'profile',description:'姓名、头像和联系方式'},{label:'通知',value:'notifications',description:'推送和邮件偏好'},{label:'隐私与安全',value:'security',description:'管理账户的安全设置'}],
     events: [{label:'订单已确认',value:'confirmed',description:'我们正在准备你的订单',time:'09:41'},{label:'正在配送',value:'shipping',description:'你的包裹已出发',time:'12:00'},{label:'即将送达',value:'arrival',description:'留意配送通知',time:'预计明天'}],
     actions: [{label:'收藏',value:'favorite'},{label:'分享',value:'share'},{label:'删除',value:'delete',danger:true}], slides: [{label:'山间清晨',value:0,src:'/images/lake.jpg'},{label:'一场聆听',value:1,src:'/images/airpods-max-orange.jpg'}],
+    photoActions: [{label:'加入收藏',value:'favorite',description:'将这张照片保存到你的灵感收藏',icon:markRaw(Heart),danger:false},{label:'分享照片',value:'share',description:'与朋友分享山间的这一刻',icon:markRaw(Share2),danger:false},{label:'删除照片',value:'delete',description:'从当前相册中移除',icon:markRaw(Trash2),danger:true}],
     timers: [] as ReturnType<typeof setTimeout>[],
   } },
   computed: {

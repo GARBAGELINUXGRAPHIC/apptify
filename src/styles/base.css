@@ -8,7 +8,7 @@
 @property --apple-accent-text { syntax: '<color>'; inherits: true; initial-value: #fff; }
 @property --apple-danger { syntax: '<color>'; inherits: true; initial-value: #c93830; }
 @property --apple-success { syntax: '<color>'; inherits: true; initial-value: #248245; }
-@property --apple-warning { syntax: '<color>'; inherits: true; initial-value: #996600; }
+@property --apple-warning { syntax: '<color>'; inherits: true; initial-value: #ffaa00; }
 .apple-provider {
   --apple-duration: 300ms;
   --apple-fast: 120ms;
@@ -53,12 +53,12 @@
 .apple-button__content { position: relative; z-index: 1; display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-width: 0; pointer-events: none; }
 @media (hover:hover) {
   .apple-button:not(:disabled):hover { background: color-mix(in srgb,var(--apple-accent) 90%,white); }
-  .apple-button--secondary:not(:disabled):hover,.apple-button--outline:not(:disabled):hover { background: color-mix(in srgb,var(--apple-accent) 7%,transparent); }
+  .apple-button--secondary:not(:disabled):hover,.apple-button--outline:not(:disabled):hover { background: var(--apple-accent); color: var(--apple-accent-text); }
   .apple-button--ghost:not(:disabled):hover { background: transparent; color: color-mix(in srgb,var(--apple-accent) 80%,var(--apple-text)); }
   .apple-button--danger:not(:disabled):hover { background: color-mix(in srgb,var(--apple-danger) 90%,white); }
 }
 .apple-button:not(:disabled):active { background: color-mix(in srgb,var(--apple-accent) 80%,black); }
-.apple-button--secondary:not(:disabled):active,.apple-button--outline:not(:disabled):active { background: color-mix(in srgb,var(--apple-accent) 15%,transparent); }
+.apple-button--secondary:not(:disabled):active,.apple-button--outline:not(:disabled):active { background: color-mix(in srgb,var(--apple-accent) 80%,black); color: var(--apple-accent-text); }
 .apple-button--ghost:not(:disabled):active { background: transparent; color: var(--apple-text); }
 .apple-button--danger:not(:disabled):active { background: color-mix(in srgb,var(--apple-danger) 80%,black); }
 .apple-provider .v-ripple__animation--in { opacity: .1; }
@@ -94,7 +94,6 @@
 }
 .apple-image__trigger { display: flex; width: 100%; height: 100%; padding: 0; border: 0; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: transparent; color: var(--apple-secondary); }
 .apple-image img { display: block; width: 100%; height: 100%; }
-.apple-image__zoom { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #1d1d1f; background: rgb(255 255 255 / .88); }
 .apple-image figcaption { position: absolute; bottom: 0; background: var(--apple-surface); padding: 8px 12px; }
 .apple-search { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; background: var(--apple-surface-alt); border: 1px solid transparent; border-radius: 8px; color: var(--apple-secondary); }
 .apple-search { transition: background-color var(--apple-fast), border-color var(--apple-fast), box-shadow var(--apple-fast); }
@@ -110,6 +109,8 @@
 .apple-auto-size { min-width: 0; }
 .apple-auto-size__inner { display: flow-root; min-width: 0; }
 .apple-page-enter-active,.apple-page-leave-active,.apple-slide-x-enter-active,.apple-slide-x-leave-active,.apple-slide-y-enter-active,.apple-slide-y-leave-active { transition: transform var(--apple-duration) var(--apple-ease); }
+.apple-page-enter-active { transition: transform var(--apple-duration) var(--apple-ease), opacity var(--apple-duration) var(--apple-ease); }
+.apple-page-enter-from { opacity: 0; }
 .apple-page-enter-from,.apple-slide-y-enter-from { transform: translateY(22px); }
 .apple-page-leave-to,.apple-slide-y-leave-to { transform: translateY(-16px); }
 .apple-slide-x-enter-from { transform: translateX(24px); }

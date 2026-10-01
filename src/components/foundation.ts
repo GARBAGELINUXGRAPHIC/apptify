@@ -1,5 +1,5 @@
 import { defineComponent, h, shallowRef, type PropType, type Component, type CSSProperties } from 'vue'
-import { ArrowUpRight, ImageOff, ZoomIn, X, Search } from 'lucide-vue-next'
+import { ArrowUpRight, ImageOff, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, AppleImageViewer } from './overlays'
 import { AppleButton } from './button'
@@ -88,7 +88,7 @@ export const AppleImage = defineComponent({
     const mode = resolveMotion(this.motion, ctx?.motion.mode, ctx?.motion.reduced)
     return h('figure', { class: ['apple-image', { 'apple-image--loaded': this.loaded && !this.failed && !this.open }], 'data-apple-motion': mode, style: { aspectRatio: this.squared ? '1' : String(this.aspectRatio) } }, [
       h('div', { class: 'apple-image__surface' }, [
-        h(this.preview && !this.failed ? 'button' : 'div', { class: 'apple-image__trigger', type: this.preview ? 'button' : undefined, 'aria-label': this.preview ? `放大图片：${this.alt}` : undefined, onClick: () => { if (this.preview && !this.failed) this.open = true } }, this.failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', { src: this.src, alt: this.alt, loading: 'lazy', style: { objectFit: this.fit }, onError: () => { this.failed = true }, onLoad: () => { this.loaded = true } }), this.preview ? h('span', { class: 'apple-image__zoom' }, h(ZoomIn, { size: 18 })) : null]),
+        h(this.preview && !this.failed ? 'button' : 'div', { class: 'apple-image__trigger', type: this.preview ? 'button' : undefined, 'aria-label': this.preview ? `放大图片：${this.alt}` : undefined, onClick: () => { if (this.preview && !this.failed) this.open = true } }, this.failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', { src: this.src, alt: this.alt, loading: 'lazy', style: { objectFit: this.fit }, onError: () => { this.failed = true }, onLoad: () => { this.loaded = true } })]),
       ]),
       h(AppleImageViewer, { modelValue: this.open, 'onUpdate:modelValue': (value: boolean) => { this.open = value }, images, index, motion: this.motion }),
       this.$slots.caption ? h('figcaption', this.$slots.caption()) : null,

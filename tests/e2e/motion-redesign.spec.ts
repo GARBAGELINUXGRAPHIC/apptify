@@ -9,7 +9,7 @@ async function openComponent(page: Page, tag: string) {
 
 test.beforeEach(async ({ page }) => { await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('/'); await expect(page.locator('.specimen')).toHaveCount(6) })
 
-test('global entrance is one upward movement with one page and no leave phase', async ({ page }) => {
+test('global entrance fades in with one upward movement, one page and no leave phase', async ({ page }) => {
   await page.locator('.sidebar-groups').getByRole('button', { name: /^表单/ }).evaluate(el => (el as HTMLElement).click())
   const frames = await page.locator('main').evaluate(async el => {
     await new Promise(requestAnimationFrame)
@@ -17,7 +17,7 @@ test('global entrance is one upward movement with one page and no leave phase', 
   })
   expect(frames).toHaveLength(2)
   expect(frames.map(frame => frame.transform)).toEqual(['translateY(14px)', 'translateY(0px)'])
-  expect(frames.every(frame => !('opacity' in frame))).toBe(true)
+  expect(frames.map(frame => Number(frame.opacity))).toEqual([0, 1])
   await expect(page.locator('.gallery-page')).toHaveCount(1)
   await expect(page.locator('[class*="leave-active"]')).toHaveCount(0)
   await page.locator('.sidebar-groups').getByRole('button', { name: /^导航/ }).click()
@@ -98,6 +98,17 @@ test('Ripple stays translucent and ghost buttons never create it', async ({ page
   await page.mouse.up()
   const secondary = page.locator('.component-demo .apple-button--secondary')
   expect(await secondary.evaluate(el => getComputedStyle(el).borderTopStyle)).toBe('solid')
+  for (const variant of ['secondary', 'outline']) {
+    const outlined = page.locator(`.component-demo .apple-button--${variant}`)
+    await outlined.hover()
+    await expect.poll(() => outlined.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(0, 113, 227)')
+    await expect.poll(() => outlined.evaluate(el => getComputedStyle(el).color)).toBe('rgb(255, 255, 255)')
+    await page.mouse.down()
+    await expect.poll(() => outlined.evaluate(el => getComputedStyle(el).color)).toBe('rgb(255, 255, 255)')
+    await page.mouse.up()
+    await page.mouse.move(0, 0)
+    await expect.poll(() => outlined.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
+  }
 })
 
 test('search has a single animated focus ring and theme colors interpolate', async ({ page }) => {

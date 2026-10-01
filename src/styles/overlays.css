@@ -22,7 +22,6 @@
 .apple-drawer .apple-modal-body { flex: 1; }
 .apple-overlay-backdrop--sheet { align-items: flex-end; padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)); }
 .apple-sheet { width: min(100%, max(var(--apple-overlay-width, 540px), 540px)); max-height: calc(100dvh - max(20px, env(safe-area-inset-top))); border-radius: 8px 8px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom); }
-.apple-sheet-handle { width: 34px; height: 4px; margin: 10px auto 0; flex-shrink: 0; border-radius: 999px; background: var(--apple-border, #d2d2d7); }
 .apple-sheet .apple-modal-header { padding-top: 12px; }
 .apple-snackbar-stack { position: fixed; z-index: 3000; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); width: min(420px, calc(100vw - 40px)); max-height: calc(100dvh - 40px); pointer-events: none; }
 .apple-snackbar-stack > .apple-auto-size { overflow: visible !important; }
@@ -47,12 +46,14 @@
 .apple-menu-item svg { flex-shrink: 0; }
 .apple-menu-copy { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .apple-menu-copy small { color: var(--apple-secondary, #6e6e73); font-size: 12px; }
-.apple-action-sheet .apple-modal-body { padding: 4px 16px 16px; }
-.apple-action-sheet-message { margin: 0 8px 16px; font-size: 14px; text-align: center; }
-.apple-action-sheet-items { display: flex; flex-direction: column; }
-.apple-action-sheet-item { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 56px; padding: 12px; border: 0; border-top: 1px solid var(--apple-border, #d2d2d7); background: transparent; color: var(--apple-accent, #0071e3); font: inherit; text-align: center; cursor: pointer; overflow-wrap: anywhere; transition: background-color var(--apple-fast, 120ms), color var(--apple-fast, 120ms); }
+.apple-action-sheet .apple-modal-header { padding: 24px 24px 16px; }
+.apple-action-sheet .apple-modal-body { padding: 0 24px 24px; }
+.apple-action-sheet-message { margin: 0 0 20px; color: var(--apple-secondary, #6e6e73); font-size: 14px; line-height: 1.6; }
+.apple-action-sheet-items { display: flex; flex-direction: column; gap: 6px; }
+.apple-action-sheet-item { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 14px 16px; border: 0; border-radius: 8px; background: color-mix(in srgb, var(--apple-text, #1d1d1f) 4%, var(--apple-surface, #fff)); color: var(--apple-text, #1d1d1f); font: inherit; font-weight: 500; text-align: left; cursor: pointer; overflow-wrap: anywhere; transition: background-color var(--apple-fast, 120ms), color var(--apple-fast, 120ms); }
+.apple-action-sheet-item svg { flex-shrink: 0; }
 .apple-action-sheet-item span { min-width: 0; }
-.apple-action-sheet-item small { display: block; color: var(--apple-secondary, #6e6e73); font-size: 12px; }
+.apple-action-sheet-item small { display: block; margin-top: 3px; color: var(--apple-secondary, #6e6e73); font-size: 12px; font-weight: 400; line-height: 1.5; }
 .apple-action-sheet-item--danger { color: var(--apple-danger, #d93025); }
 .apple-action-sheet-cancel { width: 100%; margin-top: 12px; }
 .apple-image-viewer { position: fixed; inset: 0; color: #fff; background: rgb(0 0 0 / 92%); outline: 0; }

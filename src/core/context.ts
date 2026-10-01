@@ -8,7 +8,7 @@ export interface AppleTheme { scheme: 'light' | 'dark'; tokens: ThemeTokens }
 const light: ThemeTokens = {
   bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', text: '#1d1d1f', secondary: '#6e6e73',
   border: '#d2d2d7', accent: '#0071e3', 'accent-text': '#ffffff', danger: '#c93830', success: '#248245',
-  warning: '#996600', shadow: '0 8px 28px rgb(0 0 0 / 0.07)', radius: '8px',
+  warning: '#ffaa00', shadow: '0 8px 28px rgb(0 0 0 / 0.07)', radius: '8px',
 }
 export const builtInThemes: Record<string, AppleTheme> = {
   light: { scheme: 'light', tokens: light },
