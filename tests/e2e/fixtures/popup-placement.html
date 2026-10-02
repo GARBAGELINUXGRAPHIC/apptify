@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}.anchor{margin:260px 20px 1000px;width:300px}</style></head><body><div id="app"></div><script type="module">
+import {createApp,h} from 'vue'
+import {createAppleUI,AppleProvider,AppleSelect,AppleAutocomplete,AppleColorPicker,AppleDatePicker,ApplePopover} from '/src/index.ts'
+const kind=new URLSearchParams(location.search).get('kind')||'select'
+const component={select:AppleSelect,autocomplete:AppleAutocomplete,color:AppleColorPicker,date:AppleDatePicker,popover:ApplePopover}[kind]
+createApp({render(){return h(AppleProvider,{motion:'full'},()=>h('div',{class:'anchor'},[h(component,{label:'Open',items:[{label:'One',value:1},{label:'Two',value:2},{label:'Three',value:3}],type:'datetime-local'}, {default:()=>h('div',{style:'height:150px'},'Popup')})]))}}).use(createAppleUI()).mount('#app')
+</script></body></html>

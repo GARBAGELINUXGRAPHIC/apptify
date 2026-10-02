@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
-import { AppleAccordion, AppleAvatar, AppleBackTop, AppleBadge, AppleBreadcrumbs, AppleCarousel, AppleFloatingGroup, AppleInfiniteScroll, AppleList, AppleMarquee, ApplePagination, AppleProgress, ApplePullRefresh, AppleSkeleton, AppleSwipeCell, AppleTable, AppleTabBar, AppleTabs, AppleTimeline, AppleTree } from '../src/components/content'
+import { AppleAccordion, AppleAvatar, AppleBackTop, AppleBadge, AppleBreadcrumbs, AppleFloatingGroup, AppleInfiniteScroll, AppleList, AppleMarquee, ApplePagination, AppleProgress, ApplePullRefresh, AppleSkeleton, AppleTable, AppleTabBar, AppleTabs, AppleTimeline, AppleTree } from '../src/components/content'
 
 const items = [
   { label: '概览', value: 'overview', content: '概览内容' },
@@ -22,17 +22,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.useRealTimers()
   document.body.innerHTML = ''
-})
-
-describe('AppleCarousel lifecycle', () => {
-  it('ignores a queued scroll callback after its track is unmounted', () => {
-    vi.useFakeTimers()
-    const wrapper = mount(AppleCarousel, { props: { items: [{ label: 'One', value: 1 }] } })
-    const onScroll = wrapper.vm.onScroll
-    wrapper.unmount()
-    onScroll()
-    expect(() => vi.runAllTimers()).not.toThrow()
-  })
 })
 
 describe('AppleTabs', () => {
@@ -215,35 +204,6 @@ describe('AppleTree', () => {
   })
 })
 
-describe('AppleCarousel', () => {
-  it('navigates with controls and keyboard while keeping offscreen slides inert', async () => {
-    const wrapper = keep(mount(AppleCarousel, { props: { items: [{ label: '一', value: 1 }, { label: '二', value: 2 }] } }))
-    expect(wrapper.get('[aria-label="上一张"]').attributes('disabled')).toBeDefined()
-    await wrapper.get('[aria-label="下一张"]').trigger('click')
-    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([1])
-    expect(wrapper.findAll('.apple-carousel__slide')[0]!.attributes('inert')).toBeDefined()
-    expect(wrapper.findAll('.apple-carousel__slide')[1]!.attributes('inert')).toBeUndefined()
-    await wrapper.get('.apple-carousel__track').trigger('keydown', { key: 'ArrowLeft' })
-    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([0])
-  })
-
-  it('reports a native horizontal scroll and uses slide-relative offsets', async () => {
-    vi.useFakeTimers()
-    const wrapper = keep(mount(AppleCarousel, { props: { items: [{ label: '一', value: 1 }, { label: '二', value: 2 }] } }))
-    const track = wrapper.get('.apple-carousel__track').element as HTMLElement
-    const slides = wrapper.findAll('.apple-carousel__slide')
-    Object.defineProperty(track, 'offsetLeft', { value: 80 })
-    Object.defineProperty(slides[0]!.element, 'offsetLeft', { value: 0 })
-    Object.defineProperty(slides[1]!.element, 'offsetLeft', { value: 320 })
-    track.scrollLeft = 320
-    await wrapper.get('.apple-carousel__track').trigger('scroll')
-    await vi.advanceTimersByTimeAsync(130)
-    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([1])
-    await wrapper.get('[aria-label="上一张"]').trigger('click')
-    expect(HTMLElement.prototype.scrollTo).toHaveBeenLastCalledWith({ left: 0, behavior: 'auto' })
-  })
-})
-
 describe('Mobile patterns', () => {
   it('refreshes via touch and exposes a completion callback without duplicate refreshes', async () => {
     const wrapper = keep(mount(ApplePullRefresh, { props: { threshold: 50 }, slots: { default: '我的列表' } }))
@@ -310,20 +270,7 @@ describe('Mobile patterns', () => {
     expect(disconnect).toHaveBeenCalledOnce()
   })
 
-  it('offers a keyboard-operable swipe action entry and honors disabled', async () => {
-    const wrapper = keep(mount(AppleSwipeCell, { slots: { default: '订单', actions: '<button type="button">删除</button>' } }))
-    expect(wrapper.get('.apple-swipe-cell__actions').attributes('inert')).toBeDefined()
-    expect(wrapper.get('.apple-swipe-cell__actions').attributes('aria-hidden')).toBe('true')
-    await wrapper.get('[aria-label="更多操作"]').trigger('click')
-    expect(wrapper.get('.apple-swipe-cell__actions').attributes('inert')).toBeUndefined()
-    expect(wrapper.get('.apple-swipe-cell__actions').attributes('aria-hidden')).toBe('false')
-    await wrapper.trigger('keydown', { key: 'Escape' })
-    expect(wrapper.get('[aria-label="更多操作"]').attributes('aria-expanded')).toBe('false')
-    await wrapper.setProps({ disabled: true })
-    await wrapper.trigger('touchstart', { touches: [{ clientX: 100, clientY: 0 }] })
-    await wrapper.trigger('touchend', { changedTouches: [{ clientX: 0, clientY: 0 }] })
-    expect(wrapper.get('[aria-label="更多操作"]').attributes('aria-expanded')).toBe('false')
-  })
+
 })
 
 describe('Status and utility components', () => {

@@ -107,8 +107,8 @@
 .apple-modal-presence-enter-from .apple-drawer--left, .apple-modal-presence-leave-to .apple-drawer--left { transform: translateX(-100%); }
 .apple-modal-presence-enter-from .apple-sheet, .apple-modal-presence-leave-to .apple-sheet { transform: translateY(100%); }
 .apple-popover-presence-enter-active, .apple-popover-presence-leave-active { transition: transform var(--apple-overlay-duration, 320ms) var(--apple-ease, ease), opacity var(--apple-overlay-duration, 320ms) var(--apple-ease, ease); }
-.apple-popover-presence-enter-from, .apple-popover-presence-leave-to { transform: translateY(-10px); opacity: 0; }
-.apple-tooltip.apple-popover-presence-enter-from, .apple-tooltip.apple-popover-presence-leave-to { transform: translateY(10px); }
+.apple-popover-presence-enter-from, .apple-popover-presence-leave-to { transform: translate(var(--apple-popup-x, 0px), var(--apple-popup-y, -10px)); opacity: 0; }
+.apple-tooltip.apple-popover-presence-enter-from, .apple-tooltip.apple-popover-presence-leave-to { transform: translate(var(--apple-popup-x, 0px), var(--apple-popup-y, 10px)); }
 .apple-toast-enter-active, .apple-toast-leave-active { transition: transform var(--apple-overlay-duration, 320ms) var(--apple-ease, cubic-bezier(.2, .8, .2, 1)); }
 .apple-toast-enter-from, .apple-toast-leave-to { transform: translateX(calc(100% + 48px)); }
 .apple-toast-stack-move { transition: transform var(--apple-duration, 320ms) var(--apple-ease, ease); }

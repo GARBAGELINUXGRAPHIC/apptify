@@ -1,0 +1,20 @@
+import {test,expect} from '@playwright/test'
+for (const kind of ['select','autocomplete','color','date','popover']) test(`${kind} updates placement while open and leaves toward the current anchor`,async({page})=>{
+ await page.setViewportSize({width:600,height:440})
+ await page.goto(`/tests/e2e/fixtures/popup-placement.html?kind=${kind}`)
+ await page.evaluate(()=>window.scrollTo(0,200))
+ if(kind==='date') await page.getByRole('button',{name:'打开日历'}).click()
+ else if(kind==='color') await page.locator('.apple-color-picker').click()
+ else if(kind==='popover') await page.getByRole('button',{name:'Open'}).click()
+ else await page.getByRole('combobox').click()
+ const popup=page.locator('.apple-field-menu, .apple-date-menu, .apple-popover').last()
+ await expect(popup).toHaveAttribute('data-placement','bottom')
+ await page.waitForTimeout(400)
+ await page.evaluate(()=>window.scrollTo(0,0))
+ await expect(popup).toHaveAttribute('data-placement','top')
+ expect(await popup.evaluate(el=>parseFloat(getComputedStyle(el).getPropertyValue('--apple-popup-y')))).toBeGreaterThan(0)
+ await page.keyboard.press('Escape')
+ // Direction is retained through the closing frame, not reset to the opening side.
+ if(await popup.count()) expect(await popup.getAttribute('data-placement')).toBe('top')
+ await expect(popup).toBeHidden()
+})

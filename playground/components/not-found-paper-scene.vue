@@ -13,6 +13,7 @@
           <pattern :id="`${uid}-grain`" width="41" height="37" patternUnits="userSpaceOnUse"><path d="M4 6h1m15 11h1m13-9h.7M9 29h1m26 3h.8" stroke="#5e472e" stroke-opacity=".14" stroke-width="1" /><path d="M8 11l3-1m13 16 3-1m-4-23 2-1" stroke="#fff8e5" stroke-opacity=".2" stroke-width=".7" /></pattern>
           <clipPath :id="`${uid}-frame`"><path d="M36 74Q37 38 75 35L909 20Q957 19 963 68L986 565Q987 608 942 614L84 635Q29 635 27 585Z" /></clipPath>
           <clipPath :id="`${uid}-river-clip`"><path d="M550 435C655 419 655 451 744 459S900 472 1020 449V663H261C297 557 379 522 465 506S516 459 550 435Z" /></clipPath>
+          <clipPath :id="`${uid}-drift-clip`"><path d="M578 388C592 395 607 413 621 435S638 460 655 476L635 490C620 467 609 449 602 434S578 408 567 401Z" /><path d="M550 435C655 419 655 451 744 459S900 472 1020 449V663H261C297 557 379 522 465 506S516 459 550 435Z" /></clipPath>
           <g :id="`${uid}-acorn`"><path d="M-12-3 11-5 12 6 5 16-1 19-10 12-14 4Z" fill="#bf8247" /><path d="M-12-3-1-2 0 18-10 12-14 4Z" fill="#dca661" /><path d="M-14-5-7-12 6-13 14-6 13-1-13 2Z" fill="#675137" /><path d="M-13-4 0-8 13-5M-7-10-4-5 1-9 6-5 9-8" fill="none" stroke="#a28b58" stroke-width="1.5" /><path d="M0-12 2-19 5-20 4-12Z" fill="#675137" /><path d="m3 3 5-2-2 8-3 3Z" fill="#ebbc78" opacity=".7" /></g>
           <g :id="`${uid}-leaf`"><path d="M0 0C-31-3-39-22-27-39-7-36 5-19 0 0Z" fill="currentColor" /><path d="M0 0-24-32" stroke="#f5e2ae" stroke-width="1" opacity=".6" /></g>
           <g :id="`${uid}-fir`"><path d="M0-132-50-48-30-50-67 2-39-4-72 46H64L36-5 59 1 26-51 43-46Z" fill="currentColor" /><path d="M0-132-2 46H64L36-5 59 1 26-51 43-46Z" fill="#fff" opacity=".07" /><path d="M-2 26v37" stroke="currentColor" stroke-width="8" /></g>
@@ -34,13 +35,17 @@
             <path d="M550 435C655 419 655 451 744 459S900 472 1020 449" fill="none" stroke="var(--paper-water-edge)" stroke-width="7" />
             <g :clip-path="`url(#${uid}-river-clip)`">
               <g data-part="current" fill="none" stroke="var(--paper-ripple)" stroke-linecap="round"><path d="M351 535q50-15 103-9m69-35q50-13 109 1m37-24q41 5 76 2m23 31q45 10 91 4m-455 63q50-11 104-4m53-16q47-7 93 2m33 32q45 12 91 5m54-41q50 12 100 1m-574 58q64-12 128-4m111 17q66 0 134 14m32-47q50 10 105 0m44-76q42 5 80-3" stroke-width="2.2" opacity=".62" /><path d="M592 466h29m72 70h57m-252 47h43m324-63h28m-481 33h28m425 61h57m-400 28h65m326-71h27" stroke-width="1" opacity=".68" /></g>
-              <g v-for="(nut, index) in driftwood" :key="index" :data-drifter="index" :transform="`translate(${nut.x} ${nut.y})`"><ellipse cx="2" cy="13" rx="22" ry="3" fill="var(--paper-ripple)" opacity=".3" /><g :transform="`rotate(${nut.angle}) scale(${nut.scale})`"><use :href="`#${uid}-acorn`" /></g></g>
             </g>
             <!-- Bank layers hide the drifting resets. -->
             <path d="M-210 479Q74 375 303 411L485 417 586 432 562 460 511 469 497 493 386 526 242 565-203 594Z" fill="var(--paper-bank-shadow)" />
             <path d="M-210 456Q38 371 267 399L485 409 587 432 553 444 500 447 472 476 373 502 238 537-200 574Z" fill="var(--paper-bank)" />
             <path d="m224 472 105-16 59 9-118 27Z" fill="var(--paper-bank-fold)" />
             <path d="M40 457q61-12 126-11m88-12 66-8m-164 57 42-7m167-33 25-6" fill="none" stroke="var(--paper-grass)" stroke-width="2" opacity=".5" />
+            <path d="M578 388C592 395 607 413 621 435S638 460 655 476L635 490C620 467 609 449 602 434S578 408 567 401Z" :fill="`url(#${uid}-water)`" />
+            <!-- Drifters are above water but behind the trunk; the tree masks their entry. -->
+            <g data-part="drifters" :clip-path="`url(#${uid}-drift-clip)`">
+              <g v-for="(nut, index) in driftwood" :key="index" :data-drifter="index" :transform="`translate(${nut.x} ${nut.y})`"><ellipse cx="2" cy="13" rx="22" ry="3" fill="var(--paper-ripple)" opacity=".3" /><g :transform="`rotate(${nut.angle}) scale(${nut.scale})`"><use :href="`#${uid}-acorn`" /></g></g>
+            </g>
             <!-- Trunk, hollow and pantry; the foreground lip is after the actor. -->
             <g :filter="`url(#${uid}-paper-shadow)`">
               <path d="M456 44 570 33 582 161 649 109 682 114 591 224 591 327 612 400 651 434 572 432 548 417 493 435 426 439 465 402 477 327 468 229 427 186 375 179 351 145 440 156 467 177Z" :fill="`url(#${uid}-bark)`" />
@@ -51,10 +56,9 @@
               <path d="M522 269Q560 253 576 289L582 352 568 387 510 386 497 362 502 297Z" fill="#70452f" />
               <path d="M528 281Q555 265 567 297L574 350 562 374 514 374 507 353 511 303Z" :fill="`url(#${uid}-hole)`" />
               <path d="m516 303 12-22 15-6-17 25-8 51 7 24-11-1-7-21Z" fill="#432f24" />
-              <g data-part="pantry" opacity=".94"><use :href="`#${uid}-acorn`" transform="translate(527 354) rotate(-24) scale(.65)" /><use :href="`#${uid}-acorn`" transform="translate(550 358) rotate(28) scale(.66)" /><use :href="`#${uid}-acorn`" transform="translate(558 337) rotate(-16) scale(.59)" /><use :href="`#${uid}-acorn`" transform="translate(536 336) rotate(14) scale(.6)" /><use :href="`#${uid}-acorn`" transform="translate(547 317) rotate(-25) scale(.58)" /></g>
+              <g data-part="pantry" class="paper-pantry"><use :href="`#${uid}-acorn`" transform="translate(527 354) rotate(-24) scale(.65)" /><use :href="`#${uid}-acorn`" transform="translate(550 358) rotate(28) scale(.66)" /></g>
               <path d="m569 377 15 6 4 15 15 9-14 8-20-19Z" fill="#352f27" /><path d="m577 381 5 11 16 17-8 2-12-14-9-20Z" fill="#c39666" />
             </g>
-            <g v-for="index in 7" :key="index" :data-spill="index" class="paper-spill"><use :href="`#${uid}-acorn`" transform="scale(.63)" /></g>
             <g data-part="splash" class="paper-splash" fill="none" stroke="var(--paper-ripple)" stroke-width="2.5" stroke-linecap="round"><path d="m619 461-4-9m17 6 1-11m11 15 6-7" /><ellipse cx="632" cy="470" rx="25" ry="4" /></g>
             <ellipse data-part="actor-shadow" cx="443" cy="428" rx="63" ry="9" fill="#503c28" opacity=".13" />
             <!-- One articulated squirrel, from the first hop to the last sigh. -->
@@ -89,7 +93,7 @@
               <path d="m617 108 44-51 80 23 39 61-19 58-95 23-71-53Z" fill="var(--paper-leaf-mid)" /><path d="m661 57 43 91 57 51-95 23-71-53 22-61Z" fill="var(--paper-leaf-gold)" /><path d="m704 148 76-7-19 58Z" fill="var(--paper-leaf-pale)" />
               <path d="m316 22 108 83 10 75m71-133 9 100 36 67m147-72-31 80" fill="none" stroke="#ffebbc" stroke-width="1.5" opacity=".38" />
             </g>
-            <g color="var(--paper-leaf-gold)"><use :href="`#${uid}-leaf`" transform="translate(321 354) rotate(-20) scale(.65)" /><use :href="`#${uid}-leaf`" transform="translate(724 288) rotate(75) scale(.62)" /><use :href="`#${uid}-leaf`" transform="translate(346 438) rotate(120) scale(.62)" /></g>
+            <g color="var(--paper-leaf-gold)"><use :href="`#${uid}-leaf`" transform="translate(346 438) rotate(120) scale(.62)" /></g>
             <g fill="var(--paper-grass)"><path d="m228 435-6-31 15 26 2-40 8 42 19-15-10 26Z" /><path d="m663 436 3-27 7 25 12-14-7 22Z" /><path d="m362 456-3-19 9 15 5-24 4 24Z" /></g>
             <path d="M-200 634Q47 543 223 590L349 650 1113 680V880H-200Z" fill="var(--paper-foreground)" />
             <g color="var(--paper-foreground)"><use :href="`#${uid}-fir`" transform="translate(46 562) scale(1.48)" /></g>
@@ -190,7 +194,7 @@ onBeforeUnmount(() => {
 .paper-head { transform: translate(0px, 15px) rotate(17deg); transform-origin: -13px -91px; }
 .paper-arm { transform: translate(0px, 12px) rotate(53deg); transform-origin: -12px -69px; }
 .paper-front-foot { transform: translate(9px, 1px) rotate(-8deg); }
-.paper-held-acorn, .paper-spill, .paper-splash { opacity: 0; }
+.paper-pantry, .paper-held-acorn, .paper-splash { opacity: 0; }
 .paper-eyelid { opacity: 1; }
 .paper-brow { transform: rotate(12deg); transform-origin: 10px -113px; }
 .paper-scene__caption { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 46px; padding-inline: 4.5%; margin-top: 10px; }

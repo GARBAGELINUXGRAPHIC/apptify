@@ -35,7 +35,7 @@ for (const viewport of [
         await expect.poll(() => demo.evaluate(root => {
           const bounds = root.getBoundingClientRect()
           const stage = root.closest('.detail-preview')!.getBoundingClientRect()
-          const ignored = '.apple-carousel__track, .apple-table__viewport, .apple-table__scroll, .apple-table__body, .apple-image__gallery, .apple-swipe-cell__actions, [data-apple-portals], .apple-snackbar-list, .apple-content-sr'
+          const ignored = '.apple-table__viewport, .apple-table__scroll, .apple-table__body, .apple-image__gallery, [data-apple-portals], .apple-snackbar-list, .apple-content-sr'
           const overflowing = [...root.querySelectorAll<HTMLElement>('*')].filter(element => {
             if (element.closest(ignored + ', [aria-hidden="true"], [inert]') || !element.checkVisibility({ visibilityProperty: true }) || getComputedStyle(element).position === 'fixed') return false
             const rect = element.getBoundingClientRect()

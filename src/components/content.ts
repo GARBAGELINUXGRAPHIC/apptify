@@ -1,5 +1,5 @@
 import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, useId, withDirectives, type PropType, type VNodeChild } from 'vue'
-import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, MoreHorizontal, Pause, Play, X } from 'lucide-vue-next'
+import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, Pause, Play, X } from 'lucide-vue-next'
 import { Virtualizer, elementScroll, observeElementOffset, observeElementRect, type VirtualizerOptions } from '@tanstack/virtual-core'
 import { ripple } from '../core/motion'
 import { AppleTabs, AppleTabBar } from './tabs'
@@ -12,7 +12,6 @@ export interface AppleItem { label: string; value: AppleValue; disabled?: boolea
 export interface AppleColumn { key: string; label: string; sortable?: boolean; align?: 'left' | 'center' | 'right'; width?: string | number; minWidth?: number; maxWidth?: number; resizable?: boolean }
 export interface AppleTreeItem extends AppleItem { children?: AppleTreeItem[] }
 export interface AppleAvatarItem { name: string; src?: string; value?: AppleValue }
-export interface AppleSlide extends AppleItem { src?: string; alt?: string }
 export interface AppleTimelineItem extends AppleItem { time?: string; tone?: 'default' | 'success' | 'danger' }
 type Motion = 'inherit' | 'auto' | 'full' | 'reduced' | 'none'
 type Row = Record<string, unknown>
@@ -451,33 +450,6 @@ export const AppleTimeline = defineComponent({
   render() { return h('ol', { class: ['apple-timeline', `apple-timeline--${this.orientation}`], 'aria-label': this.label, 'data-motion': this.motion }, this.items.map(item => h('li', { key: item.value, class: `apple-tone-${item.tone ?? 'neutral'}` }, [h('span', { class: 'apple-timeline__point', 'aria-hidden': 'true' }), h('div', { class: 'apple-timeline__copy' }, [item.time ? h('time', item.time) : null, h('strong', item.label), this.$slots.item?.({ item }) ?? (item.description ? h('p', item.description) : null)])]))) },
 })
 
-export const AppleCarousel = defineComponent({
-  name: 'AppleCarousel', setup: uidSetup,
-  props: { ...motionProps, items: { type: Array as PropType<AppleSlide[]>, default: () => [] }, modelValue: { type: Number, default: undefined }, label: { type: String, default: '精选内容' }, disabled: Boolean },
-  emits: ['update:modelValue', 'change'], data: () => ({ internalIndex: 0, scrollTimer: undefined as ReturnType<typeof setTimeout> | undefined }),
-  computed: { currentIndex(): number { return Math.min(Math.max(0, this.modelValue ?? this.internalIndex), Math.max(0, this.items.length - 1)) } },
-  watch: { modelValue() { this.scrollToCurrent() }, 'items.length'() { this.$nextTick(this.scrollToCurrent) } },
-  mounted() { this.scrollToCurrent() }, beforeUnmount() { clearTimeout(this.scrollTimer) },
-  methods: {
-    scrollToCurrent() { const track = this.$refs.track as HTMLElement | undefined; const slide = track?.children[this.currentIndex] as HTMLElement | undefined; if (track && slide) track.scrollTo({ left: slide.offsetLeft, behavior: 'auto' }) },
-    go(index: number) { if (this.disabled || !this.items.length) return; const next = Math.min(this.items.length - 1, Math.max(0, index)); this.internalIndex = next; this.$emit('update:modelValue', next); this.$emit('change', next); this.$nextTick(this.scrollToCurrent) },
-    onScroll() {
-      clearTimeout(this.scrollTimer)
-      this.scrollTimer = setTimeout(() => {
-        const track = this.$refs.track as HTMLElement | undefined
-        if (!track) return
-        const slides = Array.from(track.children) as HTMLElement[]
-        const closest = slides.reduce((best, slide, index) => Math.abs(slide.offsetLeft - track.scrollLeft) < Math.abs((slides[best]?.offsetLeft ?? 0) - track.scrollLeft) ? index : best, 0)
-        if (closest !== this.currentIndex) { this.internalIndex = closest; this.$emit('update:modelValue', closest); this.$emit('change', closest) }
-      }, 120)
-    },
-  },
-  render() { return h('section', { class: 'apple-carousel', role: 'region', 'aria-roledescription': '轮播图', 'aria-label': this.label, 'data-motion': this.motion }, [
-    h('div', { id: `${this.uid}-track`, ref: 'track', class: 'apple-carousel__track', tabindex: this.disabled ? -1 : 0, style: this.disabled ? { overflowX: 'hidden' } : undefined, onScroll: this.onScroll, onKeydown: (event: KeyboardEvent) => { if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') { event.preventDefault(); this.go(this.currentIndex + (event.key === 'ArrowRight' ? 1 : -1)) } } }, this.items.map((item, index) => h('div', { key: item.value, class: 'apple-carousel__slide', role: 'group', 'aria-roledescription': '幻灯片', 'aria-label': `${index + 1} / ${this.items.length}：${item.label}`, inert: index !== this.currentIndex || undefined }, this.$slots.item?.({ item, index, active: index === this.currentIndex }) ?? [item.src ? h('img', { src: item.src, alt: item.alt ?? item.label, loading: index === 0 ? 'eager' : 'lazy', draggable: false }) : null, h('div', { class: 'apple-carousel__caption' }, [h('h3', item.label), item.description ? h('p', item.description) : null])]))),
-    h('div', { class: 'apple-carousel__controls' }, [h('span', { class: 'apple-content-sr', 'aria-live': 'polite', 'aria-atomic': 'true' }, `${this.currentIndex + 1} / ${this.items.length}`), h('div', { class: 'apple-carousel__dots', role: 'group', 'aria-label': '选择幻灯片' }, this.items.map((item, index) => h('button', { key: item.value, type: 'button', disabled: this.disabled, 'aria-label': `查看${item.label}`, 'aria-current': index === this.currentIndex ? 'true' : undefined, 'aria-controls': `${this.uid}-track`, class: { 'is-active': index === this.currentIndex }, onClick: () => this.go(index) }, h('span')))), h('div', { class: 'apple-carousel__arrows' }, [h('button', { type: 'button', disabled: this.disabled || this.currentIndex === 0, 'aria-label': '上一张', onClick: () => this.go(this.currentIndex - 1) }, icon(ChevronLeft)), h('button', { type: 'button', disabled: this.disabled || this.currentIndex >= this.items.length - 1, 'aria-label': '下一张', onClick: () => this.go(this.currentIndex + 1) }, icon(ChevronRight))])]),
-  ]) },
-})
-
 export const ApplePullRefresh = defineComponent({
   name: 'ApplePullRefresh', props: { ...motionProps, modelValue: Boolean, disabled: Boolean, threshold: { type: Number, default: 72 }, label: { type: String, default: '刷新内容' } },
   emits: ['update:modelValue', 'refresh'], data: () => ({ pulling: false, startY: 0, startX: 0, distance: 0, refreshing: false }),
@@ -515,17 +487,6 @@ export const AppleInfiniteScroll = defineComponent({
     retry() { if (this.disabled || this.loading) return; this.pending = true; this.$emit('retry', this.finish) },
   },
   render() { return h('div', { class: 'apple-infinite-scroll', 'data-motion': this.motion, 'aria-busy': this.loading || this.pending }, [this.$slots.default?.(), h('div', { ref: 'sentinel', class: 'apple-infinite-scroll__status', role: 'status' }, this.finished ? this.finishedText : this.loading || this.pending ? [h(AppleSpinner, { size: 16 }), '正在加载'] : this.error ? [h('span', typeof this.error === 'string' ? this.error : '加载失败'), h('button', { type: 'button', disabled: this.disabled, onClick: this.retry }, '重试')] : h('button', { type: 'button', disabled: this.disabled, onClick: this.load }, '加载更多'))]) },
-})
-
-export const AppleSwipeCell = defineComponent({
-  name: 'AppleSwipeCell', setup: uidSetup,
-  props: { ...motionProps, modelValue: { type: Boolean, default: undefined }, disabled: Boolean, label: { type: String, default: '更多操作' } }, emits: ['update:modelValue'],
-  data: () => ({ internalOpen: false, startX: 0, startY: 0 }), computed: { opened(): boolean { return this.modelValue ?? this.internalOpen } },
-  methods: { setOpen(open: boolean) { if (this.disabled) return; const restoreFocus = !open && (this.$refs.actions as HTMLElement | undefined)?.contains(document.activeElement); this.internalOpen = open; this.$emit('update:modelValue', open); if (restoreFocus) this.$nextTick(() => (this.$refs.trigger as HTMLButtonElement | undefined)?.focus()) } },
-  render() { return h('div', { class: ['apple-swipe-cell', { 'is-open': this.opened }], 'data-motion': this.motion, onTouchstartPassive: (event: TouchEvent) => { if (event.touches.length === 1) { this.startX = event.touches[0]!.clientX; this.startY = event.touches[0]!.clientY } }, onTouchendPassive: (event: TouchEvent) => { const touch = event.changedTouches[0]; if (touch && Math.abs(touch.clientX - this.startX) > 40 && Math.abs(touch.clientY - this.startY) < 35) this.setOpen(touch.clientX < this.startX) }, onKeydown: (event: KeyboardEvent) => { if (event.key === 'Escape' && this.opened) { event.stopPropagation(); this.setOpen(false) } } }, [
-    h('div', { class: 'apple-swipe-cell__content' }, [this.$slots.default?.(), h('button', { ref: 'trigger', type: 'button', class: 'apple-content-icon-button', disabled: this.disabled, 'aria-label': this.label, 'aria-expanded': this.opened, 'aria-controls': `${this.uid}-actions`, onClick: () => this.setOpen(!this.opened) }, icon(MoreHorizontal))]),
-    h('div', { ref: 'actions', id: `${this.uid}-actions`, class: 'apple-swipe-cell__actions', 'aria-hidden': !this.opened, inert: this.disabled || !this.opened || undefined }, h('div', { class: 'apple-swipe-cell__clip' }, h('div', { class: 'apple-swipe-cell__buttons' }, this.$slots.actions?.({ close: () => this.setOpen(false) })))),
-  ]) },
 })
 
 const floatingGroupKey = Symbol('apple-floating-group')
@@ -596,4 +557,4 @@ export const AppleStatistic = defineComponent({
   render() { const value = typeof this.value === 'number' ? this.value.toLocaleString(this.locale, { minimumFractionDigits: Math.max(0, Math.min(20, this.precision)), maximumFractionDigits: Math.max(0, Math.min(20, this.precision)) }) : this.value; return h('div', { class: 'apple-statistic', 'data-motion': this.motion }, [h('div', { class: 'apple-statistic__label' }, this.label), h('div', { class: 'apple-statistic__value' }, [this.prefix ? h('span', this.prefix) : null, h('strong', value), this.suffix ? h('span', this.suffix) : null]), this.description ? h('p', this.description) : null, this.$slots.default?.()]) },
 })
 
-export const contentComponents = { AppleTabs, AppleTabBar, AppleBreadcrumbs, ApplePagination, AppleAccordion, AppleTable, AppleTree, AppleList, AppleAvatar, AppleAvatarGroup, AppleBadge, AppleTag, AppleAlert, AppleProgress, AppleSpinner, AppleSkeleton, AppleEmpty, AppleDivider, AppleSteps, AppleTimeline, AppleCarousel, ApplePullRefresh, AppleInfiniteScroll, AppleSwipeCell, AppleBackTop, AppleFloatingGroup, AppleMarquee, AppleStatistic }
+export const contentComponents = { AppleTabs, AppleTabBar, AppleBreadcrumbs, ApplePagination, AppleAccordion, AppleTable, AppleTree, AppleList, AppleAvatar, AppleAvatarGroup, AppleBadge, AppleTag, AppleAlert, AppleProgress, AppleSpinner, AppleSkeleton, AppleEmpty, AppleDivider, AppleSteps, AppleTimeline, ApplePullRefresh, AppleInfiniteScroll, AppleBackTop, AppleFloatingGroup, AppleMarquee, AppleStatistic }

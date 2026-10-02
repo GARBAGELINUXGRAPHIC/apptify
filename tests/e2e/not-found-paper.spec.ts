@@ -17,7 +17,7 @@ async function pose(page: Page, part: string) {
   })
 }
 
-test('404 story has a hop, a hidden delivery, a camera reveal, and a resting pose', async ({ page }) => {
+test('404 story has a hop, a visible delivery, a camera reveal, and a resting pose', async ({ page }) => {
   await page.goto(route)
   await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
   await expect(page.getByRole('heading', { name: '页面不存在', exact: true })).toBeVisible()
@@ -27,15 +27,17 @@ test('404 story has a hop, a hidden delivery, a camera reveal, and a resting pos
   expect((await pose(page, 'camera')).scale).toBeGreaterThan(1.6)
   expect((await pose(page, 'held-acorn')).opacity).toBe(1)
   await seek(page, 5500)
-  expect((await pose(page, 'squirrel')).opacity).toBe(0)
+  expect((await pose(page, 'squirrel')).opacity).toBe(1)
   expect((await pose(page, 'held-acorn')).opacity).toBe(0)
   await seek(page, 8200)
   expect((await pose(page, 'camera')).scale).toBeLessThan(1.2)
-  expect(await page.locator('[data-spill]').evaluateAll(elements => elements.some(element => Number(getComputedStyle(element).opacity) > .5))).toBe(true)
+  expect(await page.locator('[data-part=drifters]').evaluate(el => getComputedStyle(el).visibility)).toBe('visible')
+  expect(await page.locator('[data-drifter]').evaluateAll(elements => elements.every(element => Number(getComputedStyle(element).opacity) === 1))).toBe(true)
   await seek(page, 13_000)
   expect((await pose(page, 'camera')).scale).toBe(1)
   expect((await pose(page, 'squirrel')).y).toBe(429)
   expect((await pose(page, 'eyelid')).opacity).toBe(1)
+  expect((await pose(page, 'pantry')).opacity).toBe(0)
 })
 
 test('the story really finishes once and the ambient cast stays bounded for another full cycle', async ({ page }) => {

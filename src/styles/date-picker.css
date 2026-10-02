@@ -49,7 +49,7 @@
 .apple-calendar__done:hover:where(:not([data-apple-touch] *)) { background: color-mix(in srgb, var(--apple-accent) 90%, black); }
 .apple-calendar__done:active { background: color-mix(in srgb, var(--apple-accent) 78%, black); }
 .apple-date-pop-enter-active, .apple-date-pop-leave-active { overflow: hidden; transition: height var(--apple-duration, 240ms) var(--apple-ease), transform var(--apple-duration, 240ms) var(--apple-ease); }
-.apple-date-pop-enter-from, .apple-date-pop-leave-to { transform: translateY(-8px); }
+.apple-date-pop-enter-from, .apple-date-pop-leave-to { transform: translateY(var(--apple-popup-y, -8px)); }
 .apple-calendar-forward-enter-active, .apple-calendar-forward-leave-active, .apple-calendar-backward-enter-active, .apple-calendar-backward-leave-active { transition: transform var(--apple-duration, 240ms) var(--apple-ease); }
 .apple-calendar-forward-enter-from, .apple-calendar-backward-leave-to { transform: translateX(25px); }
 .apple-calendar-forward-leave-to, .apple-calendar-backward-enter-from { transform: translateX(-25px); }

@@ -49,3 +49,15 @@
 - 输入拼接截图：`/tmp/apptify-forms-task/input-buttons-joined-{1440,390,320}.png`。
 - 目录hover：`/tmp/apptify-hover-check/card-hover-sidebar.png`。
 - 最终结果将在所有新增专项稳定后更新到本清单。
+
+## 云端续作（2026-10-03，基于用户推送的 0af58de）
+
+以下状态覆盖上表中的对应历史状态；本分支待人工视觉复核，不应直接视为最终验收。
+
+- 独立 AppleCarousel / AppleSwipeCell 实现、公开注册、目录、演示与样式已移除。保留用户推送的 AppleImage.carousel，实现合并后的演示与 API 文档。旧 Carousel 行为测试已由已有 image-carousel 专测覆盖；SwipeCell 删除测试随 API 删除。
+- 日期/时间继续使用 AppleTabBar。回切时冻结每个面板的当前位置和独立离场方向，避免祖先方向切换同时重置尚在离场的面板。逐帧浏览器验收待运行。
+- 新增共享 popup placement：字段菜单在 scroll / resize 后重新判断上下位置，退出时取最新方向；Popover 支持四向空间判断。ColorPicker 保留固定尺寸裁切，裁切/位移方向随当前 placement。新单测通过；真实 flip→close 浏览器测试已添加但此环境未能运行。
+- 404 五项修订：减少并清空洞内橡果、树根接水且漂物在树层后水层前自然出现、连续采样跳跃弧线、松鼠不再透明消失而保留抬头动作、移除悬浮叶片。时间线结构测试通过，视觉节奏与层级仍需浏览器复核。
+- Upload 整块点击实现及专测已包含在用户推送快照中，云端未重复改写。
+- 云端 Chromium 启动被系统 socket 权限限制拒绝；云端交互浏览器访问 localhost 被拒绝。浏览器测试未执行成功，不计作产品测试失败，也不计通过。
+- 本轮通过：完整类型/站点/库/声明构建，23 个测试文件共 172 项单测。无独立 lint 脚本。最终浏览器全量和真实触控板验收仍待恢复可用环境。

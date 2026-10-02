@@ -26,13 +26,15 @@ export function createPaperStory(art: SVGSVGElement, scene: HTMLElement, intro: 
   loop(target('current'), 'river', [{ transform: 'translate(-18px, -2px)', opacity: 0 }, { transform: 'translate(0px, 0px)', opacity: 1 }, { transform: 'translate(18px, 2px)', opacity: 0 }], 6800, 0, 'linear')
   art.querySelectorAll<SVGElement>('[data-drifter]').forEach((element, index) => {
     const lane = index % 2
+    // Constant opacity: the trunk and scene clipping, not a dissolve, mask resets.
     loop(element, `acorn-${index}`, [
-      { transform: `translate(433px, ${494 + lane * 23}px)`, opacity: 0, offset: 0 },
-      { transform: `translate(535px, ${492 + lane * 25}px)`, opacity: 1, offset: .18 },
-      { transform: `translate(722px, ${502 + lane * 29}px)`, opacity: 1, offset: .48 },
-      { transform: `translate(978px, ${541 + lane * 31}px)`, opacity: 1, offset: .92 },
-      { transform: `translate(1040px, ${551 + lane * 33}px)`, opacity: 0, offset: 1 },
-    ], 18_000 + lane * 2000, index * 3900, 'linear')
+      { transform: 'translate(579px, 391px)', offset: 0 },
+      { transform: 'translate(605px, 421px)', offset: .12 },
+      { transform: 'translate(627px, 458px)', offset: .24 },
+      { transform: `translate(665px, ${488 + lane * 8}px)`, offset: .35 },
+      { transform: `translate(820px, ${514 + lane * 14}px)`, offset: .65 },
+      { transform: `translate(1065px, ${549 + lane * 19}px)`, offset: 1 },
+    ], 20_000, index * 4000, 'linear')
   })
   const breathe = () => loop(target('breath'), 'breath', [{ transform: 'translateY(0px)' }, { transform: 'translateY(1.6px)' }, { transform: 'translateY(0px)' }], 4200)
 
@@ -43,27 +45,27 @@ export function createPaperStory(art: SVGSVGElement, scene: HTMLElement, intro: 
       { at: 9200, transform: 'translate(0px, 0px) scale(1)' },
       { at: DURATION, transform: 'translate(0px, 0px) scale(1)' },
     ])
-    cue(target('squirrel'), 'squirrel', [
-      { at: 0, transform: 'translate(135px, 428px) rotate(-13deg) scale(.8)', opacity: 1 },
-      { at: 350, transform: 'translate(155px, 428px) rotate(-13deg) scale(.8)', easing: 'cubic-bezier(.15,.6,.35,1)' },
-      { at: 1000, transform: 'translate(244px, 326px) rotate(6deg) scale(.8)', easing: 'cubic-bezier(.6,0,.85,.5)' },
-      { at: 1550, transform: 'translate(311px, 423px) rotate(-6deg) scale(.86,.69)' },
-      { at: 1740, transform: 'translate(318px, 420px) rotate(0deg) scale(.8)' },
-      { at: 2100, transform: 'translate(318px, 420px) rotate(0deg) scale(.8)', easing: 'cubic-bezier(.15,.65,.4,1)' },
-      { at: 2650, transform: 'translate(393px, 337px) rotate(8deg) scale(.8)', easing: 'cubic-bezier(.6,0,.85,.5)' },
-      { at: 3100, transform: 'translate(453px, 422px) rotate(-5deg) scale(.85,.72)' },
-      { at: 3300, transform: 'translate(457px, 420px) rotate(0deg) scale(.8)' },
-      { at: 3850, transform: 'translate(457px, 420px) rotate(-5deg) scale(.8)', easing: 'cubic-bezier(.2,.7,.4,1)' },
-      { at: 4380, transform: 'translate(520px, 364px) rotate(5deg) scale(.66)' },
-      { at: 4930, transform: 'translate(556px, 365px) rotate(0deg) scale(.47)', opacity: 1 },
-      { at: 5360, transform: 'translate(559px, 358px) rotate(0deg) scale(.3)', opacity: 0 },
-      { at: 7850, transform: 'translate(559px, 358px) rotate(0deg) scale(.3)', opacity: 0 },
-      { at: 8260, transform: 'translate(544px, 370px) rotate(0deg) scale(.5)', opacity: 1 },
-      { at: 8730, transform: 'translate(517px, 373px) rotate(-4deg) scale(.66)' },
-      { at: 9410, transform: 'translate(455px, 429px) rotate(-7deg) scale(.84,.74)' },
-      { at: 9660, transform: 'translate(455px, 429px) rotate(0deg) scale(.8)' },
+    const actor: Cue[] = [{ at: 0, transform: 'translate(135px, 428px) rotate(0deg) scale(.8)' }]
+    // Sample a ballistic arc rather than easing each coordinate in separate stages.
+    const hop = (start: number, duration: number, x0: number, x1: number, ground: number, height: number) => {
+      for (let i = 0; i <= 24; i++) {
+        const t = i / 24
+        actor.push({ at: start + duration * t, transform: `translate(${x0 + (x1 - x0) * t}px, ${ground - 4 * height * t * (1 - t)}px) rotate(${Math.sin(t * Math.PI * 2) * -5}deg) scale(.8)` })
+      }
+    }
+    hop(400, 1200, 135, 318, 428, 100)
+    actor.push({ at: 1900, transform: 'translate(318px, 428px) rotate(0deg) scale(.8)' })
+    hop(2000, 1100, 318, 457, 428, 62)
+    actor.push(
+      { at: 3700, transform: 'translate(457px, 428px) rotate(0deg) scale(.8)', easing: 'ease-in-out' },
+      { at: 4850, transform: 'translate(535px, 379px) rotate(0deg) scale(.58)' },
+      { at: 8200, transform: 'translate(535px, 379px) rotate(0deg) scale(.58)', easing: 'ease-in-out' },
+      { at: 9500, transform: 'translate(455px, 429px) rotate(0deg) scale(.8)' },
       { at: DURATION, transform: 'translate(455px, 429px) rotate(0deg) scale(.8)' },
-    ])
+    )
+    cue(target('squirrel'), 'squirrel', actor)
+    cue(target('pantry'), 'pantry', [{ at: 0, opacity: 1 }, { at: 6700, opacity: 1 }, { at: 8400, opacity: 0 }, { at: DURATION, opacity: 0 }])
+    cue(target('drifters'), 'release', [{ at: 0, visibility: 'hidden' }, { at: 7000, visibility: 'hidden' }, { at: 7001, visibility: 'visible' }, { at: DURATION, visibility: 'visible' }])
     cue(target('actor-shadow'), 'shadow', [
       { at: 0, transform: 'translateX(-300px)', opacity: 0 }, { at: 1000, transform: 'translateX(-190px)', opacity: .06 },
       { at: 1550, transform: 'translateX(-125px)', opacity: .13 }, { at: 2650, transform: 'translateX(-65px)', opacity: .06 },
@@ -83,7 +85,7 @@ export function createPaperStory(art: SVGSVGElement, scene: HTMLElement, intro: 
     cue(target('head'), 'head', [
       { at: 0, transform: 'translate(0px, 0px) rotate(-7deg)' }, { at: 2100, transform: 'translate(0px, 0px) rotate(-7deg)' },
       { at: 3300, transform: 'translate(0px, 0px) rotate(-13deg)' }, { at: 4380, transform: 'translate(0px, 0px) rotate(0deg)' },
-      { at: 9410, transform: 'translate(0px, 0px) rotate(0deg)' }, { at: 10_200, transform: 'translate(1px, 2px) rotate(20deg)' },
+      { at: 5600, transform: 'translate(0px, -3px) rotate(-19deg)' }, { at: 7300, transform: 'translate(0px, -3px) rotate(-19deg)' }, { at: 9410, transform: 'translate(0px, 0px) rotate(0deg)' }, { at: 10_200, transform: 'translate(1px, 2px) rotate(20deg)' },
       { at: 10_650, transform: 'translate(0px, -3px) rotate(-8deg)' },
       { at: 11_150, transform: 'translate(1px, 2px) rotate(20deg)', easing: 'ease-in-out' },
       { at: 12_550, transform: 'translate(0px, 15px) rotate(17deg)' }, { at: DURATION, transform: 'translate(0px, 15px) rotate(17deg)' },
@@ -106,19 +108,6 @@ export function createPaperStory(art: SVGSVGElement, scene: HTMLElement, intro: 
     cue(target('held-acorn'), 'delivery', [{ at: 0, opacity: 1 }, { at: 5100, opacity: 1 }, { at: 5350, opacity: 0 }, { at: DURATION, opacity: 0 }])
     cue(target('eyelid'), 'eyelid', [{ at: 0, opacity: 0 }, { at: 11_300, opacity: 0 }, { at: 12_100, opacity: 1 }, { at: DURATION, opacity: 1 }])
     cue(target('brow'), 'brow', [{ at: 0, transform: 'rotate(-13deg)' }, { at: 10_500, transform: 'rotate(-13deg)' }, { at: 12_100, transform: 'rotate(12deg)' }, { at: DURATION, transform: 'rotate(12deg)' }])
-    art.querySelectorAll<SVGElement>('[data-spill]').forEach((element, index) => {
-      const start = 7150 + index * 510
-      cue(element, `spill-${index}`, [
-        { at: 0, transform: 'translate(579px, 392px) rotate(-30deg)', opacity: 0 },
-        { at: start, transform: 'translate(579px, 392px) rotate(-30deg)', opacity: 0 },
-        { at: start + 100, transform: 'translate(586px, 401px) rotate(0deg)', opacity: 1, easing: 'ease-in' },
-        { at: start + 410, transform: 'translate(611px, 432px) rotate(97deg)', opacity: 1, easing: 'ease-out' },
-        { at: start + 550, transform: 'translate(623px, 426px) rotate(133deg)', opacity: 1, easing: 'ease-in' },
-        { at: start + 820, transform: 'translate(638px, 471px) rotate(190deg)', opacity: 1 },
-        { at: start + 1400, transform: 'translate(665px, 485px) rotate(216deg)', opacity: 0 },
-        { at: DURATION, transform: 'translate(665px, 485px) rotate(216deg)', opacity: 0 },
-      ])
-    })
     cue(target('splash'), 'splash', [
       { at: 0, opacity: 0 }, { at: 7900, opacity: 0 }, { at: 8000, opacity: .85 }, { at: 8360, opacity: 0 },
       { at: 8910, opacity: 0 }, { at: 9020, opacity: .8 }, { at: 9380, opacity: 0 },

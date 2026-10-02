@@ -34,7 +34,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleButton` | M；`variant=primary`（primary/secondary/outline/ghost/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot。纯图标按钮须提供 label。只有允许完整动效时启用 Ripple。 |
 | `AppleLink` | `href`、`external`、`disabled` | default slot；external 使用新窗口并设置 `noopener noreferrer`。 |
 | `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=small`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
-| `AppleImage` | M；必填 `src`、`alt`；`preview=true`、`gallery: (string/AppleViewerImage)[]`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption slot；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，桌面触控板支持自由连续横滑、一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 不缩放，显示左右翻页按钮，跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
+| `AppleImage` | M；必填 `src`、`alt`；`preview=true`、`gallery: (string/AppleViewerImage)[]`、`carousel=false`、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、常显控件且保留自由滚动；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，桌面触控板支持自由连续横滑、一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 不缩放，显示左右翻页按钮，跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
 | `AppleContainer` | `width=1200`（number/string） | default slot；数字宽度按 px，宽度不会超过可用空间。 |
 | `AppleStack` | `direction=column`、`gap=16`、`align=stretch`、`wrap=true` | default slot；Flex 布局；数字 gap 按 px。 |
@@ -107,10 +107,8 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `AppleDivider` | `label`、`vertical` | default slot；水平或垂直分隔语义。 |
 | `AppleSteps` | `v-model: number=0`、`items`、`clickable`、`disabled`、`label` | `change(index)`；模型是从 0 开始的步骤位置，不是 item.value。 |
 | `AppleTimeline` | `items: AppleTimelineItem[]`、`orientation=vertical`（horizontal/vertical）、`label` | item slot `{item}`；选项增加 `time?` 和 `tone?: default/success/danger`。 |
-| `AppleCarousel` | `items: AppleSlide[]`、`v-model: number`、`label`、`disabled` | `change(index)`；item slot `{item,index,active}`；选项增加 src/alt；滚动吸附与按钮/键盘，不自动播放。 |
 | `ApplePullRefresh` | `v-model: boolean`、`disabled`、`threshold=72`、`label` | `refresh(done)`；default slot `{refresh,refreshing}`；在滚动顶部下拉，也提供刷新按钮；完成必须调用 done 或将 model 设为 false。 |
 | `AppleInfiniteScroll` | `loading`、`error: boolean/string`、`finished`、`disabled`、`distance=120`、`finishedText` | `load(done)`、`retry(done)`；default slot；IntersectionObserver 及手动加载按钮；完成后调用 done，或令 loading 从 true 回到 false。 |
-| `AppleSwipeCell` | `v-model: boolean`、`disabled`、`label` | default、actions slot `{close}`；横向手势或操作按钮展开，Escape 关闭。 |
 | `AppleBackTop` | `target: CSS selector=''`、`threshold=300`、`label`、`disabled` | `click(event)`；default slot；空 target 使用 window，达到滚动阈值才显示。 |
 | `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区。 |
 | `AppleMarquee` | `text`、`duration=24`、`paused`、`label` | default slot；duration 单位为秒；带暂停按钮；减少动态效果时停止连续滚动。 |

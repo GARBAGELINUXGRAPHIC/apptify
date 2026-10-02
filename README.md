@@ -4,7 +4,7 @@
 
 设计借鉴 Apple 网站的排版、留白、层次与交互节奏；不是 Apple 官方产品，也不声称全部控件都与 Apple 网站逐像素一致。表格、级联选择、验证码、下拉刷新等能力是在同一套视觉语言下的扩展。
 
-当前导出并注册 **69 个组件**：基础 9 个、表单 18 个、内容与移动交互 30 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 68 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
+当前导出并注册 **67 个组件**：基础 9 个、表单 18 个、内容与移动交互 28 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 66 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
 
 ## 本地运行与安装
 
@@ -363,3 +363,7 @@ npm run test:package
 ```
 
 命令是否通过以当前执行结果为准。`build` 生成组件库 `dist/`、类型声明与工作台 `site/`。源码中的行为测试不代替消费项目的业务测试与真机验证。
+
+### 图片轮播
+
+轮播统一使用 `AppleImage` 的 `carousel` 属性、`gallery` 与 `v-model:index`，支持 `item` 插槽；独立 `AppleCarousel` 与 `AppleSwipeCell` 已移除。

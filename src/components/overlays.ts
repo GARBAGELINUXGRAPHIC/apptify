@@ -1,3 +1,4 @@
+import { choosePopupSide, applyPopupSide } from '../core/popup-placement'
 import { isTouchDevice } from '../core/device'
 import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import {
@@ -448,6 +449,7 @@ export const ApplePopover = defineComponent({
   },
   methods: {
     setOpen(open: boolean) {
+      if (!open) this.position()
       if (open && this.disabled) return
       this.internalOpen = open
       this.$emit('update:modelValue', open)
@@ -466,14 +468,15 @@ export const ApplePopover = defineComponent({
       const popup = panel.getBoundingClientRect()
       const win = anchor.ownerDocument.defaultView!
       const gap = 8
+      const side = choosePopupSide(this.placement, rect, { width: panel.offsetWidth, height: panel.offsetHeight }, { width: win.innerWidth, height: win.innerHeight }, gap)
+      applyPopupSide(panel, side, 10)
       let left = this.align === 'end' ? rect.right - popup.width : this.align === 'center' ? rect.left + (rect.width - popup.width) / 2 : rect.left
       let top = rect.bottom + gap
-      if (this.placement === 'top') top = rect.top - popup.height - gap
-      if (this.placement === 'left' || this.placement === 'right') {
-        left = this.placement === 'left' ? rect.left - popup.width - gap : rect.right + gap
+      if (side === 'top') top = rect.top - popup.height - gap
+      if (side === 'left' || side === 'right') {
+        left = side === 'left' ? rect.left - popup.width - gap : rect.right + gap
         top = rect.top + (rect.height - popup.height) / 2
       }
-      if (top + popup.height > win.innerHeight - 8 && rect.top - popup.height - gap >= 8) top = rect.top - popup.height - gap
       this.left = Math.max(8, Math.min(left, win.innerWidth - popup.width - 8))
       this.top = Math.max(8, Math.min(top, win.innerHeight - popup.height - 8))
       this.positioned = true
