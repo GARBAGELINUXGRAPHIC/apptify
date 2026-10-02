@@ -1,3 +1,4 @@
+import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import { Teleport, defineComponent, h, markRaw, mergeProps, nextTick, type CSSProperties, type PropType } from 'vue'
 import { CircleAlert, LoaderCircle, X } from 'lucide-vue-next'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
@@ -514,7 +515,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         ref: 'panel', class: 'apple-image-viewer apple-image-viewer--mobile', role: 'dialog', tabindex: -1,
         'aria-label': '图片预览', 'aria-modal': this.isTop ? 'true' : undefined,
         'data-apple-motion': this.resolvedMotion, 'data-phase': this.phase, 'data-scale': this.scale,
-        style: { zIndex: 1200 + this.depth * 20 }, onWheel: this.zoom,
+        style: { zIndex: this.phase === 'closing' ? imageReturnZIndex(this.depth) : overlayZIndex(this.depth) }, onWheel: this.zoom,
       }), [
         h('div', { ref: 'backdrop', class: 'apple-viewer-backdrop', style: { opacity: this.backdropOpacity } }),
         h('div', {

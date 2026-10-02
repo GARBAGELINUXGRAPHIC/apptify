@@ -14,7 +14,7 @@ createApp({
   data: () => ({ open: false, index: Number(options.get('index') || 0), dialog: false, visible: true, motion: 'full' }),
   render() { return h(AppleProvider, { motion: this.motion }, () => h('main', [
     this.visible ? h(AppleImage, { id: 'compact', src: images[0].src, alt: images[0].alt, gallery: images, galleryLayout: 'compact' }) : null,
-    h(AppleImage, { id: 'tiled', src: images[0].src, alt: images[0].alt, gallery: images, galleryLayout: 'tiled', fit: 'contain', aspectRatio: '3/2' }),
+    h(AppleImage, { id: 'tiled', src: images[0].src, alt: images[0].alt, gallery: images, galleryLayout: options.get('layout') || 'tiled', galleryShape: options.get('shape') || 'natural', fit: 'contain', aspectRatio: '3/2' }),
     h('button', { id: 'standalone', onClick: () => { this.open = true } }, '独立预览'),
     h(AppleImageViewer, { modelValue: this.open, 'onUpdate:modelValue': value => { this.open = value }, index: this.index, 'onUpdate:index': value => { this.index = value }, images: viewerImages, loop: options.has('loop') }),
     h('button', { id: 'remove', onClick: () => { this.visible = false } }, '卸载图片组'),

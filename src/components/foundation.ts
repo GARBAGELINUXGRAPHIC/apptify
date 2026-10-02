@@ -82,7 +82,7 @@ export const AppleImage = defineComponent({
   name: 'AppleImage', props: {
     ...motionProps, src: { type: String, required: true }, alt: { type: String, required: true },
     preview: { type: Boolean, default: true }, gallery: { type: Array as PropType<Array<string | AppleViewerImage>>, default: () => [] },
-    galleryLayout: { type: String as PropType<'compact' | 'tiled'>, default: 'compact' },
+    galleryLayout: { type: String as PropType<'compact' | 'tiled' | 'tiled-wrap'>, default: 'compact' },
     galleryShape: { type: String as PropType<'natural' | 'square'>, default: 'natural' },
     index: { type: Number, default: 0 }, squared: Boolean, aspectRatio: { type: [String, Number], default: '4/3' },
     fit: { type: String as PropType<'contain' | 'cover'>, default: 'cover' },
@@ -137,6 +137,10 @@ export const AppleImage = defineComponent({
       if (!image || !reveal || !this.grouped) return image
       const box = this.$refs.gallery as HTMLElement | undefined
       const trigger = image.parentElement
+      if (this.galleryLayout === 'tiled-wrap') {
+        trigger?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+        return image
+      }
       if (box && trigger) {
         // Center the destination, then clamp to both ends so the strip never exposes a gap.
         box.scrollLeft = clamp(trigger.offsetLeft - (box.clientWidth - trigger.offsetWidth) / 2, 0, box.scrollWidth - box.clientWidth)
@@ -149,6 +153,11 @@ export const AppleImage = defineComponent({
       const box = this.$refs.gallery as HTMLElement | undefined, image = this.thumbnails.get(index)
       if (!box || !image?.parentElement) return
       const trigger = image.parentElement
+      if (this.galleryLayout === 'tiled-wrap') {
+        this.changed(index)
+        trigger.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+        return
+      }
       const left = clamp(trigger.offsetLeft - (box.clientWidth - trigger.offsetWidth) / 2, 0, box.scrollWidth - box.clientWidth)
       this.changed(index)
       const ctx = this.apple as AppleContext | null
@@ -169,7 +178,7 @@ export const AppleImage = defineComponent({
       if (index !== this.previewIndex) this.changed(index)
     },
     galleryPointerDown(event: PointerEvent) {
-      if (event.pointerType !== 'mouse' || event.button !== 0 || this.previewing) return
+      if (event.pointerType !== 'mouse' || event.button !== 0 || this.previewing || this.galleryLayout === 'tiled-wrap') return
       const box = event.currentTarget as HTMLElement
       this.galleryDrag = { id: event.pointerId, x: event.clientX, left: box.scrollLeft, moved: false, snap: box.style.scrollSnapType }
     },
@@ -221,7 +230,7 @@ export const AppleImage = defineComponent({
       this.galleryLoaded[index] = true; this.loaded = true
     },
     tileRatio(image: AppleViewerImage): number {
-      if (this.galleryShape === 'square') return 1
+      if (this.squared || this.galleryShape === 'square') return 1
       const size = this.gallerySizes[image.src] ?? image
       return size.width && size.height ? size.width / size.height : 1
     },
@@ -230,13 +239,13 @@ export const AppleImage = defineComponent({
       return h(this.preview && !failed ? 'button' : 'div', {
         key: `${index}:${image.src}`, class: 'apple-image__trigger', type: this.preview && !failed ? 'button' : undefined,
         'aria-label': this.preview && !failed ? `放大图片：${image.alt ?? `图片 ${index + 1}`}` : undefined,
-        style: this.grouped && this.galleryLayout === 'tiled' ? { aspectRatio: String(this.tileRatio(image)) } : undefined,
+        style: this.grouped && this.galleryLayout !== 'compact' ? { aspectRatio: String(this.tileRatio(image)) } : undefined,
         onClick: () => this.previewImage(index),
       }, failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', {
         ref: (element: unknown) => { if (element) this.thumbnails.set(index, element as HTMLImageElement); else this.thumbnails.delete(index) },
         src: image.src, alt: image.alt ?? '', loading: this.grouped ? 'eager' : 'lazy', draggable: false,
         width: image.width, height: image.height,
-        style: { objectFit: this.fit },
+        style: { objectFit: this.squared || this.galleryShape === 'square' ? 'cover' : this.fit },
         onError: () => { if (this.grouped) this.galleryFailed[index] = true; else this.failed = true },
         onLoad: (event: Event) => this.loadedThumbnail(image.src, index, event.target as HTMLImageElement),
       })])
@@ -246,11 +255,11 @@ export const AppleImage = defineComponent({
     const index = clamp(this.previewIndex, 0, this.images.length - 1)
     const ctx = this.apple as AppleContext | null
     const mode = resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced)
-    const ratio = this.squared ? '1' : String(this.aspectRatio)
+    const ratio = this.squared || this.galleryShape === 'square' ? '1' : String(this.aspectRatio)
     return h('figure', {
       class: ['apple-image', { 'apple-image--loaded': this.loaded && !this.failed && !this.open, 'apple-image--group': this.grouped, 'apple-image--mobile': this.mobile }],
       'data-apple-motion': mode, 'data-gallery-layout': this.grouped ? this.galleryLayout : undefined,
-      'data-gallery-shape': this.grouped && this.galleryLayout === 'tiled' ? this.galleryShape : undefined, 'data-index': index,
+      'data-gallery-shape': this.grouped ? this.squared ? 'square' : this.galleryShape : undefined, 'data-index': index,
       style: this.grouped ? undefined : { aspectRatio: ratio },
     }, [
       h('div', { class: 'apple-image__surface', style: this.grouped && this.galleryLayout === 'compact' ? { aspectRatio: ratio } : undefined }, [
@@ -287,7 +296,7 @@ export const AppleSearch = defineComponent({
 })
 
 export const AppleContainer = defineComponent({ name: 'AppleContainer', props: { width: { type: [Number, String], default: 1200 } }, render() { return h('div', { class: 'apple-container', style: { maxWidth: typeof this.width === 'number' ? `${this.width}px` : this.width } }, this.$slots.default?.()) } })
-export const AppleStack = defineComponent({ name: 'AppleStack', props: { direction: { type: String as PropType<'row' | 'column'>, default: 'column' }, gap: { type: [String, Number], default: 16 }, align: { type: String, default: 'stretch' }, wrap: { type: Boolean, default: true } }, render() { return h('div', { class: 'apple-stack', style: { flexDirection: this.direction, gap: typeof this.gap === 'number' ? `${this.gap}px` : this.gap, alignItems: this.align, flexWrap: this.wrap ? 'wrap' : 'nowrap' } as CSSProperties }, this.$slots.default?.()) } })
+export const AppleStack = defineComponent({ name: 'AppleStack', props: { direction: { type: String as PropType<'row' | 'column'>, default: 'column' }, gap: { type: [String, Number], default: 16 }, align: { type: String, default: 'stretch' }, wrap: { type: Boolean, default: true } }, render() { return h('div', { class: 'apple-stack', style: { flexDirection: this.direction, gap: typeof this.gap === 'number' ? `${this.gap}px` : this.gap, alignItems: this.align, flexWrap: this.direction === 'row' && this.wrap ? 'wrap' : 'nowrap' } as CSSProperties }, this.$slots.default?.()) } })
 export const AppleGrid = defineComponent({ name: 'AppleGrid', props: { min: { type: Number, default: 240 }, gap: { type: Number, default: 20 } }, render() { return h('div', { class: 'apple-grid', style: { gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${this.min}px), 1fr))`, gap: `${this.gap}px` } }, this.$slots.default?.()) } })
 
 export const foundationComponents = { AppleProvider, AppleButton, AppleLink, AppleCard, AppleImage, AppleSearch, AppleContainer, AppleStack, AppleGrid }

@@ -7,12 +7,12 @@ export interface AppleTheme { scheme: 'light' | 'dark'; tokens: ThemeTokens }
 
 const light: ThemeTokens = {
   bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', text: '#1d1d1f', secondary: '#6e6e73',
-  border: '#d2d2d7', accent: '#0071e3', 'accent-text': '#ffffff', danger: '#c93830', success: '#248245',
+  border: '#d2d2d7', accent: '#0071e3', 'accent-text': '#ffffff', danger: '#c93830', success: '#34c759',
   warning: '#ffaa00', shadow: '0 8px 28px rgb(0 0 0 / 0.07)', radius: '8px',
 }
 export const builtInThemes: Record<string, AppleTheme> = {
   light: { scheme: 'light', tokens: light },
-  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', accent: '#2997ff', danger: '#ff716b', success: '#66d58a', warning: '#eac25b', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
+  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', accent: '#2997ff', danger: '#ff716b', success: '#34c759', warning: '#eac25b', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
   graphite: { scheme: 'light', tokens: { ...light, bg: '#f3f4f4', 'surface-alt': '#e9eceb', accent: '#3f5152', 'accent-text': '#ffffff' } },
   rose: { scheme: 'light', tokens: { ...light, bg: '#faf7f8', 'surface-alt': '#f4edf0', accent: '#a83b65', 'accent-text': '#ffffff' } },
 }

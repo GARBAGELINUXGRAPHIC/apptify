@@ -175,7 +175,7 @@ test('stacked dialogs close only the top layer and retain the scroll lock and fo
 
 test('image lightbox loads real images, zooms, navigates, and returns focus after Escape', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
-  const trigger = page.locator('.media-specimen .apple-image__trigger')
+  const trigger = page.locator('.media-specimen').getByRole('button', { name: '放大图片：山间湖泊和木屋', exact: true })
   await trigger.scrollIntoViewIfNeeded()
   await trigger.click()
   const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })

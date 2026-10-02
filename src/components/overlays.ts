@@ -1,3 +1,4 @@
+import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import {
   Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, markRaw, mergeProps, nextTick,
   type Component, type PropType, type VNode,
@@ -265,7 +266,7 @@ function createModal(name: string, kind: ModalKind) {
       const backdrop = this.modelValue ? h('div', {
         class: ['apple-overlay-backdrop', `apple-overlay-backdrop--${kind}`],
         'data-apple-motion': this.resolvedMotion,
-        style: { zIndex: 1200 + this.depth * 20, '--apple-overlay-duration': `${durationOf(this.resolvedMotion)}ms` },
+        style: { zIndex: overlayZIndex(this.depth), '--apple-overlay-duration': `${durationOf(this.resolvedMotion)}ms` },
         onClick: (event: MouseEvent) => { if (event.target === event.currentTarget && this.isTop) this.dismiss('backdrop') },
       }, [panel]) : null
       return portal(this, presence('apple-modal-presence', this.resolvedMotion, backdrop, this.afterClose))
@@ -526,7 +527,7 @@ export const ApplePopover = defineComponent({
       'data-apple-motion': motion,
       class: ['apple-popover', this.panelClass],
       style: {
-        left: `${this.left}px`, top: `${this.top}px`, zIndex: 1200 + this.depth * 20,
+        left: `${this.left}px`, top: `${this.top}px`, zIndex: overlayZIndex(this.depth),
         width: typeof this.width === 'number' ? `${this.width}px` : this.width,
         '--apple-overlay-duration': `${durationOf(motion)}ms`,
         visibility: this.positioned ? 'visible' : 'hidden',
@@ -791,7 +792,7 @@ export const AppleImageViewer = defineComponent({
     const viewer = this.modelValue ? h('div', mergeProps(this.$attrs, {
       ref: 'panel', class: 'apple-image-viewer', role: 'dialog', tabindex: -1,
       'aria-label': '图片预览', 'aria-modal': this.isTop ? 'true' : undefined,
-      'data-apple-motion': motion, style: { zIndex: 1200 + this.depth * 20, '--apple-overlay-duration': `${durationOf(motion)}ms` },
+      'data-apple-motion': motion, style: { zIndex: overlayZIndex(this.depth), '--apple-viewer-return-z': imageReturnZIndex(this.depth), '--apple-overlay-duration': `${durationOf(motion)}ms` },
       onWheel: this.zoom,
       onPointerdownCapture: (event: PointerEvent) => { this.pointerStart = { x: event.clientX, y: event.clientY } },
     }), [

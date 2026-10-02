@@ -110,17 +110,32 @@ button { font: inherit; }
 .catalog-item code { font-size: 10px; color: var(--apple-secondary); overflow-wrap: anywhere; }
 .catalog-item > svg { position: absolute; right: 18px; top: 26px; color: var(--apple-secondary); }
 .detail-preview { background: var(--apple-surface); border-radius: 8px; padding: 40px; min-height: 280px; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; }
-.detail-preview .component-demo { width: 100%; max-width: 720px; min-width: 0; }
+.detail-preview .component-demo { width: 100%; max-width: 720px; min-width: 0; margin-inline: auto; }
+.detail-preview .component-demo--compact { max-width: 420px; }
+.detail-preview .component-demo--media { max-width: 560px; }
+.component-demo > .apple-stack > .apple-button,
+.component-demo .apple-form__fields > .apple-button,
+.component-demo > .apple-stack > .apple-provider > .apple-stack > .apple-button { align-self: flex-start; }
+.component-demo .apple-form__fields { gap: 20px; }
+.component-demo .apple-form__fields > .apple-button { justify-self: start; }
+.component-demo .apple-grid { align-items: start; }
+.demo-layout-tile { display: flex; flex-direction: column; justify-content: center; gap: 12px; min-height: 112px; padding: 20px; border: 1px solid var(--apple-border); border-radius: 10px; background: var(--apple-surface-alt); }
+.demo-layout-tile > span { color: var(--apple-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+.demo-layout-tile > strong { font-size: 16px; font-weight: 550; }
+.component-demo > .apple-stack > .apple-provider { border-radius: 10px; }
+.component-demo[data-component="AppleSpinner"] .apple-spinner { align-self: flex-start; }
+.component-demo[data-component="AppleDivider"] .apple-divider:not(.apple-divider--vertical) { width: 100%; }
+.component-demo[data-component="AppleSkeleton"] .apple-skeleton { width: 100%; }
+.component-demo[data-component="ApplePopover"] p { margin: 0 0 16px; }
 .component-demo > .apple-field { max-width: 420px; }
 .component-demo > .apple-form { max-width: 420px; }
-.component-demo .apple-form .apple-field { margin-bottom: 18px; }
+.component-demo .apple-form .apple-field { margin-bottom: 0; }
 .component-demo > .apple-image { max-width: 560px; }
 .demo-image { max-width: 560px; }
-.demo-image-layout { display: block; }
 .demo-product { max-width: 330px; margin-inline: auto; }
 .demo-product .apple-image { margin-top: 10px; }
-.demo-copy { padding: 24px 0; color: var(--apple-secondary); }
-.demo-slide { width: 100%; height: 260px; object-fit: cover; }
+.demo-copy { margin: 0; padding: 8px 0; color: var(--apple-secondary); }
+.demo-slide { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; }
 .detail-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; font-size: 12px; color: var(--apple-secondary); margin-bottom: 60px; }
 .detail-footer > span { overflow-wrap: anywhere; }
 .code-view { border-radius: 8px; overflow: hidden; background: var(--apple-surface); padding: 22px; margin-bottom: 20px; }
@@ -172,7 +187,7 @@ pre { padding: 20px; overflow: auto; background: var(--apple-surface-alt); borde
   .catalog-grid { gap: 11px; } .catalog-item { padding: 18px 14px; } .catalog-item strong { font-size: 14px; } .catalog-item code { font-size: 9px; } .catalog-item > svg { right: 10px; top: 20px; }
   .detail-preview { padding: 20px 16px; } .detail-footer { margin-bottom: 30px; font-size: 10px; } .detail-footer .apple-button { font-size: 12px; padding-inline: 10px; }
   .more-components { align-items: flex-start; flex-direction: column; gap: 9px; padding-block: 28px; } .more-components .apple-button { padding-left: 0; } .type-large { font-size: 29px; } .motion-samples { grid-template-columns: 1fr; }
-  .code-view { padding: 15px; } pre { padding: 15px; font-size: 11px; } .demo-slide { height: 200px; }
+  .code-view { padding: 15px; } pre { padding: 15px; font-size: 11px; }
 }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } }
 .sidebar { padding-inline: 0; }

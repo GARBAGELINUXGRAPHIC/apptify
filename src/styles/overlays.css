@@ -31,7 +31,7 @@
 .apple-snackbar-position { min-width: 0; }
 .apple-snackbar { display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 12px 12px 12px 16px; width: 100%; border: 1px solid var(--apple-border, #d2d2d7); border-radius: 8px; background: var(--apple-surface, #fff); color: var(--apple-text, #1d1d1f); box-shadow: var(--apple-shadow, 0 4px 24px rgb(0 0 0 / 12%)); pointer-events: auto; }
 .apple-snackbar-symbol { flex-shrink: 0; color: var(--apple-accent, #0071e3); }
-.apple-snackbar--success .apple-snackbar-symbol { color: var(--apple-success, #248a3d); }
+.apple-snackbar--success .apple-snackbar-symbol { color: var(--apple-success, #34c759); }
 .apple-snackbar--warning .apple-snackbar-symbol { color: var(--apple-warning, #af7000); }
 .apple-snackbar--danger .apple-snackbar-symbol, .apple-snackbar--error .apple-snackbar-symbol { color: var(--apple-danger, #d93025); }
 .apple-snackbar-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
@@ -132,3 +132,5 @@
   .apple-snackbar-stack { right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); width: calc(100vw - 24px); }
   .apple-viewer-prev, .apple-viewer-next { width: 40px; height: 44px; }
 }
+
+.apple-image-viewer.apple-viewer-presence-leave-active { z-index: var(--apple-viewer-return-z, 30) !important; }
