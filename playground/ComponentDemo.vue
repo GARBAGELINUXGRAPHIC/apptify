@@ -11,7 +11,7 @@
     <apple-stack v-else-if="name === 'AppleLink'" direction="row" align="center">
       <apple-link href="https://www.apple.com.cn/" external>Apple 官网</apple-link>
       <apple-link href="https://www.apple.com.cn/accessibility/" external>辅助功能</apple-link>
-      <apple-link disabled>暂不可用</apple-link>
+      <apple-link disabled external>暂不可用</apple-link>
     </apple-stack>
     <apple-stack v-else-if="name === 'AppleSearch'">
       <apple-search v-model="searchText" label="搜索设置" placeholder="搜索设置" @search="notify(searchText ? `正在搜索：${searchText}` : '显示全部设置')" />
@@ -58,7 +58,7 @@
     <apple-stack v-else-if="name === 'AppleAvatar'"><apple-slider v-model="avatarSize" label="头像尺寸" :min="24" :max="72" :step="8" /><apple-stack direction="row" align="center"><apple-avatar name="林初" :size="avatarSize" /><apple-avatar name="Alex" :size="avatarSize" /><apple-avatar name="Taylor" :size="avatarSize" square /></apple-stack></apple-stack>
     <apple-stack v-else-if="name === 'AppleAvatarGroup'"><apple-stepper v-model="avatarMax" label="显示人数" :min="1" :max="5" /><apple-avatar-group :items="people" :max="avatarMax" :size="44" label="设计团队" /></apple-stack>
     <apple-stack v-else-if="name === 'AppleBadge'" direction="row" align="center"><apple-badge :value="unread"><apple-button variant="secondary" :icon="icons.Bell" @click="unread++">新消息</apple-button></apple-badge><apple-button variant="ghost" :disabled="!unread" @click="unread = 0">全部已读</apple-button></apple-stack>
-    <apple-stack v-else-if="name === 'AppleTag'" direction="row"><apple-tag tone="success">已完成</apple-tag><apple-tag tone="info">进行中</apple-tag><apple-tag tone="warning">待确认</apple-tag><apple-tag v-if="tag" label="设计系统" closable @close="tag = false">设计系统</apple-tag><apple-button v-else variant="ghost" :icon="icons.Plus" @click="tag = true">添加标签</apple-button></apple-stack>
+    <apple-stack v-else-if="name === 'AppleTag'" class="demo-tag-row" direction="row" align="center" :gap="10"><apple-tag>默认标签</apple-tag><apple-tag tone="success">已完成</apple-tag><apple-tag tone="info">进行中</apple-tag><apple-tag tone="warning">待确认</apple-tag><apple-tag v-if="tag" label="设计系统" closable @close="tag = false">设计系统</apple-tag><apple-button v-else variant="ghost" :icon="icons.Plus" @click="tag = true">添加标签</apple-button></apple-stack>
     <apple-stack v-else-if="name === 'AppleDivider'"><apple-switch v-model="dividerVertical" label="纵向分隔" /><apple-stack :direction="dividerVertical ? 'row' : 'column'" :gap="0" align="center"><span>配送到家</span><apple-divider :vertical="dividerVertical" :label="dividerVertical ? undefined : '更多选择'" /><span>到店取货</span></apple-stack></apple-stack>
     <apple-input v-else-if="name === 'AppleInput'" v-model="text" label="姓名" placeholder="怎么称呼你" clearable />
     <apple-textarea v-else-if="name === 'AppleTextarea'" v-model="bio" label="个人简介" placeholder="写下你的想法" :maxlength="160" counter />
@@ -85,6 +85,7 @@
       <template #default="field"><input v-bind="field" v-model="website" class="apple-control" type="url" placeholder="https://example.com" /></template>
     </apple-form-field>
     <apple-navibar v-else-if="name === 'AppleNavibar'" v-model="tab" brand="Apptify" :fixed="false" :items="tabs" label="示例导航"><template #actions><apple-button variant="ghost" :icon="icons.Bell" icon-only label="通知" @click="notify('暂无新通知')" /></template></apple-navibar>
+    <apple-aside v-else-if="name === 'AppleAside'" :hide-on-preview="false" aria-label="示例侧栏"><apple-list v-model="setting" :items="settings" selectable /></apple-aside>
     <apple-tabs v-else-if="name === 'AppleTabs'" v-model="tab" :items="tabs"><template #default="{ value }"><p class="demo-copy">{{ value === 'overview' ? '这里是产品概览。' : value === 'spec' ? '这里是技术规格。' : '你的服务与支持。' }}</p></template></apple-tabs>
     <apple-tab-bar v-else-if="name === 'AppleTabBar'" v-model="tab" :items="tabs"><template #default="{ value }"><p class="demo-copy">{{ value === 'overview' ? '这里是产品概览。' : value === 'spec' ? '这里是技术规格。' : '你的服务与支持。' }}</p></template></apple-tab-bar>
     <apple-breadcrumbs v-else-if="name === 'AppleBreadcrumbs'" :items="[{label:'组件',value:'home'},{label:'导航',value:'nav'},{label:'面包屑',value:'current'}]" @click="item=>$emit('navigate',item.value==='home'?'全部组件':'导航')" />
@@ -125,10 +126,17 @@
     <apple-pull-refresh v-else-if="name === 'ApplePullRefresh'" @refresh="refresh"><apple-list :items="[{label:'最新内容',value:'latest',description:refreshText},{label:'最近更新',value:'recent',description:'所有内容已同步'}]" /></apple-pull-refresh>
     <apple-infinite-scroll v-else-if="name === 'AppleInfiniteScroll'" :finished="itemsCount >= 12" @load="loadMore"><apple-list :items="Array.from({length:itemsCount}, (_, i) => ({label:`灵感收藏 ${i+1}`, value:i, description:'刚刚更新'}))" /></apple-infinite-scroll>
     <apple-swipe-cell v-else-if="name === 'AppleSwipeCell'" label="消息操作"><apple-list :items="[{label:'新的设计灵感',value:'new',description:'今天 09:41'}]" /><template #actions="{ close }"><apple-button variant="danger" @click="notify('消息已删除'); close()">删除</apple-button></template></apple-swipe-cell>
-    <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.ArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" /></template>
-    <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-floating-group :threshold="0"><apple-button icon-only :icon="icons.Plus" label="添加收藏" @click="notify('已加入收藏')" /><apple-button variant="secondary" icon-only :icon="icons.Bell" label="查看通知" @click="notify('暂无新通知')" /></apple-floating-group></template>
+    <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.ArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" :fixed="false" /></template>
+    <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-provider class="demo-floating-preview"><apple-floating-group :threshold="0"><apple-button icon-only :icon="icons.Plus" label="添加收藏" @click="notify('已加入收藏')" /><apple-button variant="secondary" icon-only :icon="icons.Bell" label="查看通知" @click="notify('暂无新通知')" /></apple-floating-group></apple-provider></template>
     <apple-stack v-else-if="name === 'AppleAutoSize'"><apple-switch v-model="checked" label="显示详情" /><apple-auto-size><apple-list :items="checked ? settings : settings.slice(0,1)" selectable /></apple-auto-size></apple-stack>
-    <apple-stack v-else-if="name === 'AppleTransition'"><apple-segmented-control v-model="period" :items="periods" label="统计周期" /><apple-transition name="slide-x"><apple-statistic :key="period" :value="period==='day'?428:period==='week'?2996:12840" label="访问次数" /></apple-transition></apple-stack>
+    <apple-stack v-else-if="name === 'AppleTransition'">
+      <apple-segmented-control v-model="period" :items="periods" label="统计周期" />
+      <div class="demo-transition-stage" :class="{ 'is-backward': transitionBackward }">
+        <apple-transition name="slide-x" mode="default" :appear="false">
+          <apple-statistic :key="period" :value="period==='day'?428:period==='week'?2996:12840" label="访问次数" />
+        </apple-transition>
+      </div>
+    </apple-stack>
     <apple-marquee v-else-if="name === 'AppleMarquee'" text="你的新设备已准备就绪，今天就开始探索更多可能。" />
   </div>
 </template>
@@ -142,7 +150,7 @@ export default defineComponent({
   data() { return {
     icons: markRaw({ Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
     searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageViewer: false, viewerIndex: 0, imageLayout: 'compact' as 'compact' | 'tiled' | 'tiled-wrap', imageSquare: false,
-    virtualTable:false, virtualRows:markRaw(Array.from({length:5000},(_,i)=>({id:i+1,name:`组件 ${String(i+1).padStart(4,'0')}`,category:i%2?'基础':'表单',status:'已发布',updated:'09-26'}))),
+    virtualTable: false, transitionBackward: false,
     timelineDirection:'vertical' as 'vertical'|'horizontal', skeletonVariant:'text' as 'text'|'avatar'|'card'|'list'|'table'|'image', skeletonVariants:[{label:'文本',value:'text'},{label:'头像',value:'avatar'},{label:'卡片',value:'card'},{label:'列表',value:'list'},{label:'表格',value:'table'},{label:'图片',value:'image'}],
     dateFormat:'YYYY/MM/DD HH:mm', dateFormats:[{label:'年 / 月',value:'YYYY/MM'},{label:'年 / 月 / 日',value:'YYYY/MM/DD'},{label:'日期与时分',value:'YYYY/MM/DD HH:mm'},{label:'日期与时分秒',value:'YYYY/MM/DD HH:mm:ss'},{label:'时分',value:'HH:mm'},{label:'时分秒',value:'HH:mm:ss'}],
     previewThemes: [{label:'浅色',value:'light'},{label:'深色',value:'dark'},{label:'石墨',value:'graphite'},{label:'玫瑰',value:'rose'}], layoutItems: ['概览', '设计', '支持'],
@@ -175,12 +183,18 @@ export default defineComponent({
     timers: [] as ReturnType<typeof setTimeout>[],
   } },
   computed: {
+    virtualRows() { return this.virtualTable ? Array.from({length:5000},(_,i)=>({id:i+1,name:`组件 ${String(i+1).padStart(4,'0')}`,category:i%2?'基础':'表单',status:'已发布',updated:'09-26'})) : [] },
     demoClass(): string {
       const compact = ['AppleSearch', 'AppleProvider', 'AppleAvatar', 'AppleAvatarGroup', 'AppleInput', 'AppleTextarea', 'AppleSelect', 'AppleAutocomplete', 'AppleCheckbox', 'AppleRadioGroup', 'AppleSwitch', 'AppleSlider', 'AppleStepper', 'AppleSegmentedControl', 'AppleDatePicker', 'AppleColorPicker', 'AppleUpload', 'AppleOtpInput', 'AppleCascader', 'AppleRate', 'AppleForm', 'AppleFormField', 'AppleProgress', 'AppleSpinner', 'AppleStatistic', 'AppleTransition']
       const media = ['AppleImage', 'AppleImageViewer', 'AppleCarousel']
       return compact.includes(this.name) ? 'component-demo--compact' : media.includes(this.name) ? 'component-demo--media' : 'component-demo--wide'
     },
     searchResults() { return this.settings.filter(item => `${item.label} ${item.description}`.includes(this.searchText.trim())) },
+  },
+  watch: {
+    period(next: string, previous: string) {
+      this.transitionBackward = this.periods.findIndex(item => item.value === next) < this.periods.findIndex(item => item.value === previous)
+    },
   },
   beforeUnmount() { this.timers.forEach(clearTimeout) },
   methods: {
@@ -199,3 +213,24 @@ export default defineComponent({
   },
 })
 </script>
+
+<style scoped>
+.demo-tag-row { width: 100%; max-width: 100%; }
+.component-demo > .demo-tag-row > :deep(.apple-button) { min-height: 44px; padding: 7px 10px; font-size: 11px; font-weight: 500; line-height: 1.5; }
+.demo-tag-row :deep(.apple-button__content) { gap: 4px; }
+.demo-tag-row :deep(.apple-button__content > svg) { width: 13px; height: 13px; }
+.component-demo > .demo-tag-row > :deep(.apple-tag),
+.component-demo > .demo-tag-row > :deep(.apple-button) { align-self: center; max-width: 100%; }
+
+.demo-transition-stage { display: grid; min-width: 0; overflow: hidden; --demo-slide-distance: 24px; }
+.demo-transition-stage.is-backward { --demo-slide-distance: -24px; }
+.demo-transition-stage :deep(.apple-statistic) { grid-area: 1 / 1; min-width: 0; }
+.demo-transition-stage :deep(.apple-slide-x-enter-active),
+.demo-transition-stage :deep(.apple-slide-x-leave-active) { transition: opacity var(--apple-duration) var(--apple-ease), transform var(--apple-duration) var(--apple-ease); }
+.demo-transition-stage :deep(.apple-slide-x-enter-from) { opacity: 0; transform: translateX(var(--demo-slide-distance)); }
+.demo-transition-stage :deep(.apple-slide-x-leave-to) { opacity: 0; transform: translateX(calc(-1 * var(--demo-slide-distance))); }
+@media (prefers-reduced-motion: reduce) {
+  .demo-transition-stage :deep(.apple-slide-x-enter-from),
+  .demo-transition-stage :deep(.apple-slide-x-leave-to) { transform: none; }
+}
+</style>

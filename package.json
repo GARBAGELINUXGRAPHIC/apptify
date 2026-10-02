@@ -1,12 +1,13 @@
 {
   "name": "apptify",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "An Apple-inspired, responsive Vue 3 component library with Vuetify ripple.",
   "type": "module",
   "license": "MIT",
   "files": [
     "dist",
-    "docs"
+    "docs",
+    "tooling"
   ],
   "main": "./dist/apptify.js",
   "module": "./dist/apptify.js",
@@ -16,7 +17,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/apptify.js"
     },
-    "./style.css": "./dist/apptify.css"
+    "./style.css": "./dist/apptify.css",
+    "./vite": {
+      "types": "./tooling/vite.d.ts",
+      "import": "./tooling/vite.js"
+    }
   },
   "sideEffects": [
     "**/*.css"
@@ -31,6 +36,7 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "peerDependencies": {
+    "vite-plugin-pages": "^0.32.4",
     "vue": "^3.5.0",
     "vuetify": "^3.9.0"
   },
@@ -47,9 +53,16 @@
     "jsdom": "^26.0.0",
     "typescript": "^5.8.2",
     "vite": "^6.3.4",
+    "vite-plugin-pages": "^0.32.5",
     "vitest": "^4.1.11",
     "vue": "^3.5.13",
+    "vue-router": "^4.6.4",
     "vue-tsc": "^2.2.8",
     "vuetify": "^3.9.0"
+  },
+  "peerDependenciesMeta": {
+    "vite-plugin-pages": {
+      "optional": true
+    }
   }
 }

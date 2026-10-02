@@ -1,0 +1,16 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Steps and pagination controls</title><style>body{margin:0}main{padding:18px;max-width:960px;box-sizing:border-box}section{margin-bottom:32px}</style></head><body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleSteps, ApplePagination, AppleButton } from '/src/index.ts'
+createApp({
+ data:()=>({page:12,total:250,disabled:false,commits:0,step:1,motion:new URLSearchParams(location.search).get('motion') || 'full'}),
+ render(){return h(AppleProvider,{motion:this.motion},()=>h('main',[
+  h('section',{id:'pagination'},h(ApplePagination,{modelValue:this.page,total:this.total,disabled:this.disabled,'onUpdate:modelValue':v=>this.page=v,onChange:()=>this.commits++})),
+  h('output',{id:'page'},String(this.page)),h('output',{id:'commits'},String(this.commits)),
+  h('section',{id:'steps'},h(AppleSteps,{modelValue:this.step,clickable:true,disabled:this.disabled,items:[{label:'选择产品',value:0},{label:'确认信息',value:1},{label:'完成',value:2,disabled:true}],'onUpdate:modelValue':v=>this.step=v})),
+  h(AppleButton,{id:'disable',onClick:()=>this.disabled=!this.disabled},()=> '切换禁用'),
+  h(AppleButton,{id:'shrink',onClick:()=>this.total=30},()=> '缩减页数'),
+  h(AppleButton,{id:'motion-none',onClick:()=>this.motion='none'},()=> '关闭动效'),
+  h(AppleButton,{id:'empty',onClick:()=>this.total=0},()=> '清空页数'),
+ ]))}
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

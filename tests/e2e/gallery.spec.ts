@@ -1,20 +1,9 @@
+import { catalog } from '../../playground/catalog'
+import { activeCard, openComponent } from './component-navigation'
 import { expect, test, webkit, type Page } from '@playwright/test'
 import { swipeImage } from './image-gestures'
 
-async function openComponent(page: Page, tag: string) {
-  const navigationToggle = page.getByRole('button', { name: '打开组件导航', exact: true })
-  if (await navigationToggle.isVisible() && !await page.locator('.sidebar').evaluate(element => element.classList.contains('is-open'))) {
-    await navigationToggle.click()
-  }
-  await page.getByRole('searchbox', { name: '搜索组件' }).fill(tag)
-  if (await navigationToggle.isVisible() && await page.locator('.sidebar').evaluate(element => element.classList.contains('is-open'))) {
-    await navigationToggle.click()
-  }
-  await page.locator('.catalog-item').filter({ has: page.getByText(tag, { exact: true }) }).click()
-  await expect(page.locator('.gallery-page')).toHaveCount(1)
-  await expect(page.locator('.detail-preview')).toBeVisible()
-  await expect(page.locator('.detail-footer')).toContainText(`<${tag} />`)
-}
+
 
 async function expectNoDocumentOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
@@ -30,7 +19,7 @@ async function expectNoDocumentOverflow(page: Page) {
 async function loadOverviewImages(page: Page) {
   const touch = await page.evaluate(() => navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches)
   await expect(page.locator('.media-specimen .apple-image')).toHaveClass(touch ? /apple-image--mobile/ : /^(?!.*apple-image--mobile)/)
-  const images = page.locator('.overview .apple-image img')
+  const images = page.locator('.home-page .apple-image img')
   expect(await images.count()).toBeGreaterThanOrEqual(1)
   for (const image of await images.all()) {
     await image.scrollIntoViewIfNeeded()
@@ -44,7 +33,7 @@ async function loadOverviewImages(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: '组件总览。' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /让界面自然，\s*让细节动人。/ })).toBeVisible()
 })
 
 for (const viewport of [
@@ -60,54 +49,40 @@ for (const viewport of [
     await expectNoDocumentOverflow(page)
     await expect(page.locator('.specimen-product')).toHaveCount(0)
     await expect(page.getByRole('button', { name: '继续探索', exact: true })).toBeVisible()
-    const screenshot = await page.screenshot({ path: `artifacts/${viewport.name}.png`, fullPage: true, animations: 'disabled' })
+    const screenshot = await page.screenshot({ path: `/tmp/apptify-checks/${viewport.name}.png`, fullPage: false, animations: 'disabled' })
     expect(screenshot.byteLength).toBeGreaterThan(30_000)
   })
 }
 
-test('theme changes immediately without navigation and supports named themes', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 })
-  const provider = page.locator('.apple-provider').first()
+test('theme changes immediately on the settings route and supports named themes', async ({ page }) => {
+  await page.goto('/settings')
+  const provider = page.locator('#app > .apple-provider')
   const background = await provider.evaluate(element => getComputedStyle(element).getPropertyValue('--apple-bg'))
   let navigationCount = 0
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigationCount++ })
-  await page.getByRole('button', { name: '切换明暗主题', exact: true }).click()
+  await page.getByRole('button', { name: '深色', exact: true }).click()
   await expect(provider).toHaveAttribute('data-apple-theme', 'dark')
   await expect.poll(() => provider.evaluate(element => getComputedStyle(element).getPropertyValue('--apple-bg'))).not.toBe(background)
-  expect(navigationCount).toBe(0)
-  await loadOverviewImages(page)
-  await page.screenshot({ path: 'artifacts/desktop-dark.png', fullPage: true, animations: 'disabled' })
-  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
-  const drawer = page.getByRole('dialog', { name: '外观与动效' })
-  await drawer.getByRole('combobox', { name: '主题', exact: true }).click()
-  await drawer.getByRole('option', { name: '玫瑰', exact: true }).click()
+  await page.getByRole('button', { name: '玫瑰', exact: true }).click()
   await expect(provider).toHaveAttribute('data-apple-theme', 'rose')
-  await page.keyboard.press('Escape')
-  await expect(drawer).toHaveCount(0)
   expect(navigationCount).toBe(0)
 })
 
 test('manual motion levels and operating-system reduced motion stop continuous animation', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/settings')
+  await page.getByRole('radiogroup', { name: '全局动效' }).getByText('关闭', { exact: true }).click()
   await openComponent(page, 'apple-spinner')
-  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
-  const drawer = page.getByRole('dialog', { name: '外观与动效' })
-  await drawer.getByRole('combobox', { name: '动效等级', exact: true }).click()
-  await drawer.getByRole('option', { name: '关闭', exact: true }).click()
-  await page.keyboard.press('Escape')
-  await expect(page.locator('.apple-provider').first()).toHaveAttribute('data-apple-motion', 'none')
+  await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-motion', 'none')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
-  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
-  await drawer.getByRole('combobox', { name: '动效等级', exact: true }).click()
-  await drawer.getByRole('option', { name: '完整', exact: true }).click()
-  await page.keyboard.press('Escape')
+  await page.goto('/settings')
+  await page.getByRole('radiogroup', { name: '全局动效' }).getByText('完整', { exact: true }).click()
+  await openComponent(page, 'apple-spinner')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('apple-spin')
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await expect(page.locator('.apple-provider').first()).toHaveAttribute('data-apple-motion', 'reduced')
+  await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-motion', 'reduced')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
   await openComponent(page, 'apple-marquee')
   await expect.poll(() => page.locator('.apple-marquee__track').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
-  await expect.poll(() => page.locator('.apple-marquee__track > span').first().evaluate(element => getComputedStyle(element).whiteSpace)).toBe('normal')
 })
 
 for (const width of [1440, 320]) {
@@ -119,14 +94,15 @@ for (const width of [1440, 320]) {
     page.on('console', message => {
       if (message.type() === 'warning' && /Failed to resolve component|Unhandled error/.test(message.text())) errors.push(message.text())
     })
-    await page.getByRole('tab', { name: /^全部组件/ }).click()
-    const tags = await page.locator('.catalog-item code').allTextContents()
-    expect(tags).toHaveLength(67)
+    await page.goto('/components')
+    await expect(page.locator('.component-card-heading > code')).toHaveCount(catalog.length)
+    const tags = await page.locator('.component-card-heading > code').allTextContents()
+    expect(tags).toHaveLength(catalog.length)
     expect(new Set(tags).size).toBe(tags.length)
     for (const tag of tags) {
       await test.step(tag, async () => {
         await openComponent(page, tag)
-        const demo = page.locator('.component-demo')
+        const demo = activeCard(page).locator('.component-demo')
         await expect(demo).toBeVisible()
         await expect.poll(() => demo.evaluate(element => [...element.children].some(child => {
           const rect = child.getBoundingClientRect()
@@ -156,11 +132,11 @@ test('stacked dialogs close only the top layer and retain the scroll lock and fo
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
   await first.getByRole('button', { name: '打开第二层', exact: true }).click()
   await expect(second).toBeVisible()
-  await expect(page.locator('[role="dialog"]')).toHaveCount(2)
+  await expect(page.locator('.apple-modal[role="dialog"]')).toHaveCount(2)
   await expect(second).toHaveAttribute('aria-modal', 'true')
   await expect(first).not.toHaveAttribute('aria-modal', 'true')
   await expect.poll(() => second.evaluate(element => element.contains(document.activeElement))).toBe(true)
-  await page.screenshot({ path: 'artifacts/dialog-stack.png', fullPage: true, animations: 'disabled' })
+  await page.screenshot({ path: '/tmp/apptify-checks/dialog-stack.png', fullPage: false, animations: 'disabled' })
   await page.keyboard.press('Escape')
   await expect(second).toHaveCount(0)
   await expect(first).toBeVisible()
@@ -168,7 +144,7 @@ test('stacked dialogs close only the top layer and retain the scroll lock and fo
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
   await expect(first.getByRole('button', { name: '打开第二层', exact: true })).toBeFocused()
   await page.keyboard.press('Escape')
-  await expect(page.locator('[role="dialog"]')).toHaveCount(0)
+  await expect(page.locator('.apple-modal[role="dialog"]')).toHaveCount(0)
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe(initialOverflow)
   await expect(page.getByRole('button', { name: '多层对话框', exact: true })).toBeFocused()
 })
@@ -188,11 +164,12 @@ test('image lightbox loads real images, zooms, navigates, and returns focus afte
   await expect.poll(transforms).not.toBe(beforeZoom)
   await viewer.getByRole('button', { name: '下一张', exact: true }).click()
   await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 2')
+  await expect(viewer.locator('.apple-viewer-page')).toHaveCount(1)
   await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0 && image.src.includes('airpods')))).toBe(true)
   await expect(viewer.locator('.apple-viewer-image')).toHaveAttribute('src', /airpods/)
   await expect(viewer.locator('.apple-viewer-image')).toBeVisible()
   await expect.poll(() => viewer.locator('.apple-viewer-image').evaluate(element => getComputedStyle(element).opacity)).toBe('1')
-  await page.screenshot({ path: 'artifacts/lightbox.png', animations: 'disabled' })
+  await page.screenshot({ path: '/tmp/apptify-checks/lightbox.png', animations: 'disabled' })
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveCount(0)
   await expect(trigger).toBeFocused()
@@ -201,7 +178,7 @@ test('image lightbox loads real images, zooms, navigates, and returns focus afte
 
 test('forms validate native constraints and submit valid values', async ({ page }) => {
   await openComponent(page, 'apple-form')
-  const demo = page.locator('.component-demo')
+  const demo = activeCard(page).locator('.component-demo')
   const name = demo.getByLabel('姓名', { exact: true })
   const email = demo.getByLabel('邮箱', { exact: true })
   await demo.getByRole('button', { name: '提交', exact: true }).click()
@@ -218,11 +195,11 @@ test('forms validate native constraints and submit valid values', async ({ page 
 
 test('input clearing and autocomplete keyboard selection work', async ({ page }) => {
   await openComponent(page, 'apple-input')
-  await page.locator('.component-demo').getByLabel('姓名', { exact: true }).fill('测试输入')
-  await page.locator('.component-demo').getByRole('button', { name: '清空', exact: true }).click()
-  await expect(page.locator('.component-demo').getByLabel('姓名', { exact: true })).toHaveValue('')
+  await activeCard(page).locator('.component-demo').getByLabel('姓名', { exact: true }).fill('测试输入')
+  await activeCard(page).locator('.component-demo').getByRole('button', { name: '清空', exact: true }).click()
+  await expect(activeCard(page).locator('.component-demo').getByLabel('姓名', { exact: true })).toHaveValue('')
   await openComponent(page, 'apple-autocomplete')
-  const input = page.locator('.component-demo').getByRole('combobox')
+  const input = activeCard(page).locator('.component-demo').getByRole('combobox')
   await input.fill('iPad')
   await expect(page.getByRole('option', { name: 'iPad Pro' })).toBeVisible()
   await input.press('ArrowDown')
@@ -233,11 +210,11 @@ test('input clearing and autocomplete keyboard selection work', async ({ page })
 
 test('upload accepts images, rejects invalid types, and removes selected files', async ({ page }) => {
   await openComponent(page, 'apple-upload')
-  const input = page.locator('.component-demo input[type="file"]')
+  const input = activeCard(page).locator('.component-demo input[type="file"]')
   await input.setInputFiles({ name: 'demo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6iO0AAAAASUVORK5CYII=', 'base64') })
   await expect(page.getByRole('list', { name: '已选择的文件' })).toContainText('demo.png')
   await input.setInputFiles({ name: 'invalid.txt', mimeType: 'text/plain', buffer: Buffer.from('not an image') })
-  await expect(page.locator('.component-demo [role="alert"]')).toContainText('不支持此文件类型')
+  await expect(activeCard(page).locator('.component-demo [role="alert"]')).toContainText('不支持此文件类型')
   await expect(page.getByRole('list', { name: '已选择的文件' })).not.toContainText('invalid.txt')
   await page.getByRole('button', { name: '移除 demo.png', exact: true }).click()
   await expect(page.getByRole('list', { name: '已选择的文件' })).toHaveCount(0)
@@ -265,30 +242,20 @@ test('table sorting, page selection, and pagination update visible rows', async 
   await expect(table.locator('tbody tr').first()).toContainText('Apple Input')
 })
 
-test('mobile navigation and search can open, filter, select, and dismiss', async ({ page }) => {
+test('mobile component index locates and dismisses without filtering previews', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.getByRole('button', { name: '打开组件导航', exact: true }).click()
-  await expect(page.locator('.sidebar')).toHaveClass(/is-open/)
-  const search = page.getByRole('searchbox', { name: '搜索组件' })
-  await search.fill('no-such-component')
-  const scrim = page.getByRole('button', { name: '关闭导航', exact: true })
-  const scrimBox = await scrim.boundingBox()
-  expect(scrimBox).not.toBeNull()
-  await scrim.click({ position: { x: scrimBox!.width - 12, y: 20 } })
-  await expect(page.getByRole('heading', { name: '没有找到相关组件' })).toBeVisible()
-  await openComponent(page, 'apple-tabs')
-  await expect(page.locator('.sidebar')).not.toHaveClass(/is-open/)
-  await page.locator('.component-demo').getByRole('tab', { name: '技术规格', exact: true }).click()
-  await expect(page.locator('.component-demo [role="tabpanel"]:not([aria-hidden="true"])')).toContainText('这里是技术规格。')
+  await page.goto('/components')
+  await page.getByRole('button', { name: '组件目录', exact: true }).click()
+  const drawer = page.getByRole('dialog', { name: '组件目录', exact: true })
+  await expect(drawer).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(drawer).toHaveCount(0)
+  await page.getByRole('button', { name: '组件目录', exact: true }).click()
+  await drawer.locator('a[href="/components#forms"]').click()
+  await expect(drawer).toHaveCount(0)
+  await expect(page.locator('#forms')).toBeInViewport()
+  await expect(page.locator('.component-demo')).toHaveCount(catalog.length)
   await expectNoDocumentOverflow(page)
-  await page.getByRole('button', { name: '打开组件导航', exact: true }).click()
-  await page.getByRole('button', { name: '清除搜索', exact: true }).click()
-  await expect(search).toHaveValue('')
-  await page.locator('.sidebar').getByRole('button', { name: /^表单/ }).click()
-  await expect(page.locator('.sidebar')).not.toHaveClass(/is-open/)
-  await expect(page.getByRole('heading', { name: '表单。' })).toBeVisible()
-  expect(await page.locator('.catalog-item').count()).toBeGreaterThan(10)
-  await page.screenshot({ path: 'artifacts/mobile-catalog.png', fullPage: true, animations: 'disabled' })
 })
 
 test('WebKit mobile smoke covers layout, input, layered overlays, and image viewing', async ({ baseURL }) => {
@@ -299,29 +266,31 @@ test('WebKit mobile smoke covers layout, input, layered overlays, and image view
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.stack ?? error.message))
     await page.goto(baseURL!)
-    await expect(page.getByRole('heading', { name: '组件总览。' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /让界面自然，\s*让细节动人。/ })).toBeVisible()
     await loadOverviewImages(page)
     await expectNoDocumentOverflow(page)
-    await page.screenshot({ path: 'artifacts/webkit-mobile.png', fullPage: true, animations: 'disabled' })
+    await page.screenshot({ path: '/tmp/apptify-checks/webkit-mobile.png', fullPage: false, animations: 'disabled' })
     await openComponent(page, 'apple-input')
-    await page.locator('.component-demo').getByLabel('姓名', { exact: true }).fill('移动端输入')
-    await expect(page.locator('.component-demo').getByLabel('姓名', { exact: true })).toHaveValue('移动端输入')
+    await activeCard(page).locator('.component-demo').getByLabel('姓名', { exact: true }).fill('移动端输入')
+    await expect(activeCard(page).locator('.component-demo').getByLabel('姓名', { exact: true })).toHaveValue('移动端输入')
     await openComponent(page, 'apple-dialog')
     await page.getByRole('button', { name: '多层对话框', exact: true }).click()
     await page.getByRole('button', { name: '打开第二层', exact: true }).click()
-    await expect(page.locator('[role="dialog"]')).toHaveCount(2)
+    await expect(page.locator('.apple-modal[role="dialog"]')).toHaveCount(2)
     await page.keyboard.press('Escape')
-    await expect(page.locator('[role="dialog"]')).toHaveCount(1)
+    await expect(page.locator('.apple-modal[role="dialog"]')).toHaveCount(1)
     await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
     await page.keyboard.press('Escape')
-    await expect(page.locator('[role="dialog"]')).toHaveCount(0)
+    await expect(page.locator('.apple-modal[role="dialog"]')).toHaveCount(0)
     await openComponent(page, 'apple-image')
-    await page.locator('.component-demo .apple-image__trigger').first().click()
+    const previews = activeCard(page).locator('.component-demo .apple-image__trigger'), count = await previews.count()
+    expect(count).toBeGreaterThan(1)
+    await previews.first().click()
     const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
     await expect(viewer).toBeVisible()
     await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0))).toBe(true)
     await swipeImage(viewer)
-    await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 2')
+    await expect(viewer.locator('.apple-viewer-count')).toHaveText(`2 / ${count}`)
     await viewer.getByRole('button', { name: '关闭图片预览', exact: true }).click()
     await expect(viewer).toHaveCount(0)
     await expectNoDocumentOverflow(page)

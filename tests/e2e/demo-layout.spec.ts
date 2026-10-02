@@ -1,14 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 import { catalog } from '../../playground/catalog'
 
+const activeCard = (page: Page) => page.locator(new URL(page.url()).hash)
+
 async function openDemo(page: Page, name: string) {
   const tag = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
-  const toggle = page.getByRole('button', { name: '打开组件导航', exact: true })
-  if (await toggle.isVisible()) await toggle.click()
-  await page.getByRole('searchbox', { name: '搜索组件' }).fill(tag)
-  if (await toggle.isVisible()) await toggle.click()
-  await page.locator('.catalog-item').filter({ has: page.getByText(tag, { exact: true }) }).click()
-  await expect(page.locator('.component-demo')).toHaveAttribute('data-component', name)
+  await page.locator(`.component-card-heading a[href$="#${tag}"]`).click()
+  await expect(page).toHaveURL(new RegExp(`#${tag}$`))
+  await expect(activeCard(page).locator('.component-demo')).toHaveAttribute('data-component', name)
 }
 
 for (const viewport of [
@@ -24,12 +23,12 @@ for (const viewport of [
     await page.emulateMedia({ reducedMotion: 'reduce' })
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
-    await page.goto('/')
+    await page.goto('/components')
     if (viewport.mode === 'mobile') await page.getByRole('button', { name: '手机预览', exact: true }).click()
     for (const item of catalog) {
       await test.step(item.name, async () => {
         await openDemo(page, item.name)
-        const demo = page.locator('.component-demo')
+        const demo = activeCard(page).locator('.component-demo')
         await expect(demo).toBeVisible()
         // Inspect descendants as well as document width: overflow-x:clip on main
         // can conceal broken layouts without causing a document scrollbar.
@@ -53,25 +52,25 @@ for (const viewport of [
 }
 
 test('layout and media controls retain their shape after switching', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/components')
   await openDemo(page, 'AppleGrid')
-  await expect(page.locator('.demo-layout-tile')).toHaveCount(3)
-  const heights = await page.locator('.demo-layout-tile').evaluateAll(tiles => tiles.map(tile => tile.getBoundingClientRect().height))
+  await expect(activeCard(page).locator('.demo-layout-tile')).toHaveCount(3)
+  const heights = await activeCard(page).locator('.demo-layout-tile').evaluateAll(tiles => tiles.map(tile => tile.getBoundingClientRect().height))
   expect(heights.every(height => height >= 100 && height <= 140)).toBe(true)
   await openDemo(page, 'AppleStack')
-  await page.locator('.component-demo').getByText('纵向', { exact: true }).click()
-  await expect(page.locator('.component-demo > .apple-stack > .apple-stack')).toHaveCSS('flex-direction', 'column')
-  await page.locator('.component-demo').getByText('横向', { exact: true }).click()
-  await expect(page.locator('.component-demo > .apple-stack > .apple-stack')).toHaveCSS('flex-direction', 'row')
+  await activeCard(page).locator('.component-demo').getByText('纵向', { exact: true }).click()
+  await expect(activeCard(page).locator('.component-demo > .apple-stack > .apple-stack')).toHaveCSS('flex-direction', 'column')
+  await activeCard(page).locator('.component-demo').getByText('横向', { exact: true }).click()
+  await expect(activeCard(page).locator('.component-demo > .apple-stack > .apple-stack')).toHaveCSS('flex-direction', 'row')
   await openDemo(page, 'AppleImage')
-  await expect(page.locator('.component-demo .apple-image__trigger img')).toHaveCount(12)
-  await expect.poll(() => page.locator('.component-demo .apple-image__trigger img').evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true)
-  await expect(page.locator('.component-demo .apple-segmented')).toHaveCSS('display', 'flex')
-  await page.locator('.component-demo').getByText('平铺', { exact: true }).click()
-  await expect(page.locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'tiled')
-  await page.locator('.component-demo').getByText('换行平铺', { exact: true }).click()
-  await expect(page.locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'tiled-wrap')
-  const tiles = page.locator('.component-demo .apple-image__trigger')
+  await expect(activeCard(page).locator('.component-demo .apple-image__trigger img')).toHaveCount(12)
+  await expect.poll(() => activeCard(page).locator('.component-demo .apple-image__trigger img').evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true)
+  await expect(activeCard(page).locator('.component-demo .apple-segmented')).toHaveCSS('display', 'flex')
+  await activeCard(page).locator('.component-demo').getByText('平铺', { exact: true }).click()
+  await expect(activeCard(page).locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'tiled')
+  await activeCard(page).locator('.component-demo').getByText('换行平铺', { exact: true }).click()
+  await expect(activeCard(page).locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'tiled-wrap')
+  const tiles = activeCard(page).locator('.component-demo .apple-image__trigger')
   const natural = await tiles.evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect(), image = element.querySelector('img')!
     return { width: rect.width, height: rect.height, left: rect.left, top: rect.top, bottom: rect.bottom, ratio: image.naturalWidth / image.naturalHeight }
@@ -87,7 +86,7 @@ test('layout and media controls retain their shape after switching', async ({ pa
       expect(column[index].top - column[index - 1].bottom).toBeCloseTo(8, 0)
     }
   }
-  await page.getByRole('switch', { name: '强制 1:1（裁剪）' }).click()
+  await activeCard(page).getByRole('switch', { name: '强制 1:1（裁剪）' }).click()
   const squares = await tiles.evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect()
     return { width: rect.width, height: rect.height, fit: getComputedStyle(element.querySelector('img')!).objectFit }
@@ -96,8 +95,8 @@ test('layout and media controls retain their shape after switching', async ({ pa
     expect(Math.abs(tile.width - tile.height)).toBeLessThan(1)
     expect(tile.fit).toBe('cover')
   }
-  await page.locator('.component-demo').getByText('省空间', { exact: true }).click()
-  await expect(page.locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'compact')
+  await activeCard(page).locator('.component-demo').getByText('省空间', { exact: true }).click()
+  await expect(activeCard(page).locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'compact')
   await openDemo(page, 'AppleImageViewer')
   await page.getByRole('button', { name: '浏览照片', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '图片预览', exact: true })).toBeVisible()
@@ -152,3 +151,18 @@ for (const width of [320, 390]) {
   })
 }
 
+
+test('compact hover reveals working arrows without scaling', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/tests/e2e/fixtures/mobile-images.html')
+  const compact = page.locator('#compact')
+  await compact.locator('img').first().hover()
+  await expect(compact.locator('.apple-image__surface')).toHaveCSS('transform', 'none')
+  await expect(compact.locator('.apple-image__arrows')).toHaveCSS('opacity', '1')
+  await expect(compact.getByRole('button', { name: '上一张图片', exact: true })).toBeDisabled()
+  await compact.getByRole('button', { name: '下一张图片', exact: true }).click()
+  await expect(compact).toHaveAttribute('data-index', '1')
+  await compact.getByRole('button', { name: '上一张图片', exact: true }).click()
+  await expect(compact).toHaveAttribute('data-index', '0')
+  await expect(page.locator('.apple-image-viewer')).toHaveCount(0)
+})

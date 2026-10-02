@@ -1,6 +1,6 @@
 # 组件 API 参考
 
-本页按 `src/index.ts` 合并的组件注册表列出当前 **68 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
+本页按 `src/index.ts` 合并的组件注册表列出当前 **69 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
 
 ## 公共约定
 
@@ -34,7 +34,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleButton` | M；`variant=primary`（primary/secondary/outline/ghost/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot。纯图标按钮须提供 label。只有允许完整动效时启用 Ripple。 |
 | `AppleLink` | `href`、`external`、`disabled` | default slot；external 使用新窗口并设置 `noopener noreferrer`。 |
 | `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=small`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
-| `AppleImage` | M；必填 `src`、`alt`；`preview=true`、`gallery: (string/AppleViewerImage)[]`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption slot；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，tiled 等高横向平铺并滚动，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
+| `AppleImage` | M；必填 `src`、`alt`；`preview=true`、`gallery: (string/AppleViewerImage)[]`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption slot；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，桌面触控板支持自由连续横滑、一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 不缩放，显示左右翻页按钮，跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
 | `AppleContainer` | `width=1200`（number/string） | default slot；数字宽度按 px，宽度不会超过可用空间。 |
 | `AppleStack` | `direction=column`、`gap=16`、`align=stretch`、`wrap=true` | default slot；Flex 布局；数字 gap 按 px。 |
@@ -77,13 +77,16 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 
 日期格式示例：`YYYY/MM`、`YYYY/MM/DD`、`YYYY/MM/DD HH:mm`、`YYYY/MM/DD HH:mm:ss`、`HH:mm`、`HH:mm:ss`。显示格式与模型格式分离：模型依次返回 `YYYY-MM`、`YYYY-MM-DD`、`YYYY-MM-DDTHH:mm[:ss]` 或 `HH:mm[:ss]`。独立 `AppleTimePicker` 已移除，纯时间使用 `<apple-date-picker format="HH:mm" />`；不支持原生 ISO week 模式及日期范围选择。
 
-## 内容与移动交互 · 29
+## 内容与移动交互 · 30
 
 以下组件均接受 M。
 
+导航组件默认协调同一文档中的图片预览；对话框内预览只协调该对话框内的导航。独立页面区域可用 `data-apple-navigation-scope` 容器隔离；多个预览都开始退出后恢复导航。关闭、取消和卸载均释放状态。
+
 | 组件 | 主要 Props | Events / Slots / 说明 |
 | --- | --- | --- |
-| `AppleNavibar` | `v-model: string/number`、`items: AppleItem[]`、`brand`、`brandHref='/'`、`label='主导航'`、`fixed=true`、`breakpoint=640` | `change(value,item)`、`toggle(open)`；brand、item `{item,active}`、actions `{close}` slots。固定模式自带占位；栏宽不超过 breakpoint 时折叠为三横杠菜单；选择、Escape、外部点击或焦点移出后收起。`fixed=false` 可嵌入容器。 |
+| `AppleNavibar` | `v-model: string/number`、`items: AppleItem[]`、`brand`、`brandHref='/'`、`label='主导航'`、`fixed=true`、`breakpoint=640`、`hideOnPreview`（默认跟随 fixed） | `change(value,item)`、`toggle(open)`；brand、item `{item,active}`、actions `{close}` slots。固定模式自带占位；栏宽不超过 breakpoint 时折叠为三横杠菜单；选择、Escape、外部点击或焦点移出后收起。`fixed=false` 可嵌入容器。参与预览时保留占位并隐藏，退出开始时与黑色背景淡出同步淡入。 |
+| `AppleAside` | M；`hideOnPreview=true` | 原生 aside 容器，布局由调用方提供；图片预览期间保留尺寸、隐藏并禁用交互，退出开始时 140ms 淡入。正常文档流侧栏可设 `hideOnPreview=false`。 |
 | `AppleTabs` | `v-model: string/number`、`items`、`label`、`disabled` | `change(value)`；`panel-${value}` slot `{item}` 或 default `{item,value}`；可非受控；方向键/Home/End。 |
 | `AppleTabBar` | 与 AppleTabs 相同 | 顶角圆角页签，移动选中背景与内容滑动。 |
 | `AppleBreadcrumbs` | `items`、`label='当前位置'` | `click(item,event)`；非最后项使用 item.href 或按钮；最后项为当前页文本；无下划线。 |
@@ -148,7 +151,7 @@ Table 另支持 `virtual=false`、`height=360`、`rowHeight=48`、`overscan=5`�
 | `AppleTooltip` | 必填 `text`；`placement=top`、`disabled` | default slot 为触发元素；悬停/焦点显示，Escape 关闭；短文本提示。 |
 | `AppleMenu` | `v-model?: boolean`、`label='操作'`、`items: AppleMenuItem[]`、`selected`、`disabled` | `select(value,item)`；activator slot 同 Popover、item slot `{item}`；选择后关闭，方向键/Home/End。 |
 | `AppleActionSheet` | `v-model: boolean`、`title`、`message`、`items: AppleMenuItem[]`、`cancelText='取消'` | `select(value,item)`、`close(value,reason)`；默认插槽支持自定义模板，提供 `select(item)`、`close(value)`，覆盖 items 内容；取消按钮保留。无拖拽指示条。 |
-| `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop`、`origin?: (index) => HTMLImageElement/null` | `change(index)`、`close()`、`after-close()`、`error(event)`；非触屏设备使用 @panzoom/panzoom；触屏设备双指缩放并平移、双击围绕点击位置放大至 2 倍（再次双击恢复）、单击等待 200ms 后退出、松手回到图片边界、左右切图延续松手速度且可中途接住、下滑退出，上划不退出；顶部显示当前序号/总数；双端预览按钮采用半透明模糊与 200% 饱和度；origin 提供原位过渡落点（AppleImage 自动传入）。 |
+| `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop`、`origin?: (index) => HTMLImageElement/null` | `change(index)`、`close()`、`after-close()`、`error(event)`；非触屏设备使用 @panzoom/panzoom，缩放与旋转平滑过渡，拖动可接住缩放中的位置；左右切图采用接近小窗横滑的加速/减速过渡，时长随距离调整，旧图保持缩放退场，新图和再次返回的旧图恢复默认缩放；触屏设备双指缩放并平移、双击围绕点击位置放大至 2 倍（再次双击恢复）、单击等待 200ms 后退出、松手回到图片边界、左右切图延续松手速度，翻页/缩放/回弹可中途接住、下滑退出，上划不退出；顶部显示当前序号/总数；双端预览按钮采用半透明模糊与 200% 饱和度；双端共用图片专用阻尼节奏（打开 360ms、关闭/缩放 300ms）；触屏端原位开合只动画 transform 与裁剪，origin 提供落点（AppleImage 自动传入）。 |
 
 Modal 公共属性：`title`、`message`、`ariaLabel='对话框'`、`persistent`、`loading`、`closeOnConfirm=true`、`confirmText='确定'`、`cancelText='取消'`、`showFooter`、`closable=true`、`width`、`tone=default`。Dialog 默认 width 为 480px。空按钮文本会隐藏对应按钮。
 

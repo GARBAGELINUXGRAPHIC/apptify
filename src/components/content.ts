@@ -1,9 +1,11 @@
-import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, TransitionGroup, useId, withDirectives, type PropType, type VNodeChild } from 'vue'
+import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, useId, withDirectives, type PropType, type VNodeChild } from 'vue'
 import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, MoreHorizontal, Pause, Play, X } from 'lucide-vue-next'
 import { Virtualizer, elementScroll, observeElementOffset, observeElementRect, type VirtualizerOptions } from '@tanstack/virtual-core'
-import { AppleSelection, ripple } from '../core/motion'
+import { ripple } from '../core/motion'
+import { AppleTabs, AppleTabBar } from './tabs'
+export { AppleTabs, AppleTabBar } from './tabs'
 import { AppleAutoSize } from './motion'
-import { appleKey, type AppleContext } from '../core/context'
+import { appleKey, resolveMotion, type AppleContext } from '../core/context'
 
 export type AppleValue = string | number
 export interface AppleItem { label: string; value: AppleValue; disabled?: boolean; description?: string; href?: string; content?: string }
@@ -20,59 +22,6 @@ const valueProp = { type: [String, Number] as PropType<AppleValue>, default: und
 const icon = (component: typeof Check, size = 18) => h(component, { size, 'aria-hidden': 'true', focusable: 'false' })
 const percent = (value: number, max: number) => Math.max(0, Math.min(100, max > 0 ? value / max * 100 : 0))
 const uidSetup = () => ({ uid: useId() })
-const tabsProps = { ...motionProps, ...itemProps, modelValue: valueProp, label: { type: String, default: '内容分类' }, disabled: Boolean }
-
-export const AppleTabs = defineComponent({
-  name: 'AppleTabs', setup: uidSetup,
-  props: { ...tabsProps, variant: { type: String as PropType<'underline' | 'bar'>, default: 'underline' } },
-  emits: ['update:modelValue', 'change'],
-  data: () => ({ localValue: undefined as AppleValue | undefined, backward: false }),
-  computed: {
-    activeValue(): AppleValue | undefined { const value = this.modelValue ?? this.localValue; return this.items.find(item => item.value === value && !item.disabled)?.value ?? this.items.find(item => !item.disabled)?.value },
-    activeItem(): AppleItem | undefined { return this.items.find(item => item.value === this.activeValue) },
-  },
-  watch: { activeValue(value: AppleValue | undefined, previous: AppleValue | undefined) { this.backward = this.items.findIndex(item => item.value === value) < this.items.findIndex(item => item.value === previous) } },
-  methods: {
-    select(item: AppleItem) {
-      if (this.disabled || item.disabled) return
-      this.localValue = item.value
-      this.$emit('update:modelValue', item.value)
-      this.$emit('change', item.value)
-    },
-    keydown(event: KeyboardEvent, index: number) {
-      const enabled = this.items.map((item, i) => !item.disabled ? i : -1).filter(i => i >= 0)
-      if (!enabled.length || this.disabled) return
-      const current = enabled.indexOf(index)
-      let next: number | undefined
-      if (event.key === 'ArrowRight') next = enabled[(current + 1) % enabled.length]
-      if (event.key === 'ArrowLeft') next = enabled[(current - 1 + enabled.length) % enabled.length]
-      if (event.key === 'Home') next = enabled[0]
-      if (event.key === 'End') next = enabled[enabled.length - 1]
-      if (next === undefined) return
-      event.preventDefault()
-      this.select(this.items[next]!)
-      const buttons = (this.$refs.tablist as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]')
-      buttons[next]?.focus()
-    },
-  },
-  render() {
-    return h('div', { class: ['apple-tabs', `apple-tabs--${this.variant}`, { 'is-backward': this.backward }], 'data-motion': this.motion }, [
-      withDirectives(h('div', { class: 'apple-tabs__list', role: 'tablist', 'aria-label': this.label, ref: 'tablist' }, this.items.map((item, index) => h('button', {
-        type: 'button', id: `${this.uid}-tab-${index}`, role: 'tab', class: ['apple-tabs__tab', { 'is-active': item.value === this.activeValue }],
-        'aria-selected': item.value === this.activeValue, 'data-apple-selected': item.value === this.activeValue, 'aria-controls': `${this.uid}-panel-${index}`, disabled: this.disabled || item.disabled,
-        tabindex: item.value === this.activeValue ? 0 : -1, onClick: () => this.select(item), onKeydown: (event: KeyboardEvent) => this.keydown(event, index),
-      }, item.label))), [[AppleSelection]]),
-      h(AppleAutoSize, { class: 'apple-tabs__viewport', motion: this.motion }, { default: () => h(Transition, { name: 'apple-tab-panel', onBeforeLeave: (element: Element) => { element.setAttribute('inert', ''); element.setAttribute('aria-hidden', 'true') }, onLeaveCancelled: (element: Element) => { element.removeAttribute('inert'); element.removeAttribute('aria-hidden') } }, { default: () => h('div', { key: this.activeValue, id: `${this.uid}-panel-${this.items.findIndex(item => item.value === this.activeValue)}`, class: 'apple-tabs__panel', role: 'tabpanel', tabindex: 0, 'aria-labelledby': this.activeItem ? `${this.uid}-tab-${this.items.findIndex(item => item.value === this.activeValue)}` : undefined, 'aria-label': !this.activeItem ? this.label : undefined },
-        this.$slots[`panel-${this.activeValue}`]?.({ item: this.activeItem }) ?? this.$slots.default?.({ item: this.activeItem, value: this.activeValue }) ?? this.activeItem?.content) }) }),
-    ])
-  },
-})
-
-export const AppleTabBar = defineComponent({
-  name: 'AppleTabBar', props: tabsProps, emits: ['update:modelValue', 'change'],
-  render() { return h(AppleTabs, { ...this.$props, variant: 'bar', 'onUpdate:modelValue': (value: AppleValue) => this.$emit('update:modelValue', value), onChange: (value: AppleValue) => this.$emit('change', value) }, this.$slots) },
-})
-
 export const AppleBreadcrumbs = defineComponent({
   name: 'AppleBreadcrumbs', props: { ...motionProps, ...itemProps, label: { type: String, default: '当前位置' } },
   emits: ['click'],
@@ -86,24 +35,143 @@ export const AppleBreadcrumbs = defineComponent({
   },
 })
 
+import { AppleInput } from './forms'
+import { motionDuration } from '../core/motion'
+import type { ObjectDirective } from 'vue'
+
+const paginationIndicators = new WeakMap<HTMLElement, { update: (page: number, animate?: boolean) => void; destroy: () => void }>()
+const PaginationSelection: ObjectDirective<HTMLElement, number> = {
+  mounted(element, binding) {
+    const indicator = document.createElement('span')
+    indicator.className = 'apple-pagination__indicator'
+    indicator.setAttribute('aria-hidden', 'true')
+    element.appendChild(indicator)
+    let page = binding.value
+    let previousPage = page
+    let initialized = false
+    let frame = 0
+    let animation: Animation | undefined
+    let targetPose = ''
+    let targetWidth = 0
+    let targetHeight = 0
+    const update = (nextPage: number, animate = true) => {
+      page = nextPage
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const selected = element.querySelector<HTMLElement>('[aria-current="page"]')
+        if (!selected) { animation?.cancel(); indicator.hidden = true; initialized = false; return }
+        indicator.hidden = false
+        const rect = selected.getBoundingClientRect(), bounds = element.getBoundingClientRect()
+        const x = rect.left - bounds.left + element.scrollLeft - element.clientLeft
+        const y = rect.top - bounds.top + element.scrollTop - element.clientTop
+        const pose = `translate(${x}px, ${y}px)`
+        if (initialized && previousPage === page && targetPose === pose && targetWidth === rect.width && targetHeight === rect.height) return
+        const duration = animate && initialized ? motionDuration(element) : 0
+        let from = getComputedStyle(indicator).transform
+        animation?.cancel()
+        indicator.style.width = `${rect.width}px`
+        indicator.style.height = `${rect.height}px`
+        indicator.style.transform = pose
+        // A sliding page window can leave the selected slot in the same place.
+        // Give that change a short directional arrival instead of a static swap.
+        if (initialized && previousPage !== page && targetPose === pose) from = `translate(${x - Math.sign(page - previousPage) * (rect.width + 4)}px, ${y}px)`
+        if (duration > 0 && indicator.animate && from !== 'none') {
+          const running = indicator.animate([{ transform: from }, { transform: pose }], { duration, easing: 'cubic-bezier(.25,.1,.25,1)' })
+          animation = running
+          running.onfinish = () => { if (animation === running) { running.cancel(); animation = undefined } }
+        }
+        targetPose = pose
+        targetWidth = rect.width
+        targetHeight = rect.height
+        previousPage = page
+        initialized = true
+      })
+    }
+    const resize = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(() => update(page, false))
+    resize?.observe(element)
+    const onResize = () => update(page, false)
+    window.addEventListener('resize', onResize)
+    const syncMotion = () => {
+      const duration = motionDuration(element)
+      if (!duration) { animation?.cancel(); animation = undefined }
+      else if (animation && duration <= 80) animation.updatePlaybackRate(Math.max(1, Number(animation.effect?.getTiming().duration ?? duration) / duration))
+    }
+    const policy = new MutationObserver(syncMotion)
+    for (let ancestor: HTMLElement | null = element; ancestor; ancestor = ancestor.parentElement) policy.observe(ancestor, { attributes: true, attributeFilter: ['data-apple-motion', 'data-motion'] })
+    const reduced = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : undefined
+    reduced?.addEventListener('change', syncMotion)
+    paginationIndicators.set(element, { update, destroy() { cancelAnimationFrame(frame); animation?.cancel(); resize?.disconnect(); policy.disconnect(); reduced?.removeEventListener('change', syncMotion); window.removeEventListener('resize', onResize); indicator.remove() } })
+    update(page, false)
+  },
+  updated(element, binding) { paginationIndicators.get(element)?.update(binding.value) },
+  unmounted(element) { paginationIndicators.get(element)?.destroy(); paginationIndicators.delete(element) },
+}
+
 export const ApplePagination = defineComponent({
   name: 'ApplePagination',
   props: { ...motionProps, modelValue: { type: Number, default: 1 }, total: { type: Number, default: 0 }, pageSize: { type: Number, default: 10 }, disabled: Boolean, label: { type: String, default: '分页' } },
   emits: ['update:modelValue', 'change'],
+  data() { return { draft: String(Math.min(Math.max(1, Math.ceil(this.total / Math.max(1, this.pageSize))), Math.max(1, this.modelValue))), draftError: '', availableWidth: Infinity, widthObserver: undefined as ResizeObserver | undefined } },
   computed: {
     pageCount(): number { return Math.max(1, Math.ceil(this.total / Math.max(1, this.pageSize))) },
     currentPage(): number { return Math.min(this.pageCount, Math.max(1, this.modelValue)) },
+    empty(): boolean { return this.total <= 0 },
     pages(): (number | string)[] {
       const pages = [...new Set([1, this.currentPage - 1, this.currentPage, this.currentPage + 1, this.pageCount].filter(page => page > 0 && page <= this.pageCount))].sort((a, b) => a - b)
-      return pages.flatMap((page, index) => index && page - pages[index - 1]! > 1 ? [`gap-${page}`, page] : [page])
+      const full = pages.flatMap((page, index) => index && page - pages[index - 1]! > 1 ? [`gap-${page}`, page] : [page])
+      const fits = (entries: (number | string)[]) => {
+        const numbers = entries.filter(page => typeof page === 'number').length
+        return (numbers + 2) * 44 + (entries.length - numbers) * 12 + (entries.length + 1) * 4 + 6 <= this.availableWidth
+      }
+      if (fits(full)) return full
+      const nearby = [this.currentPage - 1, this.currentPage, this.currentPage + 1].filter(page => page > 0 && page <= this.pageCount)
+      const withGaps: (number | string)[] = [...(nearby[0]! > 1 ? ['gap-start'] : []), ...nearby, ...(nearby.at(-1)! < this.pageCount ? ['gap-end'] : [])]
+      if (fits(withGaps)) return withGaps
+      if (fits(nearby)) return nearby
+      const pair = nearby.filter(page => page === this.currentPage || page === (this.currentPage === 1 ? 2 : this.currentPage - 1))
+      return fits(pair) ? pair : [this.currentPage]
     },
   },
-  methods: { go(page: number) { if (!this.disabled && page !== this.currentPage && page >= 1 && page <= this.pageCount) { this.$emit('update:modelValue', page); this.$emit('change', page) } } },
+  mounted() {
+    const measure = () => { const width = (this.$el as HTMLElement).clientWidth; if (width > 0) this.availableWidth = width }
+    measure()
+    if (typeof ResizeObserver !== 'undefined') { this.widthObserver = new ResizeObserver(measure); this.widthObserver.observe(this.$el as HTMLElement) }
+  },
+  beforeUnmount() { this.widthObserver?.disconnect() },
+  watch: {
+    currentPage() { this.resetDraft() },
+    pageCount() { this.resetDraft() },
+    empty() { this.resetDraft() },
+  },
+  methods: {
+    resetDraft() { this.draft = String(this.currentPage); this.draftError = '' },
+    go(page: number) { if (!this.disabled && !this.empty && Number.isInteger(page) && page !== this.currentPage && page >= 1 && page <= this.pageCount) { this.$emit('update:modelValue', page); this.$emit('change', page) } },
+    apply() {
+      if (this.disabled || this.empty) return
+      const value = this.draft.trim()
+      const page = Number(value)
+      if (!/^\d+$/.test(value) || !Number.isSafeInteger(page) || page < 1 || page > this.pageCount) {
+        this.draftError = `请输入 1–${this.pageCount} 的整数页码`
+        return
+      }
+      this.draftError = ''
+      this.draft = String(page)
+      this.go(page)
+    },
+  },
   render() {
+    const blocked = this.disabled || this.empty
     return h('nav', { class: 'apple-pagination', 'aria-label': this.label, 'data-motion': this.motion }, [
-      ripple(h('button', { type: 'button', disabled: this.disabled || this.currentPage === 1, 'aria-label': '上一页', onClick: () => this.go(this.currentPage - 1) }, icon(ChevronLeft))),
-      ...this.pages.map(page => typeof page === 'number' ? ripple(h('button', { type: 'button', class: { 'is-active': page === this.currentPage }, disabled: this.disabled, 'aria-label': `第 ${page} 页`, 'aria-current': page === this.currentPage ? 'page' : undefined, onClick: () => this.go(page) }, page)) : h('span', { class: 'apple-pagination__gap', key: page, 'aria-hidden': 'true' }, '…')),
-      ripple(h('button', { type: 'button', disabled: this.disabled || this.currentPage === this.pageCount, 'aria-label': '下一页', onClick: () => this.go(this.currentPage + 1) }, icon(ChevronRight))),
+      withDirectives(h('div', { class: 'apple-pagination__pages' }, [
+      ripple(h('button', { type: 'button', disabled: blocked || this.currentPage === 1, 'aria-label': '上一页', onClick: () => this.go(this.currentPage - 1) }, icon(ChevronLeft)), !blocked && this.currentPage !== 1),
+      ...this.pages.map(page => typeof page === 'number' ? ripple(h('button', { type: 'button', key: page, class: { 'is-active': page === this.currentPage }, disabled: blocked, 'aria-label': `第 ${page} 页`, 'aria-current': page === this.currentPage ? 'page' : undefined, onClick: () => this.go(page) }, page), !blocked) : h('span', { class: 'apple-pagination__gap', key: page, 'aria-hidden': 'true' }, '…')),
+      ripple(h('button', { type: 'button', disabled: blocked || this.currentPage === this.pageCount, 'aria-label': '下一页', onClick: () => this.go(this.currentPage + 1) }, icon(ChevronRight)), !blocked && this.currentPage !== this.pageCount),
+      ]), [[PaginationSelection, this.currentPage]]),
+      h('div', { class: 'apple-pagination__jump' }, h(AppleInput, {
+        modelValue: this.draft, 'aria-label': '跳转页码', inputmode: 'numeric', autocomplete: 'off', disabled: blocked, error: this.draftError, motion: this.motion,
+        'onUpdate:modelValue': (value: string | number) => { this.draft = String(value); this.draftError = '' },
+        onKeydown: (event: KeyboardEvent) => { if (event.key === 'Enter') { event.preventDefault(); this.apply() } },
+      }, { suffix: () => h(AppleButton, { variant: 'primary', disabled: blocked, motion: this.motion, onClick: this.apply }, { default: () => 'Apply' }) })),
     ])
   },
 })
@@ -212,7 +280,7 @@ export const AppleTable = defineComponent({
     const top = Math.max(0, (virtualItems[0]?.start ?? 48) - 48)
     const bottom = Math.max(0, (this.virtualizer?.getTotalSize() ?? 48) - (virtualItems.at(-1)?.end ?? 48))
     return h('div', { class: ['apple-table', { 'apple-table--virtual': this.virtual }], 'data-motion': this.motion, 'aria-busy': this.loading }, [
-      h('div', { ref: 'scroll', class: 'apple-table__scroll', style: this.virtual ? { height: `${Math.max(96, this.height)}px` } : undefined, tabindex: 0, role: 'region', 'aria-label': this.label }, h('table', { style: this.resizable ? { width: `${this.tableWidth}px` } : undefined, 'aria-rowcount': this.visibleRows.length + 1 }, [
+      h(AppleAutoSize, { class: 'apple-table-size', motion: this.motion }, { default: () => h('div', { ref: 'scroll', class: 'apple-table__scroll', style: this.virtual ? { height: `${Math.max(96, this.height)}px` } : undefined, tabindex: 0, role: 'region', 'aria-label': this.label }, h('table', { style: this.resizable ? { width: `${this.tableWidth}px` } : undefined, 'aria-rowcount': this.visibleRows.length + 1 }, [
         h('caption', { class: 'apple-content-sr' }, this.label),
         h('colgroup', [this.selectable ? h('col', { style: { width: '44px' } }) : null, ...this.columns.map(column => h('col', { key: column.key, style: { width: this.columnWidths[column.key] !== undefined ? `${this.columnWidths[column.key]}px` : typeof column.width === 'number' ? `${column.width}px` : column.width ?? (this.resizable ? `${this.columnWidth(column)}px` : undefined) } }))]),
         h('thead', h('tr', [
@@ -223,7 +291,7 @@ export const AppleTable = defineComponent({
           this.selectable ? h('td', { class: 'apple-table__select' }, h('input', { type: 'checkbox', checked: this.selectedKeys.includes(this.keyOf(row)), disabled: this.disabled, 'aria-label': `选择第 ${(this.currentPage - 1) * this.pageSize + index + 1} 行`, onClick: (event: Event) => event.stopPropagation(), onChange: () => this.toggleRow(row) })) : null,
           ...this.columns.map(column => h('td', { key: column.key, style: { textAlign: column.align ?? 'left' } }, h('div', { class: 'apple-table__cell' }, this.$slots[`cell-${column.key}`]?.({ row, value: row[column.key], index }) ?? String(row[column.key] ?? '')))),
         ])), this.virtual ? spacer(bottom, 'bottom') : null] : h('tr', h('td', { colspan: this.columns.length + (this.selectable ? 1 : 0), class: 'apple-table__empty' }, this.$slots.empty?.() ?? (this.loading ? '正在加载…' : this.emptyText)))),
-      ])),
+      ])) }),
       this.pageSize > 0 ? h('footer', { class: 'apple-table__footer' }, [h('span', `共 ${this.rows.length} 项`), h(ApplePagination, { modelValue: this.currentPage, total: this.rows.length, pageSize: this.pageSize, disabled: this.disabled, 'onUpdate:modelValue': this.setPage })]) : null,
     ])
   },
@@ -282,11 +350,11 @@ export const AppleTree = defineComponent({
 export const AppleList = defineComponent({
   name: 'AppleList', props: { ...motionProps, ...itemProps, modelValue: valueProp, selectable: Boolean, disabled: Boolean, label: { type: String, default: '列表' } },
   emits: ['update:modelValue', 'select'],
-  render() { return h(AppleAutoSize, { class: 'apple-list-size', motion: this.motion }, { default: () => h(TransitionGroup, { tag: 'ul', class: 'apple-list', name: 'apple-list-row', 'aria-label': this.label, 'data-motion': this.motion }, { default: () => this.items.map(item => {
+  render() { return h(AppleAutoSize, { class: 'apple-list-size', motion: this.motion }, { default: () => h('ul', { class: 'apple-list', 'aria-label': this.label, 'data-motion': this.motion }, this.items.map(item => {
     const disabled = this.disabled || item.disabled
     const content = this.$slots.item?.({ item, selected: this.modelValue === item.value }) ?? [h('span', { class: 'apple-list__copy' }, [h('span', { class: 'apple-list__label' }, item.label), item.description ? h('span', { class: 'apple-list__description' }, item.description) : null]), this.selectable ? this.modelValue === item.value ? icon(Check) : null : item.href ? icon(ChevronRight) : null]
     return h('li', { key: item.value }, ripple(h(this.selectable ? 'button' : item.href && !disabled ? 'a' : 'div', { type: this.selectable ? 'button' : undefined, href: !this.selectable && !disabled ? item.href : undefined, disabled: this.selectable ? disabled : undefined, 'aria-disabled': disabled || undefined, 'aria-pressed': this.selectable ? this.modelValue === item.value : undefined, class: ['apple-list__item', { 'is-selected': this.modelValue === item.value }], onClick: () => { if (!disabled) { this.$emit('select', item); if (this.selectable) this.$emit('update:modelValue', item.value) } } }, content), !disabled && (this.selectable || Boolean(item.href))))
-  }) }) }) },
+  })) }) },
 })
 
 export const AppleAvatar = defineComponent({
@@ -307,7 +375,7 @@ export const AppleBadge = defineComponent({
 
 export const AppleTag = defineComponent({
   name: 'AppleTag', props: { ...motionProps, tone: { type: String, default: 'neutral' }, closable: Boolean, disabled: Boolean, label: String }, emits: ['close'],
-  render() { return h('span', { class: ['apple-tag', `apple-tone-${this.tone}`], 'aria-disabled': this.disabled || undefined, 'data-motion': this.motion }, [this.$slots.default?.() ?? this.label, this.closable ? h('button', { type: 'button', disabled: this.disabled, 'aria-label': `移除${this.label ?? '标签'}`, onClick: (event: Event) => this.$emit('close', event) }, icon(X, 13)) : null]) },
+  render() { return h('span', { class: ['apple-tag', `apple-tone-${this.tone}`], 'aria-disabled': this.disabled || undefined, 'data-motion': this.motion }, [this.$slots.default?.() ?? this.label, this.closable ? ripple(h('button', { type: 'button', disabled: this.disabled, 'aria-label': `移除${this.label ?? '标签'}`, onClick: (event: Event) => this.$emit('close', event) }, icon(X, 13)), !this.disabled) : null]) },
 })
 
 export const AppleAlert = defineComponent({
@@ -348,9 +416,34 @@ export const AppleDivider = defineComponent({
   render() { return h('div', { class: ['apple-divider', { 'apple-divider--vertical': this.vertical }], role: 'separator', 'aria-orientation': this.vertical ? 'vertical' : 'horizontal', 'aria-label': this.label, 'data-motion': this.motion }, this.$slots.default?.() ?? (this.label ? h('span', this.label) : undefined)) },
 })
 
+import { AppleButton } from './button'
+
 export const AppleSteps = defineComponent({
   name: 'AppleSteps', props: { ...motionProps, ...itemProps, modelValue: { type: Number, default: 0 }, clickable: Boolean, disabled: Boolean, label: { type: String, default: '步骤' } }, emits: ['update:modelValue', 'change'],
-  render() { return h('ol', { class: 'apple-steps', 'aria-label': this.label, 'data-motion': this.motion }, this.items.map((item, index) => h('li', { key: item.value, class: { 'is-complete': index < this.modelValue, 'is-current': index === this.modelValue }, 'aria-current': index === this.modelValue ? 'step' : undefined }, ripple(h(this.clickable ? 'button' : 'div', { type: this.clickable ? 'button' : undefined, disabled: this.clickable ? this.disabled || item.disabled : undefined, onClick: () => { if (this.clickable && !this.disabled && !item.disabled) { this.$emit('update:modelValue', index); this.$emit('change', index) } } }, [h('span', { class: 'apple-steps__number', 'aria-hidden': 'true' }, h(Transition, { name: 'apple-step-symbol', mode: 'out-in' }, { default: () => h('span', { key: index < this.modelValue ? 'complete' : 'number' }, index < this.modelValue ? icon(Check, 16) : index + 1) })), h('span', { class: 'apple-steps__copy' }, [h('strong', item.label), item.description ? h('span', item.description) : null])]), this.clickable && !this.disabled && !item.disabled)))) },
+  methods: {
+    select(index: number) {
+      if (!this.clickable || this.disabled || this.items[index]?.disabled) return
+      this.$emit('update:modelValue', index)
+      this.$emit('change', index)
+    },
+  },
+  render() {
+    return h('ol', { class: 'apple-steps', 'aria-label': this.label, 'data-motion': this.motion }, this.items.map((item, index) => {
+      const complete = index < this.modelValue
+      const current = index === this.modelValue
+      const blocked = this.disabled || item.disabled
+      const symbol = () => h(Transition, { name: 'apple-step-symbol', mode: 'out-in' }, { default: () => h('span', { key: complete ? 'complete' : 'number', class: 'apple-steps__symbol', 'aria-hidden': 'true' }, complete ? icon(Check, 16) : index + 1) })
+      return h('li', { key: item.value, class: { 'is-complete': complete, 'is-current': current, 'is-disabled': blocked }, 'aria-current': current ? 'step' : undefined, 'aria-disabled': blocked || undefined }, [
+        this.clickable
+          ? h(AppleButton, { class: 'apple-steps__number', variant: current ? 'primary' : 'outline', iconOnly: true, label: item.label, disabled: blocked, motion: this.motion, onClick: () => this.select(index) }, { default: symbol })
+          : h('span', { class: 'apple-steps__number', 'aria-hidden': 'true' }, symbol()),
+        h('div', { class: 'apple-steps__copy' }, [
+          h(this.clickable ? 'button' : 'strong', { class: 'apple-steps__label', type: this.clickable ? 'button' : undefined, disabled: this.clickable ? blocked : undefined, 'aria-current': current ? 'step' : undefined, onClick: this.clickable ? () => this.select(index) : undefined }, item.label),
+          item.description ? h('span', item.description) : null,
+        ]),
+      ])
+    }))
+  },
 })
 
 export const AppleTimeline = defineComponent({
@@ -440,11 +533,40 @@ const floatingGroupKey = Symbol('apple-floating-group')
 export const AppleBackTop = defineComponent({
   name: 'AppleBackTop', setup: () => ({ grouped: inject(floatingGroupKey, false) }), props: { ...motionProps, target: { type: String, default: '' }, threshold: { type: Number, default: 300 }, label: { type: String, default: '回到顶部' }, disabled: Boolean, fixed: { type: Boolean, default: true } },
   inject: { apple: { from: appleKey, default: null } },
-  emits: ['click'], data: () => ({ visible: false, scrollTarget: undefined as HTMLElement | Window | undefined }),
+  emits: ['click'], data: () => ({ visible: false, scrollTarget: undefined as HTMLElement | Window | undefined, scrollFrame: 0 }),
+  computed: {
+    motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced ?? (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)) },
+  },
   mounted() { this.bindTarget() },
-  watch: { target() { this.bindTarget() }, threshold() { this.onScroll() } },
-  beforeUnmount() { this.scrollTarget?.removeEventListener('scroll', this.onScroll) },
-  methods: { bindTarget() { this.scrollTarget?.removeEventListener('scroll', this.onScroll); this.scrollTarget = this.target ? document.querySelector<HTMLElement>(this.target) ?? window : window; this.scrollTarget.addEventListener('scroll', this.onScroll, { passive: true }); this.onScroll() }, onScroll() { this.visible = (this.scrollTarget === window ? window.scrollY : (this.scrollTarget as HTMLElement)?.scrollTop ?? 0) >= this.threshold }, go(event: Event) { if (this.disabled) return; this.scrollTarget?.scrollTo({ top: 0, behavior: 'auto' }); this.$emit('click', event) } },
+  watch: { target() { this.bindTarget() }, threshold() { this.onScroll() }, disabled(value) { if (value) this.cancelScroll() }, motionMode(mode) { if (mode !== 'full') this.cancelScroll() } },
+  beforeUnmount() { this.cancelScroll(); this.scrollTarget?.removeEventListener('scroll', this.onScroll) },
+  methods: {
+    bindTarget() { this.cancelScroll(); this.scrollTarget?.removeEventListener('scroll', this.onScroll); this.scrollTarget = this.target ? document.querySelector<HTMLElement>(this.target) ?? window : window; this.scrollTarget.addEventListener('scroll', this.onScroll, { passive: true }); this.onScroll() },
+    scrollPosition(): number { return this.scrollTarget === window ? window.scrollY : (this.scrollTarget as HTMLElement)?.scrollTop ?? 0 },
+    onScroll() { this.visible = this.scrollPosition() >= this.threshold },
+    interruptScroll(event: Event) { if (event.type !== 'keydown' || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'].includes((event as KeyboardEvent).key)) this.cancelScroll() },
+    cancelScroll() { cancelAnimationFrame(this.scrollFrame); this.scrollFrame = 0; for (const type of ['wheel', 'touchstart', 'keydown']) window.removeEventListener(type, this.interruptScroll, true) },
+    go(event: Event) {
+      if (this.disabled || !this.scrollTarget) return
+      this.$emit('click', event)
+      // A second click retains the current deadline instead of queuing another run.
+      if (this.scrollFrame) return
+      const target = this.scrollTarget, distance = Math.max(0, this.scrollPosition())
+      // Instant writes prevent consumer scroll-behavior:smooth from adding a
+      // second browser-controlled animation to our bounded frame sequence.
+      if (this.motionMode !== 'full' || distance === 0) { target.scrollTo({ top: 0, behavior: 'instant' }); return }
+      const duration = Math.min(2000, Math.max(180, Math.sqrt(distance) * 20)), started = performance.now()
+      for (const type of ['wheel', 'touchstart', 'keydown']) window.addEventListener(type, this.interruptScroll, { capture: true, passive: true })
+      const tick = (now: number) => {
+        const progress = Math.min(1, Math.max(0, (now - started) / duration))
+        target.scrollTo({ top: distance * (1 - progress) ** 3, behavior: 'instant' })
+        this.onScroll()
+        if (progress < 1) this.scrollFrame = requestAnimationFrame(tick)
+        else this.cancelScroll()
+      }
+      this.scrollFrame = requestAnimationFrame(tick)
+    },
+  },
   render() {
     const node = h(Transition, { name: 'apple-floating-action' }, { default: () => this.visible ? ripple(h('button', { type: 'button', class: ['apple-back-top', { 'apple-back-top--fixed': this.fixed && !this.grouped }], disabled: this.disabled, 'aria-label': this.label, title: this.label, 'data-motion': this.motion, onClick: this.go }, this.$slots.default?.() ?? icon(ArrowUp, 20)), !this.disabled) : null })
     const target = (this.apple as AppleContext | null)?.portalTarget.value

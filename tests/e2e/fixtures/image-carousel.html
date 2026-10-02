@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>图片轮播模式</title>
+<style>body{margin:0}main{padding:24px;max-width:640px;margin:auto}figure{margin-bottom:24px!important}.slide-copy{padding:24px;text-align:center}fieldset{display:flex;flex-wrap:wrap;gap:12px}</style>
+</head><body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleImage } from '/src/index.ts'
+const photo = (color, label, value) => ({ value, label, description: `${label}的介绍`, src: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600"><rect width="900" height="600" fill="${color}"/><circle cx="450" cy="300" r="150" fill="white"/></svg>`) })
+const photos = [photo('#328baa','山间清晨',0),photo('#ae573a','一场聆听',1),photo('#63549b','安静片刻',2),photo('#427c49','远行',3)]
+const cards = [{value:'one',label:'第一项'},{value:'two',label:'第二项'},{value:'three',label:'第三项'}]
+createApp({
+  data: () => ({ index:0, cardIndex:0, disabled:false, count:0, motion:'full', short:false }),
+  render() { return h(AppleProvider,{motion:this.motion},()=>h('main',[
+    h(AppleImage,{id:'photos',carousel:true,src:photos[0].src,alt:'图片轮播',gallery:photos,index:this.index,'onUpdate:index':index=>{this.index=index},label:'精选照片'}),
+    h(AppleImage,{id:'cards',carousel:true,src:'',alt:'自定义轮播',gallery:this.short?cards.slice(0,1):cards,index:this.cardIndex,'onUpdate:index':index=>{this.cardIndex=index},disabled:this.disabled,preview:false,label:'计划轮播'}, {item:({item,active})=>h('article',{class:'slide-copy'},[h('h2',item.label),h('a',{href:'#details-'+item.value},'了解详情'),h('button',{type:'button',onClick:()=>{this.count++}},'选择'+item.label),h('p',active?'当前项目':'其他项目')])}),
+    h('fieldset',[h('button',{id:'disable',onClick:()=>{this.disabled=!this.disabled}},'切换禁用'),h('button',{id:'short',onClick:()=>{this.short=!this.short}},'减少项目'),h('button',{id:'set-index',onClick:()=>{this.cardIndex=2}},'外部选第三项'),h('button',{id:'none',onClick:()=>{this.motion='none'}},'无动效')]),
+    h('output',{id:'selected'},String(this.count)),
+  ])) }
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

@@ -15,6 +15,7 @@ import './styles/navibar.css'
 import './styles/overlays.css'
 
 export * from './core/context'
+export { isTouchDevice } from './core/device'
 export * from './components/foundation'
 export * from './components/forms'
 export * from './components/content'

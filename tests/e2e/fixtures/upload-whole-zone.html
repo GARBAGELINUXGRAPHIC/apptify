@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Upload whole dropzone</title>
+<style>body { margin: 0; background: #f5f5f7; } main { padding: 36px; max-width: 640px; margin: auto; } section { margin-bottom: 28px; } .apple-upload { min-height: 170px; } </style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleUpload } from '/src/index.ts'
+createApp({
+  data: () => ({ files: [], disabled: false, loading: false, actions: 0 }),
+  render() {
+    return h(AppleProvider, {}, () => h('main', [
+      h('section', { id: 'upload' }, [h(AppleUpload, { label: '附件', hint: '支持拖放文件', multiple: true, modelValue: this.files, 'onUpdate:modelValue': files => this.files = files, disabled: this.disabled, loading: this.loading }, { default: () => [h('p', '点击空白处或拖放文件'), h('button', { id: 'preview', type: 'button', onClick: event => { event.stopPropagation(); this.actions++ } }, [h('span', '预览')]), h('button', { id: 'cancel', type: 'button', onClick: () => this.actions++ }, '取消')] })]),
+      h('button', { id: 'disable', onClick: () => this.disabled = !this.disabled }, '切换禁用'),
+      h('button', { id: 'loading', onClick: () => this.loading = !this.loading }, '切换加载'),
+      h('output', { id: 'actions' }, String(this.actions)),
+    ]))
+  },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

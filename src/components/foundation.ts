@@ -1,8 +1,10 @@
-import { defineComponent, h, markRaw, nextTick, ref, type PropType, type Component, type CSSProperties } from 'vue'
-import { ArrowUpRight, ImageOff, X, Search } from 'lucide-vue-next'
+import { defineComponent, h, markRaw, nextTick, ref, useId, type PropType, type Component, type CSSProperties } from 'vue'
+import { ArrowUpRight, ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, AppleImageViewer, type AppleViewerImage } from './overlays'
 import { clamp, isTouchImageDevice, touchImageQuery, type PhotoSize } from '../core/image-geometry'
+import { scrollGallery, stopGalleryScroll } from '../core/image-gallery-motion'
+import { GalleryScrollbar } from './gallery-scrollbar'
 import { AppleButton } from './button'
 export { AppleButton } from './button'
 
@@ -14,7 +16,10 @@ export const AppleProvider = defineComponent({
   props: { theme: String, motion: String as PropType<Motion> },
   data() {
     const parent = this.parentApple as unknown as AppleContext | null
-    return { context: ref(this.nested || this.theme || this.motion ? createApple({ theme: this.theme ?? parent?.theme.value.name, motion: this.motion ?? parent?.motion.value.mode, themes: parent?.theme.value.themes }) : (parent ?? createApple())) }
+    const context = this.nested || this.theme || this.motion ? createApple({ theme: this.theme ?? parent?.theme.value.name, motion: this.motion ?? parent?.motion.value.mode, themes: parent?.theme.value.themes }) : (parent ?? createApple())
+    // Material preferences belong to the app, including providers with a local theme.
+    if (parent && parent !== context) context.glass = parent.glass
+    return { context: ref(context) }
   },
   provide() { return { [appleKey as symbol]: this.context, [providerKey]: true } },
   computed: {
@@ -77,11 +82,20 @@ export const AppleCard = defineComponent({
   },
 })
 
+export interface AppleImageItem extends Omit<AppleViewerImage, 'src'> {
+  src?: string
+  label?: string
+  value?: string | number
+  description?: string
+}
+
 export const AppleImage = defineComponent({
+  setup: () => ({ uid: useId() }),
   inject: { apple: { from: appleKey, default: null } },
   name: 'AppleImage', props: {
     ...motionProps, src: { type: String, required: true }, alt: { type: String, required: true },
-    preview: { type: Boolean, default: true }, gallery: { type: Array as PropType<Array<string | AppleViewerImage>>, default: () => [] },
+    preview: { type: Boolean, default: true }, gallery: { type: Array as PropType<Array<string | AppleImageItem>>, default: () => [] },
+    carousel: Boolean, disabled: Boolean, label: { type: String, default: '图片轮播' },
     galleryLayout: { type: String as PropType<'compact' | 'tiled' | 'tiled-wrap'>, default: 'compact' },
     galleryShape: { type: String as PropType<'natural' | 'square'>, default: 'natural' },
     index: { type: Number, default: 0 }, squared: Boolean, aspectRatio: { type: [String, Number], default: '4/3' },
@@ -93,38 +107,83 @@ export const AppleImage = defineComponent({
     viewportQuery: null as MediaQueryList | null, thumbnails: markRaw(new Map<number, HTMLImageElement>()),
     galleryLoaded: {} as Record<number, boolean>, galleryFailed: {} as Record<number, boolean>,
     gallerySizes: {} as Record<string, PhotoSize>, gallerySnap: null as string | null,
+    galleryTarget: null as number | null,
+    galleryObserver: null as ResizeObserver | null,
     galleryDrag: null as { id: number; x: number; left: number; moved: boolean; snap: string } | null, galleryClickUntil: 0,
   } },
   computed: {
+    imageMotion(): string {
+      const ctx = this.apple as AppleContext | null
+      return resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced)
+    },
     images(): AppleViewerImage[] {
       return this.gallery.length ? this.gallery.map((image, index) => typeof image === 'string'
-        ? { src: image, alt: image === this.src ? this.alt : `图片 ${index + 1}` } : image)
+        ? { src: image, alt: image === this.src ? this.alt : `图片 ${index + 1}` }
+        : { ...image, src: image.src ?? this.src, alt: image.alt ?? (this.carousel ? image.label : undefined) })
         : [{ src: this.src, alt: this.alt }]
     },
-    grouped(): boolean { return this.gallery.length > 1 },
+    grouped(): boolean { return this.gallery.length > 1 || this.carousel && this.gallery.length > 0 },
+    layout(): 'compact' | 'tiled' | 'tiled-wrap' { return this.carousel ? 'compact' : this.galleryLayout },
   },
   watch: {
+    imageMotion(value: string) {
+      if (value !== 'full' && this.galleryTarget !== null) this.origin(this.galleryTarget)
+    },
     src() { this.failed = false; this.loaded = false },
     index(value: number) {
       const index = clamp(value, 0, this.images.length - 1)
       if (index === this.previewIndex) return
       this.previewIndex = index; if (!this.previewing) void nextTick(() => this.origin(index))
     },
-    galleryLayout() { void nextTick(() => this.origin(this.previewIndex)) },
+    layout() { void nextTick(() => this.origin(this.previewIndex)) },
+    carousel() { void nextTick(() => this.origin(this.previewIndex)) },
     galleryShape() { void nextTick(() => this.origin(this.previewIndex)) },
     gallery: { deep: true, handler() {
       this.galleryLoaded = {}; this.galleryFailed = {}; this.previewIndex = clamp(this.previewIndex, 0, this.images.length - 1)
-      void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex) })
+      void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery() })
     } },
   },
   mounted() {
     this.viewportQuery = window.matchMedia?.(touchImageQuery) ?? null
     this.viewportQuery?.addEventListener('change', this.syncViewport)
     this.syncViewport()
-    void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex) })
+    void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery() })
   },
-  beforeUnmount() { this.viewportQuery?.removeEventListener('change', this.syncViewport) },
+  beforeUnmount() { this.cancelGalleryScroll(); this.galleryObserver?.disconnect(); this.viewportQuery?.removeEventListener('change', this.syncViewport) },
   methods: {
+    observeGallery() {
+      this.galleryObserver?.disconnect()
+      const box = this.$refs.gallery as HTMLElement | undefined
+      if (!box || typeof ResizeObserver === 'undefined') return
+      let width = box.clientWidth
+      this.galleryObserver = markRaw(new ResizeObserver(() => {
+        if (box.clientWidth === width) return
+        width = box.clientWidth
+        if (this.galleryTarget !== null) this.origin(this.galleryTarget)
+      }))
+      this.galleryObserver.observe(box)
+    },
+    cancelGalleryScroll() {
+      const box = this.$refs.gallery as HTMLElement | undefined
+      if (box) stopGalleryScroll(box)
+      this.galleryTarget = null
+    },
+    interruptGalleryScroll() { this.cancelGalleryScroll(); this.scrolled() },
+    galleryWheel(event: WheelEvent) {
+      if (this.layout !== 'compact') { this.interruptGalleryScroll(); return }
+      if (this.previewing || event.ctrlKey) return
+      const delta = event.shiftKey && !event.deltaX ? event.deltaY : event.deltaX
+      if (!delta || !event.shiftKey && Math.abs(event.deltaY) > Math.abs(delta)) return
+      if (this.disabled) { event.preventDefault(); return }
+      this.interruptGalleryScroll()
+      const box = this.$refs.gallery as HTMLElement | undefined
+      if (!box) return
+      // Keep native scrolling over the photos. The sibling arrow layer and
+      // Shift+vertical input forward their full distance into the same strip.
+      if (box.contains(event.target as Node) && !(event.shiftKey && !event.deltaX)) return
+      event.preventDefault()
+      box.scrollBy({ left: delta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? box.clientWidth : 1), behavior: 'auto' })
+    },
     syncViewport() { if (!this.previewing) this.mobile = isTouchImageDevice() },
     afterPreview() {
       this.previewing = false; this.syncViewport()
@@ -133,11 +192,12 @@ export const AppleImage = defineComponent({
       this.gallerySnap = null
     },
     origin(index: number, reveal = true): HTMLImageElement | null {
+      if (reveal) this.cancelGalleryScroll()
       const image = this.thumbnails.get(this.grouped ? index : 0) ?? null
-      if (!image || !reveal || !this.grouped) return image
+      if (!reveal || !this.grouped) return image
       const box = this.$refs.gallery as HTMLElement | undefined
-      const trigger = image.parentElement
-      if (this.galleryLayout === 'tiled-wrap') {
+      const trigger = box?.children[index] as HTMLElement | undefined
+      if (this.layout === 'tiled-wrap') {
         trigger?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
         return image
       }
@@ -148,37 +208,39 @@ export const AppleImage = defineComponent({
       return image
     },
     showImage(index: number) {
-      if (this.previewing) return
+      if (this.previewing || this.disabled) return
       index = clamp(index, 0, this.images.length - 1)
-      const box = this.$refs.gallery as HTMLElement | undefined, image = this.thumbnails.get(index)
-      if (!box || !image?.parentElement) return
-      const trigger = image.parentElement
-      if (this.galleryLayout === 'tiled-wrap') {
+      if (index === this.galleryTarget) return
+      const box = this.$refs.gallery as HTMLElement | undefined
+      const trigger = box?.children[index] as HTMLElement | undefined
+      if (!box || !trigger) return
+      if (this.layout === 'tiled-wrap') {
         this.changed(index)
         trigger.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
         return
       }
       const left = clamp(trigger.offsetLeft - (box.clientWidth - trigger.offsetWidth) / 2, 0, box.scrollWidth - box.clientWidth)
+      const adjacent = Math.abs(index - this.previewIndex) <= 1
+      this.galleryTarget = index
       this.changed(index)
-      const ctx = this.apple as AppleContext | null
-      box.scrollTo({ left, behavior: resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced) === 'full' ? 'smooth' : 'auto' })
+      scrollGallery(box, left, this.imageMotion === 'full', () => { this.galleryTarget = null }, adjacent)
     },
     scrolled() {
-      if (this.previewing) return
+      if (this.previewing || this.disabled || this.galleryTarget !== null) return
       const box = this.$refs.gallery as HTMLElement | undefined
       if (!box) return
       const center = box.scrollLeft + box.clientWidth / 2
       let index = this.previewIndex, nearest = Infinity
-      this.thumbnails.forEach((image, i) => {
-        const trigger = image.parentElement
-        if (!trigger) return
+      Array.from(box.children).forEach((element, i) => {
+        const trigger = element as HTMLElement
         const distance = Math.abs(trigger.offsetLeft + trigger.offsetWidth / 2 - center)
         if (distance < nearest) { nearest = distance; index = i }
       })
       if (index !== this.previewIndex) this.changed(index)
     },
     galleryPointerDown(event: PointerEvent) {
-      if (event.pointerType !== 'mouse' || event.button !== 0 || this.previewing || this.galleryLayout === 'tiled-wrap') return
+      this.interruptGalleryScroll()
+      if (event.pointerType !== 'mouse' || event.button !== 0 || this.previewing || this.disabled || this.layout === 'tiled-wrap') return
       const box = event.currentTarget as HTMLElement
       this.galleryDrag = { id: event.pointerId, x: event.clientX, left: box.scrollLeft, moved: false, snap: box.style.scrollSnapType }
     },
@@ -200,18 +262,20 @@ export const AppleImage = defineComponent({
       if (drag.moved) {
         this.galleryClickUntil = performance.now() + 400
         this.scrolled()
-        if (this.galleryLayout === 'compact') this.showImage(this.previewIndex)
+        if (this.layout === 'compact') this.showImage(this.previewIndex)
       }
     },
     galleryKeydown(event: KeyboardEvent) {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+      if (this.disabled || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
       event.preventDefault()
       const index = clamp(event.key === 'Home' ? 0 : event.key === 'End' ? this.images.length - 1 : this.previewIndex + (event.key === 'ArrowRight' ? 1 : -1), 0, this.images.length - 1)
       this.showImage(index)
-      this.thumbnails.get(index)?.parentElement?.focus({ preventScroll: true })
+      const trigger = (this.$refs.gallery as HTMLElement | undefined)?.children[index] as HTMLElement | undefined
+      trigger?.focus({ preventScroll: true })
     },
     previewImage(index: number) {
-      if (this.previewing || performance.now() < this.galleryClickUntil || !this.preview || (this.grouped ? this.galleryFailed[index] : this.failed)) return
+      if (this.disabled || this.previewing || performance.now() < this.galleryClickUntil || !this.preview || (this.grouped ? this.galleryFailed[index] : this.failed)) return
+      this.cancelGalleryScroll()
       this.syncViewport()
       this.previewIndex = this.grouped ? index : this.index; this.previewing = true; this.open = true
       const box = this.$refs.gallery as HTMLElement | undefined
@@ -234,21 +298,37 @@ export const AppleImage = defineComponent({
       const size = this.gallerySizes[image.src] ?? image
       return size.width && size.height ? size.width / size.height : 1
     },
+    slideLabel(index: number): string {
+      const item = this.gallery[index]
+      return (typeof item === 'object' ? item.label : undefined) ?? this.images[index]?.title ?? this.images[index]?.alt ?? `图片 ${index + 1}`
+    },
     thumbnail(image: AppleViewerImage, index: number) {
       const failed = this.grouped ? this.galleryFailed[index] : this.failed
-      return h(this.preview && !failed ? 'button' : 'div', {
-        key: `${index}:${image.src}`, class: 'apple-image__trigger', type: this.preview && !failed ? 'button' : undefined,
-        'aria-label': this.preview && !failed ? `放大图片：${image.alt ?? `图片 ${index + 1}`}` : undefined,
-        style: this.grouped && this.galleryLayout !== 'compact' ? { aspectRatio: String(this.tileRatio(image)) } : undefined,
-        onClick: () => this.previewImage(index),
-      }, failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', {
+      const item = this.gallery[index] ?? image
+      const metadata = typeof item === 'string' ? image as AppleImageItem : item
+      const active = index === clamp(this.previewIndex, 0, this.images.length - 1)
+      const content = this.carousel ? this.$slots.item?.({ item: metadata, index, active }) : undefined
+      const picture = failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', {
         ref: (element: unknown) => { if (element) this.thumbnails.set(index, element as HTMLImageElement); else this.thumbnails.delete(index) },
         src: image.src, alt: image.alt ?? '', loading: this.grouped ? 'eager' : 'lazy', draggable: false,
         width: image.width, height: image.height,
         style: { objectFit: this.squared || this.galleryShape === 'square' ? 'cover' : this.fit },
         onError: () => { if (this.grouped) this.galleryFailed[index] = true; else this.failed = true },
         onLoad: (event: Event) => this.loadedThumbnail(image.src, index, event.target as HTMLImageElement),
-      })])
+      })]
+      const canPreview = this.preview && !this.disabled && !failed
+      const trigger = h(canPreview ? 'button' : 'div', {
+        key: `${index}:${image.src}`, class: this.carousel ? 'apple-image__slide-picture' : 'apple-image__trigger', type: canPreview ? 'button' : undefined,
+        'aria-label': canPreview ? `放大图片：${image.alt ?? `图片 ${index + 1}`}` : undefined,
+        style: this.grouped && this.layout !== 'compact' ? { aspectRatio: String(this.tileRatio(image)) } : undefined,
+        onClick: () => this.previewImage(index),
+      }, picture)
+      if (!this.carousel) return trigger
+      return h('div', {
+        key: metadata.value ?? `${index}:${image.src}`, class: 'apple-image__trigger apple-image__slide',
+        role: 'group', 'aria-roledescription': '幻灯片', 'aria-label': `${index + 1} / ${this.images.length}：${this.slideLabel(index)}`,
+        inert: !active || undefined,
+      }, content ?? [trigger, metadata.label || metadata.description ? h('div', { class: 'apple-image__slide-caption' }, [metadata.label ? h('strong', metadata.label) : null, metadata.description ? h('p', metadata.description) : null]) : null])
     },
   },
   render() {
@@ -258,21 +338,31 @@ export const AppleImage = defineComponent({
     const ratio = this.squared || this.galleryShape === 'square' ? '1' : String(this.aspectRatio)
     return h('figure', {
       class: ['apple-image', { 'apple-image--loaded': this.loaded && !this.failed && !this.open, 'apple-image--group': this.grouped, 'apple-image--mobile': this.mobile }],
-      'data-apple-motion': mode, 'data-gallery-layout': this.grouped ? this.galleryLayout : undefined,
+      'data-apple-motion': mode, 'data-gallery-layout': this.grouped ? this.layout : undefined, 'data-carousel': this.carousel || undefined,
+      role: this.carousel ? 'region' : undefined, 'aria-roledescription': this.carousel ? '轮播图' : undefined, 'aria-label': this.carousel ? this.label : undefined,
       'data-gallery-shape': this.grouped ? this.squared ? 'square' : this.galleryShape : undefined, 'data-index': index,
       style: this.grouped ? undefined : { aspectRatio: ratio },
     }, [
-      h('div', { class: 'apple-image__surface', style: this.grouped && this.galleryLayout === 'compact' ? { aspectRatio: ratio } : undefined }, [
+      h('div', { class: 'apple-image__surface', style: this.grouped && this.layout === 'compact' ? { aspectRatio: ratio } : undefined, onWheel: this.grouped ? this.galleryWheel : undefined }, [
         this.grouped ? h('div', {
-          ref: 'gallery',
-          role: 'group', tabindex: 0, 'aria-label': '图片组', class: ['apple-image__gallery', `apple-image__gallery--${this.galleryLayout}`, { 'is-dragging': this.galleryDrag?.moved }],
+          ref: 'gallery', id: `${this.uid}-gallery`,
+          role: 'group', tabindex: this.disabled ? -1 : 0, 'aria-label': this.carousel ? this.label : '图片组', class: ['apple-image__gallery', `apple-image__gallery--${this.layout}`, { 'is-dragging': this.galleryDrag?.moved }],
+          style: this.disabled ? { overflowX: 'hidden' } : undefined,
           onScroll: this.scrolled, onKeydown: this.galleryKeydown, onPointerdown: this.galleryPointerDown, onPointermove: this.galleryPointerMove,
           onPointerup: this.galleryPointerUp, onPointercancel: this.galleryPointerUp, onLostpointercapture: this.galleryPointerUp,
         }, this.images.map((image, i) => this.thumbnail(image, i))) : this.thumbnail({ src: this.src, alt: this.alt }, 0),
+        this.grouped && this.layout === 'compact' ? h('div', { class: 'apple-image__arrows', role: 'group', 'aria-label': '图片翻页' }, [
+          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--prev', 'aria-label': '上一张图片', disabled: this.disabled || index === 0, onClick: () => this.showImage(index - 1) }, h(ChevronLeft, { size: 22, 'aria-hidden': true })),
+          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || index === this.images.length - 1, onClick: () => this.showImage(index + 1) }, h(ChevronRight, { size: 22, 'aria-hidden': true })),
+        ]) : null,
       ]),
-      this.grouped && this.galleryLayout === 'compact' ? h('div', { class: 'apple-image__pagination', role: 'group', 'aria-label': '图片组分页' }, [
+      this.grouped && this.layout === 'tiled' ? h(GalleryScrollbar, {
+        target: () => this.$refs.gallery as HTMLElement | undefined, controls: `${this.uid}-gallery`,
+        onInteraction: this.interruptGalleryScroll,
+      }) : null,
+      this.grouped && this.layout === 'compact' ? h('div', { class: 'apple-image__pagination', role: 'group', 'aria-label': this.carousel ? '选择幻灯片' : '图片组分页' }, [
         h('div', { class: 'apple-image__dots' }, this.images.map((_, i) => h('button', {
-          type: 'button', class: 'apple-image__dot', 'aria-label': `显示第 ${i + 1} 张图片`, 'aria-current': i === index ? 'true' : undefined,
+          type: 'button', class: 'apple-image__dot', disabled: this.disabled, 'aria-label': this.carousel ? `查看${this.slideLabel(i)}` : `显示第 ${i + 1} 张图片`, 'aria-current': i === index ? 'true' : undefined, 'aria-controls': `${this.uid}-gallery`,
           onClick: () => this.showImage(i),
         }, h('span', { 'aria-hidden': true })))),
         h('span', { class: 'apple-image__count', 'aria-live': 'polite', 'aria-atomic': 'true' }, `${index + 1} / ${this.images.length}`),

@@ -1,3 +1,5 @@
+import { detectTouchDevice, touchDeviceQuery } from './device'
+
 export interface PhotoSize { width: number; height: number }
 export interface PhotoPoint { x: number; y: number }
 export interface PhotoGeometry {
@@ -7,9 +9,8 @@ export interface PhotoGeometry {
   inset: [number, number, number, number]
 }
 
-export const touchImageQuery = '(any-pointer: coarse)'
-export const isTouchImageDevice = () => typeof window !== 'undefined' &&
-  (window.navigator.maxTouchPoints > 0 || (window.matchMedia?.(touchImageQuery).matches ?? false))
+export const touchImageQuery = touchDeviceQuery
+export const isTouchImageDevice = detectTouchDevice
 export const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 
 export function fitPhoto(photo: PhotoSize, viewport: PhotoSize): PhotoSize {

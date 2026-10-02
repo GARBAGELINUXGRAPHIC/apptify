@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Color picker motion</title>
+<style>body { margin: 0; background: #f5f5f7; } main { padding: 32px; max-width: 420px; }</style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleColorPicker } from '/src/index.ts'
+createApp({
+  data: () => ({ color: '#0071e3', commits: 0, motion: new URLSearchParams(location.search).get('motion') || 'full', disabled: false, loading: false, shown: true }),
+  render() { return h(AppleProvider, { motion: this.motion }, () => h('main', [
+    this.shown ? h(AppleColorPicker, { modelValue: this.color, 'onUpdate:modelValue': value => this.color = value, onChange: () => this.commits++, label: '强调色', disabled: this.disabled, loading: this.loading }) : null,
+    h('div', { style: { marginTop: '380px' } }, [
+      h('button', { id: 'outside' }, '外部按钮'),
+      h('button', { id: 'disabled', onClick: () => this.disabled = !this.disabled }, '切换禁用'),
+      h('button', { id: 'loading', onClick: () => this.loading = !this.loading }, '切换加载'),
+      h('button', { id: 'motion', onClick: () => this.motion = this.motion === 'none' ? 'full' : 'none' }, '切换动效'),
+      h('button', { id: 'unmount', onClick: () => this.shown = false }, '移除颜色选择器'),
+      h('output', { id: 'commits' }, String(this.commits)),
+    ]),
+  ])) },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

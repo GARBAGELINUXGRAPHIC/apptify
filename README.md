@@ -4,7 +4,7 @@
 
 设计借鉴 Apple 网站的排版、留白、层次与交互节奏；不是 Apple 官方产品，也不声称全部控件都与 Apple 网站逐像素一致。表格、级联选择、验证码、下拉刷新等能力是在同一套视觉语言下的扩展。
 
-当前导出并注册 **68 个组件**：基础 9 个、表单 18 个、内容与移动交互 29 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 67 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
+当前导出并注册 **69 个组件**：基础 9 个、表单 18 个、内容与移动交互 30 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 68 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
 
 ## 本地运行与安装
 
@@ -105,6 +105,74 @@ export default {
 ```
 
 也导出 `useApple()` 供 Composition API 的 `setup()` 使用，但不需要为接入组件库重写现有 Options API 页面。
+
+## 自动路由（与 Vuetify 项目相同）
+
+采用 `vite-plugin-pages` + Vue Router 4，默认扫描 `src/views`。新页面自动生成路由，不需要维护 routes 数组；普通 JavaScript 和 Options API 页面同样适用。
+
+```sh
+npm install vue-router@^4.5
+npm install -D vite-plugin-pages@^0.32.4
+```
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import apptifyRoutes from 'apptify/vite'
+
+export default defineConfig({
+  plugins: [apptifyRoutes(), vue()],
+})
+```
+
+```js
+// src/router/index.js
+import { createRouter, createWebHistory } from 'vue-router'
+import routes from 'virtual:generated-pages'
+
+export default createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+})
+```
+
+```js
+// src/main.js
+import { createApp } from 'vue'
+import { createAppleUI } from 'apptify'
+import 'apptify/style.css'
+import App from './App.vue'
+import router from './router'
+
+createApp(App).use(createAppleUI()).use(router).mount('#app')
+```
+
+```vue
+<!-- src/App.vue：全局主题和弹层跨页面保留 -->
+<template>
+  <apple-provider>
+    <router-view />
+  </apple-provider>
+</template>
+```
+
+| 页面文件 | 路由 |
+| --- | --- |
+| `src/views/index.vue` | `/` |
+| `src/views/about.vue` | `/about` |
+| `src/views/users/[id].vue` | `/users/:id` |
+| `src/views/[...all].vue` | 未匹配地址（404 页面） |
+
+页面内使用 `<router-link to="/about">关于</router-link>`，Options API 可通过 `this.$router.push('/about')` 跳转、通过 `this.$route.params.id` 读取参数。页面无需再包根 `apple-provider`。
+
+TypeScript 项目在 `src/vite-env.d.ts` 增加 `/// <reference types="vite-plugin-pages/client" />`。需要改扫描目录时传入 `apptifyRoutes({ dirs: [{ dir: 'src/pages', baseRoute: '' }] })`；支持其余 Pages 选项，包括排除文件和扩展路由。
+
+已经接入 `Pages()` 的项目继续使用现有配置即可，避免重复添加生成插件。`apptify/vite` 只负责构建时生成路由，浏览器组件入口不加载此插件。
+
+本仓库演示也使用同一套机制：`playground/App.vue` 放 Provider 与 RouterView，`playground/router/index.ts` 创建 Router，工作台页面位于 `playground/views/index.vue`。演示扫描目录设为 `playground/views`。
+
+使用 history 模式部署时，服务器需要将页面 URL 回退到 `index.html`，并保留 `/api` 和静态资源自己的处理规则；你的 Spring Boot 项目同样需要配置该回退。无法配置回退时，可改用 `createWebHashHistory(import.meta.env.BASE_URL)`。
 
 ## 主题与动效
 
@@ -259,7 +327,7 @@ notice.update({ message: '同步完成', tone: 'success', duration: 2500 })
 />
 ```
 
-示例图片路径需要替换为业务资源。`AppleImage` 默认支持点击预览，可用 `:preview="false"` 关闭。手机端的图片组支持 `gallery-layout="compact"`（固定框内横滑，默认）和 `gallery-layout="tiled"`（在矩形内平铺），组内每张预览图都会渲染。预览支持双指缩放与同时平移、双击放大或恢复、松手边界回弹、左右滑动切图、单击或下滑退出，顶部显示序号。手机单击等待 200ms 区分双击；双击围绕点击位置放大至 2 倍，再次双击恢复；拖动、双指操作、切图及关闭会取消等待中的单击。切图延续松手速度，快速轻扫也能翻页，动画可由下一次触摸接住；循环首尾只移动相邻图片。打开和关闭通过贝塞尔缓动连接原图位置；退出前同步横滑预览的位置，当前缩略图保持黑色占位直到落回。`AppleImage` 统一使用同一组件入口，根据 `navigator.maxTouchPoints` 或 `(any-pointer: coarse)` 判断触屏能力，不按屏幕宽度区分；触屏设备使用手势预览，非触屏设备保留缩放、拖动、旋转、左右按钮与键盘控制。双端预览按钮均使用半透明背景、backdrop blur 和 200% 饱和度。独立 Viewer 可传入 `:origin="index => thumbnailElements[index]"` 接入原位动画。
+示例图片路径需要替换为业务资源。`AppleImage` 默认支持点击预览，可用 `:preview="false"` 关闭。手机端的图片组支持 `gallery-layout="compact"`（固定框内横滑，默认）和 `gallery-layout="tiled"`（横向平铺，溢出时显示随主题变化的圆角滚动条，支持拖动、轨道点击及键盘操作），组内每张预览图都会渲染。省空间（compact）模式桌面触控板支持自由连续横滑，一次手势可跨越多张图片，垂直滚动仍交给页面；快速连续点击翻页会沿当前画面的位置和速度继续。点击小点跨多张时，直接在当前画面和目标图之间滑动一屏，不快速扫过中间图片；小点保持选中目标，连续改选从当前动画画面衔接。预览支持双指缩放与同时平移、双击放大或恢复、松手边界回弹、左右滑动切图、单击或下滑退出，顶部显示序号。手机单击等待 200ms 区分双击；双击围绕点击位置放大至 2 倍，再次双击恢复；拖动、双指操作、切图及关闭会取消等待中的单击。按钮、键盘和静止松手后的切图使用接近小窗横滑的先加速、后减速曲线，时长随移动距离调整；滑动松手仍以带初速度的阻尼曲线延续手势，快速轻扫也能翻页，翻页、缩放和边界回弹均可由下一次触摸接住；循环首尾只移动相邻图片。打开和关闭通过固定尺寸图片的 transform 与裁剪连接原图位置，避免逐帧修改布局尺寸；退出前同步横滑预览的位置，当前缩略图保持黑色占位直到落回。`AppleImage` 统一使用同一组件入口，根据 `navigator.maxTouchPoints` 或 `(any-pointer: coarse)` 判断触屏能力，不按屏幕宽度区分；触屏设备使用手势预览，非触屏设备保留缩放、拖动、旋转、左右按钮与键盘控制。双端共用图片专用的阻尼节奏：打开 360ms、关闭 300ms、双击缩放 300ms，翻页根据剩余距离与松手速度调整；这些时长独立于通用 UI 过渡。桌面端按钮缩放、双击缩放与旋转平滑过渡，拖动可接住缩放中的实际位置，滚轮仍直接跟随输入。减少动态效果时不执行大幅位移或缩放，关闭动效时立即更新。双端预览按钮均使用半透明背景、backdrop blur 和 200% 饱和度。独立 Viewer 可传入 `:origin="index => thumbnailElements[index]"` 接入原位动画。
 
 ## 移动端与边界
 

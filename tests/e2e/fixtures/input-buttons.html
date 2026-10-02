@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Input button spacing</title>
+  <style>body { margin: 0; background: #f5f5f7; } main { padding: 24px; max-width: 560px; margin: auto; } section { margin-bottom: 20px; }</style>
+</head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleInput, AppleAutocomplete, AppleButton, AppleStepper, AppleDatePicker } from '/src/index.ts'
+createApp({
+  data: () => ({ name: 'QuitSense', password: 'mock-password', suffix: '13800138000', multiple: 'mock-password', disabled: false, quantity: 1, device: 'mac', clicks: 0 }),
+  render() {
+    const value = key => ({ modelValue: this[key], 'onUpdate:modelValue': next => this[key] = next, disabled: this.disabled })
+    const send = () => h(AppleButton, { size: 'small', variant: 'secondary', disabled: this.disabled, onClick: () => this.clicks++ }, () => '发送')
+    return h(AppleProvider, { motion: 'none' }, () => h('main', [
+      h('section', { id: 'clear' }, [h(AppleInput, { ...value('name'), label: '清除按钮', clearable: true })]),
+      h('section', { id: 'password' }, [h(AppleInput, { ...value('password'), label: '密码显示按钮', type: 'password' })]),
+      h('section', { id: 'suffix' }, [h(AppleInput, { ...value('suffix'), label: '自定义后缀按钮' }, { suffix: send })]),
+      h('section', { id: 'prefix' }, [h(AppleInput, { ...value('suffix'), label: '自定义前缀按钮' }, { prefix: send })]),
+      h('section', { id: 'suffix-icon' }, [h(AppleInput, { ...value('suffix'), label: '自定义后缀图标按钮' }, { suffix: () => h(AppleButton, { iconOnly: true, label: '后缀操作', disabled: this.disabled, onClick: () => this.clicks++ }, () => '↗') })]),
+      h('section', { id: 'suffix-multiple' }, [h(AppleInput, { ...value('suffix'), label: '多个自定义后缀按钮' }, { suffix: () => [h(AppleButton, { variant: 'ghost', disabled: this.disabled }, () => '检测'), send()] })]),
+      h('section', { id: 'multiple' }, [h(AppleInput, { ...value('multiple'), label: '清除、密码显示与后缀按钮', type: 'password', clearable: true }, { suffix: send })]),
+      h('section', { id: 'autocomplete' }, [h(AppleAutocomplete, { ...value('device'), label: 'Autocomplete 清除', items: [{ value: 'mac', label: 'MacBook' }] })]),
+      h('section', { id: 'number' }, [h(AppleStepper, { ...value('quantity'), label: 'Number 加减', min: 1, max: 3 })]),
+      h('section', { id: 'date' }, [h(AppleDatePicker, { label: '日期按钮', disabled: this.disabled, format: 'YYYY-MM-DD' })]),
+      h(AppleButton, { id: 'disable', onClick: () => this.disabled = !this.disabled }, () => '切换禁用'),
+      h('output', { id: 'clicks' }, String(this.clicks)),
+    ]))
+  },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

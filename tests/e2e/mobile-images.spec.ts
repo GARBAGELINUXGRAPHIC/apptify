@@ -1,5 +1,5 @@
 import { expect, test, webkit, type Locator, type Page } from '@playwright/test'
-import { swipeImage } from './image-gestures'
+import { samplePhotoFlight, swipeImage } from './image-gestures'
 
 test.use({ hasTouch: true })
 
@@ -16,31 +16,19 @@ async function pointer(viewer: Locator, type: string, id: number, x: number, y: 
   await viewer.locator('.apple-viewer-stage').dispatchEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, button: 0, bubbles: true })
 }
 async function tapReturn(viewer: Locator) {
-  const flight = viewer.evaluate(panel => new Promise<{
-    frame: ComputedKeyframe[]; image: ComputedKeyframe[]; opacity: string; locked: string; placeholder: string; duration: number
-  }>(resolve => {
-    const observer = new MutationObserver(() => {
-      if (panel.getAttribute('data-phase') !== 'closing') return
-      observer.disconnect()
-      requestAnimationFrame(() => {
-        const frame = panel.querySelector('.apple-viewer-canvas')!, image = frame.querySelector('img')!
-        const animation = frame.getAnimations()[0]
-        resolve({
-          frame: (animation.effect as KeyframeEffect).getKeyframes(), image: (image.getAnimations()[0].effect as KeyframeEffect).getKeyframes(),
-          opacity: getComputedStyle(image).opacity, locked: document.body.style.overflow,
-          placeholder: getComputedStyle(document.querySelector('.apple-image__trigger--placeholder img')!).opacity,
-          duration: Number(animation.effect!.getTiming().duration),
-        })
-      })
-    })
-    observer.observe(panel, { attributes: true, attributeFilter: ['data-phase'] })
-  }))
   await viewer.locator('.apple-viewer-stage').click({ position: { x: 195, y: 422 } })
-  return await flight
+  await expect(viewer).toHaveAttribute('data-phase', 'closing')
+  const flight = await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)
+  const state = await viewer.evaluate(panel => ({
+    opacity: getComputedStyle(panel.querySelector('.apple-viewer-image')!).opacity, locked: document.body.style.overflow,
+    placeholder: getComputedStyle(document.querySelector('.apple-image__trigger--placeholder img')!).opacity,
+  }))
+  return { ...flight, ...state }
 }
 async function expectGlass(viewer: Locator) {
   const materials = await viewer.locator('button, .apple-viewer-toolbar').evaluateAll(elements => elements.map(element => {
-    const css = getComputedStyle(element)
+    const surface = element.closest('.apple-viewer-toolbar') ?? element
+    const css = getComputedStyle(surface)
     return { filter: css.backdropFilter || css.getPropertyValue('-webkit-backdrop-filter'), background: css.backgroundColor }
   }))
   expect(materials.length).toBeGreaterThan(0)
@@ -240,6 +228,62 @@ test('a touch can catch a double-tap zoom in place and continue panning', async 
   await expect(viewer).toHaveAttribute('data-phase', 'open')
 })
 
+test('a touch can also catch a cancelled dismissal rebound without losing its position', async ({ page }) => {
+  const viewer = await openPhoto(page)
+  await pointer(viewer, 'pointerdown', 1, 195, 422)
+  await pointer(viewer, 'pointermove', 1, 210, 480)
+  await pointer(viewer, 'pointercancel', 1, 210, 480)
+  await expect(viewer).toHaveAttribute('data-phase', 'settling')
+  const stopped = await viewer.locator('.apple-viewer-canvas').evaluate(frame => {
+    const animation = frame.getAnimations()[0]
+    animation.pause(); animation.currentTime = 60
+    const rect = frame.getBoundingClientRect()
+    return { x: rect.x, y: rect.y, width: rect.width }
+  })
+  await pointer(viewer, 'pointerdown', 2, 195, 422)
+  await expect(viewer).toHaveAttribute('data-phase', 'open')
+  const caught = (await viewer.locator('.apple-viewer-image').boundingBox())!
+  expect(caught.x).toBeCloseTo(stopped.x, 1)
+  expect(caught.y).toBeCloseTo(stopped.y, 1)
+  expect(caught.width).toBeCloseTo(stopped.width, 1)
+  await pointer(viewer, 'pointercancel', 2, 195, 422)
+  await bounded(viewer)
+})
+
+test('a fast release near the next page keeps a visible settling interval', async ({ page }) => {
+  const viewer = await openPhoto(page)
+  const duration = await viewer.evaluate(async panel => {
+    const stage = panel.querySelector('.apple-viewer-stage')!
+    const send = (type: string, x: number) => stage.dispatchEvent(new PointerEvent(type, { pointerId: 1, pointerType: 'touch', button: 0, clientX: x, clientY: 422, bubbles: true }))
+    send('pointerdown', 370)
+    await new Promise(resolve => setTimeout(resolve, 16))
+    send('pointermove', 170)
+    await new Promise(resolve => setTimeout(resolve, 16))
+    send('pointermove', -20)
+    send('pointerup', -20)
+    await new Promise(requestAnimationFrame)
+    return Number(panel.querySelector('.is-current')!.getAnimations()[0].effect!.getTiming().duration)
+  })
+  expect(duration).toBeGreaterThanOrEqual(120)
+  expect(duration).toBeLessThanOrEqual(360)
+  await expect(viewer).toHaveAttribute('data-phase', 'open')
+  await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 5')
+})
+
+test('browsers without linear easing still open, page and return their photo', async ({ page }) => {
+  await page.addInitScript(() => {
+    const supports = CSS.supports.bind(CSS)
+    CSS.supports = (property: string, value?: string) => value?.startsWith('linear(') ? false : value === undefined ? supports(property) : supports(property, value)
+  })
+  await page.reload()
+  const viewer = await openPhoto(page)
+  await swipeImage(viewer)
+  await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 5')
+  await page.keyboard.press('Escape')
+  await expect(viewer).toHaveCount(0)
+  await expect(page.locator('#compact .apple-image__trigger img').nth(1)).toHaveCSS('opacity', '1')
+})
+
 test.describe('non-touch viewer', () => {
   test.use({ hasTouch: false })
 
@@ -335,7 +379,7 @@ test('a new touch catches a paging animation in place and closes from that live 
   await expect(preview).toHaveCSS('opacity', '0')
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveAttribute('data-phase', 'closing')
-  const flight = await viewer.locator('.apple-viewer-canvas').evaluate(frame => (frame.getAnimations()[0].effect as KeyframeEffect).getKeyframes())
+  const flight = (await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)).frame
   expect(parseFloat(flight[0].left as string)).toBeCloseTo(live.x, 1)
   expect(parseFloat(flight[0].top as string)).toBeCloseTo(live.y, 1)
   expect(parseFloat(flight.at(-1)!.left as string)).toBeCloseTo(destination.x, 1)
@@ -402,7 +446,7 @@ for (const width of [390, 1440]) {
       else await expect(page.locator('.apple-viewer-presence-enter-active')).toHaveCount(0)
       await expectGlass(viewer)
       await viewer.dispatchEvent('wheel', { deltaY: -750, clientX: width / 2, clientY: 450 })
-      await page.screenshot({ path: `artifacts/image-viewer-glass-${width}.png` })
+      await page.screenshot({ path: `/tmp/apptify-checks/image-viewer-glass-${width}.png` })
       const close = viewer.getByRole('button', { name: '关闭图片预览', exact: true })
       const box = (await close.boundingBox())!
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
@@ -436,7 +480,9 @@ test('mobile groups mount every preview, page without arrows and keep a black de
   expect(parseFloat(end.left as string)).toBeCloseTo(destination.x, 1)
   expect(parseFloat(end.top as string)).toBeCloseTo(destination.y, 1)
   expect(parseFloat(end.width as string)).toBeCloseTo(destination.width, 1)
-  expect(flight.duration).toBe(420)
+  expect(flight.duration).toBeLessThanOrEqual(360)
+  expect(flight.properties).toEqual(['clipPath', 'transform'])
+  expect(new Set(flight.layout.map(size => `${size.width}:${size.height}`)).size).toBe(1)
   expect(flight.locked).toBe('hidden')
   expect(flight.placeholder).toBe('0')
   await expect(viewer).toHaveCount(0)
@@ -484,11 +530,11 @@ test('upward drags stay open, small downward drags recover and a downward dismis
   const dragged = (await viewer.locator('.apple-viewer-image').boundingBox())!
   await pointer(viewer, 'pointerup', 3, 230, 640)
   await expect(viewer).toHaveAttribute('data-phase', 'closing')
+  const start = (await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)).frame[0]
   const leaving = await viewer.evaluate(panel => {
-    const frame = panel.querySelector('.apple-viewer-canvas')!, animation = frame.getAnimations()[0]
-    return { start: (animation.effect as KeyframeEffect).getKeyframes()[0], opacity: getComputedStyle(panel.querySelector('.apple-viewer-image')!).opacity, background: Number(getComputedStyle(panel.querySelector('.apple-viewer-backdrop')!).opacity) }
+    return { opacity: getComputedStyle(panel.querySelector('.apple-viewer-image')!).opacity, background: Number(getComputedStyle(panel.querySelector('.apple-viewer-backdrop')!).opacity) }
   })
-  expect(parseFloat(leaving.start.top as string)).toBeCloseTo(dragged.y, 0)
+  expect(parseFloat(start.top)).toBeCloseTo(dragged.y, 0)
   expect(leaving.opacity).toBe('1')
   expect(leaving.background).toBeGreaterThan(0)
   expect(leaving.background).toBeLessThan(1)
@@ -521,10 +567,9 @@ test('opening preserves the photo node and cover crop, and interruption continue
   await preview.click()
   const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
   await expect(viewer).toHaveAttribute('data-phase', 'opening')
+  const flight = await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)
   const opening = await viewer.locator('.apple-viewer-canvas').evaluate(async frame => {
     const image = frame.querySelector('img')!
-    const animation = frame.getAnimations()[0]
-    const start = (animation.effect as KeyframeEffect).getKeyframes()[0]
     const samples: Array<{ same: boolean; opacity: string; ratio: number; masked: boolean; chrome: string; control: number }> = []
     for (let i = 0; i < 4; i++) {
       await new Promise(requestAnimationFrame)
@@ -532,11 +577,13 @@ test('opening preserves the photo node and cover crop, and interruption continue
       samples.push({ same: frame.querySelector('img') === image, opacity: getComputedStyle(image).opacity, ratio: rect.width / rect.height, masked: Boolean(document.querySelector('#compact .apple-image__trigger--placeholder')), chrome: getComputedStyle(document.querySelector('.apple-viewer-chrome')!).opacity, control: Number(getComputedStyle(document.querySelector('.apple-viewer-close')!).opacity) })
     }
     const rect = frame.getBoundingClientRect()
-    return { start, samples, rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }, backdrop: Number(getComputedStyle(document.querySelector('.apple-viewer-backdrop')!).opacity) }
+    return { samples, rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }, backdrop: Number(getComputedStyle(document.querySelector('.apple-viewer-backdrop')!).opacity) }
   })
-  expect(parseFloat(opening.start.left as string)).toBeCloseTo(source.x, 1)
-  expect(parseFloat(opening.start.top as string)).toBeCloseTo(source.y, 1)
-  expect(parseFloat(opening.start.width as string)).toBeCloseTo(source.width, 1)
+  expect(parseFloat(flight.frame[0].left)).toBeCloseTo(source.x, 1)
+  expect(parseFloat(flight.frame[0].top)).toBeCloseTo(source.y, 1)
+  expect(parseFloat(flight.frame[0].width)).toBeCloseTo(source.width, 1)
+  expect(flight.properties).toEqual(['clipPath', 'transform'])
+  expect(new Set(flight.layout.map(size => `${size.width}:${size.height}`)).size).toBe(1)
   for (const sample of opening.samples) {
     expect(sample.same).toBe(true); expect(sample.opacity).toBe('1'); expect(sample.ratio).toBeCloseTo(1.5, 3); expect(sample.masked).toBe(true)
     expect(sample.chrome).toBe('1')
@@ -545,12 +592,10 @@ test('opening preserves the photo node and cover crop, and interruption continue
   expect(opening.backdrop).toBeGreaterThan(0)
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveAttribute('data-phase', 'closing')
-  const continuation = await viewer.evaluate(panel => ({
-    from: (panel.querySelector('.apple-viewer-canvas')!.getAnimations()[0].effect as KeyframeEffect).getKeyframes()[0],
-    backdrop: Number((panel.querySelector('.apple-viewer-backdrop')!.getAnimations()[0].effect as KeyframeEffect).getKeyframes()[0].opacity),
-  }))
-  expect(parseFloat(continuation.from.width as string)).toBeGreaterThanOrEqual(opening.rect.width - 1)
-  expect(continuation.backdrop).toBeGreaterThanOrEqual(opening.backdrop)
+  const continuation = await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)
+  const backdrop = await viewer.locator('.apple-viewer-backdrop').evaluate(element => Number((element.getAnimations()[0].effect as KeyframeEffect).getKeyframes()[0].opacity))
+  expect(parseFloat(continuation.image[0].width)).toBeGreaterThanOrEqual(opening.rect.width - 1)
+  expect(backdrop).toBeGreaterThanOrEqual(opening.backdrop)
   await expect(preview).toHaveCSS('opacity', '0')
   await expect(viewer).toHaveCount(0)
   await expect(preview).toHaveCSS('opacity', '1')
@@ -576,7 +621,7 @@ test('320px paging reaches both strip edges and an offscreen zoomed image return
   const destination = (await strip.locator('img').last().boundingBox())!
   await page.keyboard.press('Escape')
   await expect(viewer).toHaveAttribute('data-phase', 'closing')
-  const frames = await viewer.locator('.apple-viewer-canvas').evaluate(frame => (frame.getAnimations()[0].effect as KeyframeEffect).getKeyframes())
+  const frames = (await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)).frame
   expect(parseFloat(frames[0].top as string)).toBeCloseTo(photo.y, 0)
   expect(parseFloat(frames.at(-1)!.left as string)).toBeCloseTo(destination.x, 1)
   expect(parseFloat(frames.at(-1)!.top as string)).toBeCloseTo(destination.y, 1)
@@ -593,9 +638,9 @@ test('a partly clipped preview opens from its visible position before its strip 
   await page.mouse.click(source.x + 280, source.y + 120)
   const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
   await expect(viewer).toHaveAttribute('data-phase', 'opening')
-  const start = await viewer.locator('.apple-viewer-canvas').evaluate(frame => (frame.getAnimations()[0].effect as KeyframeEffect).getKeyframes()[0])
-  expect(parseFloat(start.left as string)).toBeCloseTo(source.x, 1)
-  expect(start.clipPath).toContain('171px')
+  const start = (await viewer.locator('.apple-viewer-canvas').evaluate(samplePhotoFlight)).frame[0]
+  expect(parseFloat(start.left)).toBeCloseTo(24, 1)
+  expect(parseFloat(start.width)).toBeCloseTo(source.width / 2, 1)
   await expect(viewer).toHaveAttribute('data-phase', 'open')
   await expect.poll(() => strip.evaluate(box => box.scrollLeft)).toBe(0)
   await page.keyboard.press('Escape')

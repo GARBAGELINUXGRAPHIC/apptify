@@ -1,8 +1,10 @@
-import { defineComponent, h, useId, withDirectives, Transition, type PropType } from 'vue'
+import { isTouchDevice } from '../core/device'
+import { defineComponent, h, useId, Transition, type PropType } from 'vue'
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Clock3 } from 'lucide-vue-next'
 import { addDays, addMonths, format as formatDate, getDaysInMonth, startOfMonth, startOfWeek } from 'date-fns'
-import { AppleSelection, ripple } from '../core/motion'
+import { ripple } from '../core/motion'
 import { AppleAutoSize } from './motion'
+import { AppleTabBar } from './tabs'
 
 type Part = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second'
 type Parts = Record<Part, string>
@@ -51,8 +53,8 @@ function canonical(parts: Parts, segments: Segment[]): string {
 function hoverTrail(event: PointerEvent, selected: boolean) {
   const element = event.currentTarget as HTMLElement
   element.getAnimations?.().forEach(animation => animation.cancel())
-  if (selected || element.closest('[data-apple-motion="none"]') || element.closest('[data-apple-motion="reduced"]') || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-  const color = getComputedStyle(element).getPropertyValue('--apple-surface-alt').trim() || '#e8e8ed'
+  if (isTouchDevice.value || event.pointerType === 'touch' || selected || element.closest('[data-apple-motion="none"]') || element.closest('[data-apple-motion="reduced"]') || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  const color = 'rgb(128 128 128 / 8%)'
   element.animate?.([{ backgroundColor: color }, { backgroundColor: 'transparent' }], { duration: 240, easing: 'ease-out' })
 }
 
@@ -171,8 +173,9 @@ export const AppleDatePicker = defineComponent({
   render() {
     const message = this.error || this.hint, inactive = this.disabled || this.loading
     const panel = this.opened && !inactive ? h('div', { class: 'apple-date-menu', role: 'dialog', 'aria-label': this.label || '选择日期与时间', id: `${this.id}-calendar` }, [
-      this.hasDate && this.hasTime ? withDirectives(h('div', { class: 'apple-calendar__tabs', role: 'tablist', 'aria-label': '日期与时间' }, [{ value: 'date', label: '日期', icon: CalendarDays }, { value: 'time', label: '时间', icon: Clock3 }].map(tab => h('button', { type: 'button', role: 'tab', 'aria-selected': this.tab === tab.value, 'data-apple-selected': this.tab === tab.value, onClick: () => { this.tab = tab.value } }, [h(tab.icon, { size: 15 }), tab.label]))), [[AppleSelection]]) : null,
-      h(AppleAutoSize, {}, { default: () => h(Transition, { name: 'apple-calendar-forward', mode: 'out-in' }, { default: () => h('div', { key: this.tab, role: 'tabpanel' }, this.tab === 'date' ? this.renderCalendar() : this.renderTime()) }) }),
+      this.hasDate && this.hasTime
+        ? h(AppleTabBar, { class: 'apple-calendar__tabs', label: '日期与时间', motion: this.motion, modelValue: this.tab, items: [{ value: 'date', label: '日期' }, { value: 'time', label: '时间' }], 'onUpdate:modelValue': (value: string | number) => { this.tab = String(value) } }, { 'panel-date': () => this.renderCalendar(), 'panel-time': () => this.renderTime() })
+        : this.hasDate ? this.renderCalendar() : this.renderTime(),
       h('div', { class: 'apple-calendar__footer' }, [h('button', { type: 'button', class: 'apple-calendar__text', onClick: () => { this.draft = emptyParts(); this.emitValue(true) } }, '清除'), h('button', { type: 'button', class: 'apple-calendar__text', disabled: this.hasDate && this.dateDisabled(this.now), onClick: () => { this.draft = dateParts(this.now); this.cursor = startOfMonth(this.now); this.emitValue(true) } }, this.hasDate ? '今天' : '现在'), ripple(h('button', { type: 'button', class: 'apple-calendar__done', onClick: () => { this.close(); this.focus() } }, '完成'))]),
     ]) : null
     return h('div', { class: ['apple-field', 'apple-date-field', this.$attrs.class, { 'has-error': !!this.error, 'is-disabled': inactive }], 'data-apple-motion': this.motion, 'data-apple-popup-open': this.opened ? true : undefined, onFocusout: (event: FocusEvent) => { if (event.relatedTarget && !(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node)) this.close() }, onKeydown: (event: KeyboardEvent) => { if (event.key === 'Escape') this.close() } }, [

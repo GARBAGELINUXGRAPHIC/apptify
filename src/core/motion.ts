@@ -1,5 +1,6 @@
 import { withDirectives, type DirectiveBinding, type ObjectDirective, type VNode } from 'vue'
 import { Ripple } from 'vuetify/directives/ripple'
+import '../styles/ripple.css'
 
 export function motionDuration(element: HTMLElement, fallback = 300): number {
   if (element.closest('[data-apple-motion="none"], [data-motion="none"]')) return 0
@@ -10,28 +11,72 @@ export function motionDuration(element: HTMLElement, fallback = 300): number {
   return duration ? parseFloat(duration) * (duration.endsWith('ms') ? 1 : 1000) : fallback
 }
 
-const vuetifyRipple = Ripple as ObjectDirective<HTMLElement, boolean>
-const rippleStates = new WeakMap<HTMLElement, { update: (binding: DirectiveBinding<boolean>) => void; destroy: () => void }>()
+// Keep Vuetify's listeners stable. Its enabled/disabled update replaces the
+// keyboard callback before removing it, leaving the previous listener attached.
+// Gating the mounted state also lets keyup/blur reset a held keyboard ripple when
+// an ancestor changes its motion policy in the middle of a press.
+type RippleElement = HTMLElement & { _ripple?: { enabled: boolean; showTimer?: number; showTimerCommit?: (() => void) | null; touched?: boolean } }
+const rippleStates = new Map<HTMLElement, { update: (binding: DirectiveBinding<boolean>) => void; sync: () => void; destroy: () => void }>()
+let ripplePolicyObserver: MutationObserver | undefined
+let rippleMedia: MediaQueryList | undefined
+const syncRipplePolicies = () => rippleStates.forEach(state => state.sync())
+function observeRipplePolicies() {
+  if (ripplePolicyObserver || typeof document === 'undefined') return
+  ripplePolicyObserver = new MutationObserver(records => {
+    for (const [element, state] of rippleStates) {
+      if (records.some(record => (record.target as Element).contains(element))) state.sync()
+    }
+  })
+  ripplePolicyObserver.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-apple-motion', 'data-motion', 'disabled', 'aria-disabled'] })
+  rippleMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : undefined
+  rippleMedia?.addEventListener?.('change', syncRipplePolicies)
+}
 export const AppleRipple: ObjectDirective<HTMLElement, boolean> = {
-  mounted(el, binding, vnode, previous) {
+  mounted(element, binding) {
+    const el = element as RippleElement
     let current = binding
-    let enabled = binding.value !== false && motionDuration(el) > 80
-    if (typeof vuetifyRipple.mounted === 'function') vuetifyRipple.mounted(el, { ...binding, value: enabled }, vnode, previous)
+    el.setAttribute('data-apple-ripple', '')
+    // Establish the containing block without writing/restoring inline position
+    // after every wave. Consumer fixed/sticky/absolute positioning stays intact.
+    if (getComputedStyle(el).position === 'static' || !getComputedStyle(el).position) el.setAttribute('data-apple-ripple-positioned', '')
+    Ripple.mounted(el, { ...binding, value: { keys: ['Enter', ' ', 'Spacebar'] } })
+    const clear = () => {
+      if (el._ripple) {
+        window.clearTimeout(el._ripple.showTimer)
+        el._ripple.showTimerCommit = null
+        el._ripple.touched = false
+      }
+      // Never remove a nested control's wave.
+      for (const child of Array.from(el.children)) if (child.classList.contains('v-ripple__container')) child.remove()
+    }
     const sync = () => {
       const next = current.value !== false && motionDuration(el) > 80 && !el.matches(':disabled, [aria-disabled="true"]')
-      if (next === enabled) return
-      if (typeof vuetifyRipple.updated === 'function') vuetifyRipple.updated(el, { ...current, value: next, oldValue: enabled }, vnode, previous ?? vnode)
-      enabled = next
+      if (el._ripple) el._ripple.enabled = next
+      if (!next) clear()
     }
     // Ancestor policy can change without this component rerendering.
     const events = ['mousedown', 'touchstart', 'keydown']
     events.forEach(event => el.addEventListener(event, sync, { capture: true, passive: true }))
-    rippleStates.set(el, { update(next) { current = next; sync() }, destroy() { events.forEach(event => el.removeEventListener(event, sync, true)) } })
+    const cancellations = ['pointercancel', 'touchcancel', 'touchmove', 'dragstart']
+    cancellations.forEach(event => el.addEventListener(event, clear, { passive: true }))
+    rippleStates.set(el, { update(next) { current = next; sync() }, sync, destroy() {
+      clear()
+      events.forEach(event => el.removeEventListener(event, sync, true))
+      cancellations.forEach(event => el.removeEventListener(event, clear))
+      Ripple.unmounted(el)
+      el.removeAttribute('data-apple-ripple')
+      el.removeAttribute('data-apple-ripple-positioned')
+    } })
+    sync()
+    observeRipplePolicies()
   },
   updated(el, binding) { rippleStates.get(el)?.update(binding) },
-  unmounted(el, binding, vnode, previous) {
+  unmounted(el) {
     rippleStates.get(el)?.destroy(); rippleStates.delete(el)
-    if (typeof vuetifyRipple.unmounted === 'function') vuetifyRipple.unmounted(el, binding, vnode, previous)
+    if (!rippleStates.size) {
+      ripplePolicyObserver?.disconnect(); ripplePolicyObserver = undefined
+      rippleMedia?.removeEventListener?.('change', syncRipplePolicies); rippleMedia = undefined
+    }
   },
 }
 
@@ -40,21 +85,23 @@ export function ripple(node: VNode, enabled = true): VNode {
 }
 
 const entrances = new WeakMap<HTMLElement, Animation>()
-function enter(element: HTMLElement) {
+export function animateEntrance(element: HTMLElement, axis: 'x' | 'y' = 'y'): Animation | undefined {
   entrances.get(element)?.cancel()
   const duration = motionDuration(element)
   if (duration <= 80 || !element.animate) return
-  const animation = element.animate([{ transform: 'translateY(14px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration, easing: 'cubic-bezier(.2,.65,.3,1)' })
+  // Give whole-page entrances more breathing room than control interactions.
+  const animation = element.animate([{ transform: axis === 'x' ? 'translateX(-14px)' : 'translateY(14px)', opacity: 0 }, { transform: 'translate(0)', opacity: 1 }], { duration: duration * 1.8, easing: 'cubic-bezier(.25,.1,.25,1)' })
   entrances.set(element, animation)
   animation.onfinish = () => entrances.delete(element)
+  return animation
 }
 
 // Entrance only: never duplicates the page or delays replacement for a leave phase.
 export const AppleEntrance: ObjectDirective<HTMLElement, unknown> = {
-  mounted: enter,
+  mounted: element => { animateEntrance(element) },
   updated(element, binding) {
     if (motionDuration(element) <= 80) entrances.get(element)?.cancel()
-    else if (!Object.is(binding.value, binding.oldValue)) enter(element)
+    else if (!Object.is(binding.value, binding.oldValue)) animateEntrance(element)
   },
   unmounted(element) { entrances.get(element)?.cancel(); entrances.delete(element) },
 }
@@ -90,11 +137,22 @@ export const AppleSelection: ObjectDirective<HTMLElement, SelectionValue> = {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(measure)
     }
-    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => update())
+    const reflow = () => {
+      // A resized container must not paint an indicator at its previous, potentially out-of-bounds position.
+      cancelAnimationFrame(frame)
+      initialized = false
+      measure()
+    }
+    let containerWidth = element.clientWidth
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
+      const width = element.clientWidth
+      if (width !== containerWidth) { containerWidth = width; reflow() }
+      else update()
+    })
     resize?.observe(element)
     const mutation = new MutationObserver(() => update())
     mutation.observe(element, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-apple-selected', 'aria-selected', 'class'] })
-    const onResize = () => update()
+    const onResize = reflow
     window.addEventListener('resize', onResize)
     selections.set(element, { update, destroy() { cancelAnimationFrame(frame); resize?.disconnect(); mutation.disconnect(); window.removeEventListener('resize', onResize); indicator.remove() } })
     update()

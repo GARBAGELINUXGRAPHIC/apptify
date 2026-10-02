@@ -2,11 +2,12 @@ import { defineComponent, h, markRaw, nextTick, useId, type PropType } from 'vue
 import { Menu, X } from 'lucide-vue-next'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
 import type { AppleItem, AppleValue } from './content'
+import { usePreviewNavigation } from '../core/preview-navigation'
 
 export const AppleNavibar = defineComponent({
   name: 'AppleNavibar',
   inject: { apple: { from: appleKey, default: null } },
-  setup: () => ({ uid: useId() }),
+  setup: () => ({ uid: useId(), ...usePreviewNavigation() }),
   props: {
     ...motionProps,
     items: { type: Array as PropType<AppleItem[]>, default: () => [] },
@@ -15,6 +16,7 @@ export const AppleNavibar = defineComponent({
     brandHref: { type: String, default: '/' },
     label: { type: String, default: '主导航' },
     fixed: { type: Boolean, default: true },
+    hideOnPreview: { type: Boolean, default: undefined },
     breakpoint: { type: Number, default: 640 },
   },
   emits: ['update:modelValue', 'change', 'toggle'],
@@ -24,12 +26,14 @@ export const AppleNavibar = defineComponent({
   }),
   computed: {
     activeValue(): AppleValue | undefined { return this.modelValue ?? this.localValue },
+    previewHidden(): boolean { return this.previewActive && (this.hideOnPreview ?? this.fixed) },
   },
   watch: {
     breakpoint() { this.measure() },
     fixed() { void nextTick(this.measure) },
     modelValue() { this.close() },
     collapsed() { void nextTick(this.observeSize) },
+    previewHidden(value: boolean) { if (value) this.close() },
   },
   mounted() {
     this.measure()
@@ -116,7 +120,11 @@ export const AppleNavibar = defineComponent({
       'aria-current': item.value === this.activeValue ? 'page' : undefined,
       tabindex: item.disabled ? -1 : undefined, onClick: (event: MouseEvent) => this.select(item, event),
     }, this.$slots.item?.({ item, active: item.value === this.activeValue }) ?? item.label)))
-    return h('div', { class: ['apple-navibar', { 'apple-navibar--fixed': this.fixed, 'is-collapsed': this.collapsed, 'is-open': this.open }], 'data-apple-motion': mode }, [
+    return h('div', {
+      ref: 'previewRoot', class: ['apple-navibar', { 'apple-navibar--fixed': this.fixed, 'is-collapsed': this.collapsed, 'is-open': this.open }],
+      'data-apple-motion': mode, 'data-apple-scheme': context?.theme.value.current.scheme ?? 'light', 'data-preview-hidden': this.previewHidden || undefined,
+      inert: this.previewHidden || undefined, 'aria-hidden': this.previewHidden || undefined,
+    }, [
       this.collapsed ? h('div', { ref: 'backdrop', class: 'apple-navibar__backdrop', 'aria-hidden': true, onClick: () => this.close(true), onWheel: (event: WheelEvent) => event.preventDefault() }) : null,
       h('header', {
         ref: 'bar', class: 'apple-navibar__bar',
@@ -137,4 +145,21 @@ export const AppleNavibar = defineComponent({
   },
 })
 
-export const navigationComponents = { AppleNavibar }
+// Layout is supplied by the caller; fading preserves the aside's occupied space.
+export const AppleAside = defineComponent({
+  name: 'AppleAside',
+  inject: { apple: { from: appleKey, default: null } },
+  setup: usePreviewNavigation,
+  props: { ...motionProps, hideOnPreview: { type: Boolean, default: true } },
+  render() {
+    const context = this.apple as AppleContext | null
+    const hidden = this.hideOnPreview && this.previewActive
+    return h('aside', {
+      ref: 'previewRoot', class: 'apple-aside',
+      'data-apple-motion': resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced),
+      'data-preview-hidden': hidden || undefined, inert: hidden || undefined, 'aria-hidden': hidden || undefined,
+    }, this.$slots.default?.())
+  },
+})
+
+export const navigationComponents = { AppleNavibar, AppleAside }

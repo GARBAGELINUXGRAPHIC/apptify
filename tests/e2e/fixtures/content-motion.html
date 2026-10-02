@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Content motion and tags</title>
+<style>body{margin:0}main{padding:24px;max-width:720px}.tall{height:160px;display:flex;align-items:stretch;gap:8px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;justify-items:stretch;height:160px}.long{width:180px}.tones{display:flex;gap:8px;flex-wrap:wrap;padding-block:20px}</style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleButton, AppleTable, AppleTag } from '/src/index.ts'
+import ComponentDemo from '/playground/ComponentDemo.vue'
+createApp({
+  data: () => ({ count: 5, closed: false, motion: new URLSearchParams(location.search).get('motion') || 'full' }),
+  render() { return h(AppleProvider, { motion: this.motion, theme: new URLSearchParams(location.search).get('theme') || 'light' }, () => h('main', [
+    h(AppleButton, { id:'filter', onClick: () => this.count = this.count === 5 ? 1 : 5 }, () => '过滤表格'),
+    h(AppleTable, { columns:[{key:'name',label:'名称'}], rows:Array.from({length:this.count}, (_,i)=>({id:i,name:`结果 ${i+1}`})) }),
+    h('div', {class:'tones'}, ['neutral','accent','info','success','warning','danger'].map(tone => h(AppleTag,{tone,label:tone}))),
+    h('div',{class:'tall'},[h(AppleTag,{label:'自然高度'}), !this.closed && h(AppleTag,{label:'可关闭',closable:true,onClose:()=>this.closed=true})]),
+    h('div',{class:'grid'},[h(AppleTag,{label:'网格标签'}),h(AppleTag,{label:'另一个'})]),
+    h('div',{class:'tall long'},[h(AppleTag,{label:'这是一段需要在窄容器中换行而不溢出的很长的标签文案',closable:true})]),
+    h(ComponentDemo,{name:'AppleTransition'}),
+  ])) },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

@@ -1,3 +1,4 @@
+import { openComponent } from './component-navigation'
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => { await page.goto('/') })
@@ -20,7 +21,7 @@ test('mobile menu animates height, dims the page, and reverses cleanly', async (
   expect(sample.opacity).toBeGreaterThan(0)
   expect(sample.opacity).toBeLessThan(1)
   await expect(backdrop).toHaveCSS('opacity', '1')
-  await page.screenshot({ path: 'artifacts/navibar-dimmed.png', animations: 'disabled' })
+  await page.screenshot({ path: '/tmp/apptify-checks/navibar-dimmed.png', animations: 'disabled' })
   const closing = await navibar.evaluate(async element => {
     const panel = element.querySelector<HTMLElement>('.apple-navibar__menu')!
     const before = panel.getBoundingClientRect().height
@@ -49,17 +50,17 @@ for (const width of [320, 390, 768, 1440]) {
     if (width <= 640) await expect(toggle).toBeVisible()
     else await expect(toggle).toBeHidden()
     await expect(bar).toHaveCSS('position', 'fixed')
-    await expect(bar).toHaveCSS('backdrop-filter', 'blur(2px) saturate(2)')
+    await expect(bar).toHaveCSS('backdrop-filter', 'none')
     const before = (await bar.boundingBox())!
-    expect(before.width).toBe(width)
+    await expect.poll(async () => (await bar.boundingBox())!.width).toBe(width)
     expect(before.height).toBe(width <= 640 ? 58 : 64)
-    const boxes = await bar.locator('.brand, .top-actions, .apple-navibar__toggle:not([hidden])').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()))
+    const boxes = await bar.locator('.brand, .user-trigger, .apple-navibar__toggle:not([hidden])').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()).sort((a, b) => a.left - b.left))
     for (let i = 1; i < boxes.length; i++) expect(boxes[i]!.left).toBeGreaterThanOrEqual(boxes[i - 1]!.right)
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width)
     await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, 500) })
     expect((await bar.boundingBox())!.y).toBe(0)
     expect((await bar.boundingBox())!.height).toBe(before.height)
-    await page.screenshot({ path: `artifacts/navibar-${width}.png`, animations: 'disabled' })
+    await page.screenshot({ path: `/tmp/apptify-checks/navibar-${width}.png`, animations: 'disabled' })
   })
 }
 
@@ -71,15 +72,15 @@ test('mobile disclosure selects routes, handles Escape and outside clicks, and r
   await toggle.click()
   await expect(nav).toBeVisible()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await page.keyboard.press('Tab')
-  await expect(nav.getByRole('button', { name: '组件', exact: true })).toBeFocused()
-  await page.screenshot({ path: 'artifacts/navibar-mobile-open.png', animations: 'disabled' })
-  await nav.getByRole('button', { name: '设计基础', exact: true }).click()
+  await toggle.press('ArrowDown')
+  await expect(nav.getByRole('link', { name: '首页', exact: true })).toBeFocused()
+  await page.screenshot({ path: '/tmp/apptify-checks/navibar-mobile-open.png', animations: 'disabled' })
+  await nav.getByRole('link', { name: '设置', exact: true }).click()
   await expect(nav).toBeHidden()
-  await expect(page.getByRole('heading', { name: '设计基础。', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '设置。', exact: true })).toBeVisible()
   await toggle.focus()
   await page.keyboard.press('ArrowDown')
-  await expect(nav.getByRole('button', { name: '组件', exact: true })).toBeFocused()
+  await expect(nav.getByRole('link', { name: '首页', exact: true })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(nav).toBeHidden()
   await expect(toggle).toBeFocused()
@@ -97,8 +98,7 @@ test('mobile disclosure selects routes, handles Escape and outside clicks, and r
 
 test('embedded navibar collapses by container width without fixing itself to the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.getByRole('searchbox', { name: '搜索组件' }).fill('apple-navibar')
-  await page.locator('.catalog-item').filter({ has: page.getByText('apple-navibar', { exact: true }) }).click()
+  await openComponent(page, 'apple-navibar')
   const demo = page.locator('.component-demo .apple-navibar')
   await expect(demo).toBeVisible()
   await expect(demo.locator('.apple-navibar__bar')).toHaveCSS('position', 'relative')
@@ -107,5 +107,5 @@ test('embedded navibar collapses by container width without fixing itself to the
   await expect(toggle).toBeVisible()
   await toggle.click()
   await expect(demo.getByRole('navigation', { name: '示例导航' })).toBeVisible()
-  await page.screenshot({ path: 'artifacts/navibar-embedded.png', animations: 'disabled' })
+  await page.screenshot({ path: '/tmp/apptify-checks/navibar-embedded.png', animations: 'disabled' })
 })

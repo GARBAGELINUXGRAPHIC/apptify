@@ -1,9 +1,20 @@
+import { isTouchDevice, syncTouchDevice } from './device'
 import { inject, markRaw, ref, type Component, type InjectionKey, type PropType, type Ref } from 'vue'
 
 export type Motion = 'auto' | 'full' | 'reduced' | 'none'
 export type ComponentMotion = Motion | 'inherit'
 export type ThemeTokens = Record<string, string>
 export interface AppleTheme { scheme: 'light' | 'dark'; tokens: ThemeTokens }
+export interface AppleGlassSettings { opacity: number; blur: number }
+export const defaultGlassSettings: Readonly<AppleGlassSettings> = Object.freeze({ opacity: 80 / 255 * 100, blur: 12 })
+
+function glassSettings(value: unknown, fallback: AppleGlassSettings): AppleGlassSettings {
+  const settings = value && typeof value === 'object' ? value as Partial<AppleGlassSettings> : {}
+  return {
+    opacity: typeof settings.opacity === 'number' && Number.isFinite(settings.opacity) ? Math.min(100, Math.max(0, settings.opacity)) : fallback.opacity,
+    blur: typeof settings.blur === 'number' && Number.isFinite(settings.blur) ? Math.min(22, Math.max(2, Math.round(settings.blur))) : fallback.blur,
+  }
+}
 
 const light: ThemeTokens = {
   bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', text: '#1d1d1f', secondary: '#6e6e73',
@@ -12,7 +23,7 @@ const light: ThemeTokens = {
 }
 export const builtInThemes: Record<string, AppleTheme> = {
   light: { scheme: 'light', tokens: light },
-  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', accent: '#2997ff', danger: '#ff716b', success: '#34c759', warning: '#eac25b', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
+  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
   graphite: { scheme: 'light', tokens: { ...light, bg: '#f3f4f4', 'surface-alt': '#e9eceb', accent: '#3f5152', 'accent-text': '#ffffff' } },
   rose: { scheme: 'light', tokens: { ...light, bg: '#faf7f8', 'surface-alt': '#f4edf0', accent: '#a83b65', 'accent-text': '#ffffff' } },
 }
@@ -96,6 +107,7 @@ export interface AppleOptions {
   theme?: string
   themes?: Record<string, AppleTheme>
   motion?: Motion
+  glass?: Partial<AppleGlassSettings>
   persist?: boolean
   storageKey?: string
 }
@@ -108,7 +120,7 @@ export function createApple(options: AppleOptions = {}) {
   const storageKey = options.storageKey ?? 'apptify:preferences'
   const persist = () => {
     if (!options.persist || typeof window === 'undefined') return
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, motion: motion.value.mode })) } catch { /* Storage may be disabled. */ }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, motion: motion.value.mode, glass: { opacity: glass.value.opacity, blur: glass.value.blur } })) } catch { /* Storage may be disabled. */ }
   }
   const theme = ref({
     name: options.theme ?? 'system',
@@ -130,13 +142,18 @@ export function createApple(options: AppleOptions = {}) {
     mode: options.motion ?? 'auto', reduced: false,
     set(mode: Motion) { motion.value.mode = mode; persist() },
   })
+  const glass = ref({
+    ...glassSettings(options.glass, defaultGlassSettings),
+    set(value: Partial<AppleGlassSettings>) { Object.assign(glass.value, glassSettings(value, glass.value)); persist() },
+    reset() { glass.value.set(defaultGlassSettings) },
+  })
   const messages = createMessageBus()
   const overlays = createOverlayService()
   const portalTarget: Ref<HTMLElement | undefined> = ref()
   let attached = 0
   let detachMedia = () => {}
   const context = {
-    theme, motion, messages, overlays, portalTarget,
+    theme, motion, glass, messages, overlays, portalTarget, isTouchDevice,
     dialog: <T = unknown>(settings: Omit<OverlayOptions, 'kind'>) => overlays.open<T>({ ...settings, kind: 'dialog' }),
     notify: (message: string, settings: Omit<OverlayOptions, 'kind' | 'message'> = {}) => overlays.open({ duration: 4000, ...settings, message, kind: 'snackbar' }),
     sendMessage: messages.sendMessage,
@@ -144,11 +161,13 @@ export function createApple(options: AppleOptions = {}) {
     attach() {
       attached++
       if (attached > 1 || typeof window === 'undefined') return
+      syncTouchDevice()
       if (options.persist) {
         try {
           const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')
           if (stored.theme === 'system' || themes.value[stored.theme]) theme.value.name = stored.theme
           if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.value.mode = stored.motion
+          Object.assign(glass.value, glassSettings(stored.glass, glass.value))
         } catch { /* Ignore invalid preferences, not application state. */ }
       }
       if (!window.matchMedia) return
@@ -161,6 +180,7 @@ export function createApple(options: AppleOptions = {}) {
           const value = JSON.parse(event.newValue)
           if (value.theme === 'system' || themes.value[value.theme]) theme.value.name = value.theme
           if (['auto', 'full', 'reduced', 'none'].includes(value.motion)) motion.value.mode = value.motion
+          Object.assign(glass.value, glassSettings(value.glass, glass.value))
         } catch { /* Other tabs may contain invalid preferences. */ }
       }
       sync()
@@ -189,5 +209,10 @@ export function useApple(): AppleContext {
 }
 
 export function themeStyle(context: AppleContext): Record<string, string> {
-  return Object.fromEntries(Object.entries(context.theme.value.current.tokens).map(([key, value]) => [`--apple-${key}`, value]))
+  return {
+    ...Object.fromEntries(Object.entries(context.theme.value.current.tokens).map(([key, value]) => [`--apple-${key}`, value])),
+    '--apple-glass-rgb': context.theme.value.current.scheme === 'dark' ? '0 0 0' : '255 255 255',
+    '--apple-glass-opacity': String(context.glass.value.opacity / 100),
+    '--apple-glass-blur': `${context.glass.value.blur}px`,
+  }
 }

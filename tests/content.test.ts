@@ -402,11 +402,11 @@ describe('Status and utility components', () => {
     target.id = 'scroll-area'
     target.scrollTop = 500
     document.body.appendChild(target)
-    const wrapper = keep(mount(AppleBackTop, { props: { target: '#scroll-area', threshold: 300 } }))
+    const wrapper = keep(mount(AppleBackTop, { props: { target: '#scroll-area', threshold: 300, motion: 'none' } }))
     await nextTick()
     expect(wrapper.find('button').exists()).toBe(true)
     await wrapper.get('button').trigger('click')
-    expect(target.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' })
+    expect(target.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' })
     target.scrollTop = 0
     target.dispatchEvent(new Event('scroll'))
     await nextTick()

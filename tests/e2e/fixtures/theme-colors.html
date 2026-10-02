@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>主题同源彩色审计</title>
+<style>body { margin: 0; } main { padding: 24px; display: grid; gap: 20px; } .samples { display: grid; gap: 16px; } .surface { padding: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; } .semantic { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); } .audit-provider { min-height: 100vh; } </style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { Star } from 'lucide-vue-next'
+import { createAppleUI, AppleProvider, AppleTag, AppleAlert, AppleBadge, AppleProgress, AppleButton } from '/src/index.ts'
+const apple = createAppleUI({ theme: 'light', motion: new URLSearchParams(location.search).get('motion') || 'none' })
+const tones = ['accent', 'info', 'success', 'warning', 'danger', 'custom']
+createApp({
+  data: () => ({ closes: 0 }),
+  render() { return h(AppleProvider, { class: 'audit-provider' }, () => h('main', [
+    h('h1', '主题同源彩色审计'),
+    h('div', { style: { display: 'flex', gap: '12px' } }, ['light', 'dark'].map(theme => h(AppleButton, { onClick: () => apple.theme.value.set(theme) }, () => theme === 'dark' ? '切换深色' : '切换浅色'))),
+    h('output', { id: 'closed' }, String(this.closes)),
+    h(AppleTag, { id: 'disabled-tag', tone: 'info', disabled: true, closable: true, label: '禁用', onClose: () => this.closes++ }),
+    h('div', { class: 'samples' }, ['bg', 'surface', 'surface-alt'].map(surface => h('section', { class: 'surface', 'data-surface': surface, style: { background: `var(--apple-${surface})` } }, [
+      h(AppleTag, { label: '中性', 'data-tone': 'neutral' }),
+      ...tones.map(tone => h(AppleTag, { tone, closable: true, label: tone, style: tone === 'custom' ? { '--apple-tone': '#c75c86' } : undefined, 'data-tone': tone, onClose: () => this.closes++ }, () => [h(Star, { size: 13, 'aria-hidden': true }), tone])),
+    ]))),
+    h('section', { class: 'semantic' }, ['info', 'success', 'warning', 'danger'].map(tone => h('div', { 'data-semantic': tone }, [
+      h(AppleAlert, { title: tone, tone }),
+      h(AppleBadge, { value: 8, tone }),
+      h(AppleProgress, { modelValue: 70, tone, label: `${tone}进度` }),
+    ]))),
+  ])) },
+}).use(apple).mount('#app')
+</script></body></html>

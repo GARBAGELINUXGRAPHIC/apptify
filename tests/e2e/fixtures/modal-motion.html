@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Modal motion</title>
+<style>body { margin: 0; background: #f5f5f7; } main { padding: 32px; } .tile { display: inline-block; background: #dde8f2; padding: 32px; margin: 12px; border-radius: 12px; }</style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleDialog, AppleDrawer, AppleSheet } from '/src/index.ts'
+const query = new URLSearchParams(location.search)
+const component = { dialog: AppleDialog, drawer: AppleDrawer, sheet: AppleSheet }[query.get('kind') || 'dialog']
+createApp({
+  data: () => ({ open: false }),
+  render() { return h(AppleProvider, { motion: query.get('motion') || 'full' }, () => [
+    h('main', [h('h1', '对话框动画验证'), h('button', { id: 'open', onClick: () => this.open = true }, '打开对话框'), ...Array.from({ length: 12 }, (_, i) => h('div', { class: 'tile' }, `背景内容 ${i + 1}`))]),
+    h(component, { modelValue: this.open, 'onUpdate:modelValue': value => this.open = value, title: '保存更改？', message: '你的修改将保存到当前项目。', placement: query.get('placement') || undefined }),
+  ]) },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

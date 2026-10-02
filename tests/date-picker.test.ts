@@ -1,10 +1,27 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { AppleDatePicker } from '../src/components/forms'
+import { AppleTabBar } from '../src/components/content'
 
 afterEach(() => vi.useRealTimers())
 
 describe('AppleDatePicker', () => {
+  it('uses the shared TabBar for linked panels, keyboard switching, and retained draft values', async () => {
+    const wrapper = mount(AppleDatePicker, { props: { type: 'datetime-local', modelValue: '2026-09-26T12:30', motion: 'none' } })
+    await wrapper.get('button[aria-label="打开日历"]').trigger('click')
+    expect(wrapper.findComponent(AppleTabBar).props('motion')).toBe('none')
+    const [date, time] = wrapper.findAll('[role=tab]')
+    expect(wrapper.get('[role=tabpanel]').attributes('aria-labelledby')).toBe(date!.attributes('id'))
+    await date!.trigger('keydown', { key: 'ArrowRight' })
+    expect(time!.attributes('aria-selected')).toBe('true')
+    expect(wrapper.get('[role=tabpanel]').attributes('id')).toBe(time!.attributes('aria-controls'))
+    expect((wrapper.get('.apple-calendar__time-column input').element as HTMLInputElement).value).toBe('12')
+    await time!.trigger('keydown', { key: 'Home' })
+    expect(wrapper.get('.apple-calendar__day.is-selected').attributes('data-date')).toBe('2026-09-26')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    wrapper.unmount()
+  })
+
   it('freezes readable mount-time placeholders and does not use native pickers', async () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 26, 12, 34, 56))
     const wrapper = mount(AppleDatePicker, { props: { format: 'YYYY/MM/DD HH:mm:ss', label: '到店日期' } })

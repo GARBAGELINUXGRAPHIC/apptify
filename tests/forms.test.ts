@@ -132,16 +132,25 @@ describe('Apple form controls', () => {
     expect(stepper.emitted('update:modelValue')?.at(-1)).toEqual([0.3])
   })
 
-  it('offers a rounded custom HEX-only color control without native mode switches', async () => {
+  it('keeps HEX drafts editable and commits valid colors with Apply or Enter', async () => {
     const color = mount(AppleColorPicker, { props: { label: '颜色' } })
     expect(color.find('input[type=color]').exists()).toBe(false)
     await color.get('button').trigger('click')
     await color.get('input[aria-label="HEX 颜色"]').setValue('#ff0000')
+    expect(color.emitted('update:modelValue')).toBeUndefined()
+    await color.get('button[aria-label="应用 HEX 颜色"]').trigger('click')
     expect(color.emitted('update:modelValue')?.at(-1)).toEqual(['#ff0000'])
     await color.get('input[aria-label="HEX 颜色"]').setValue('f80')
+    await color.get('input[aria-label="HEX 颜色"]').trigger('keydown', { key: 'Enter' })
     expect(color.emitted('update:modelValue')?.at(-1)).toEqual(['#ff8800'])
     await color.get('input[aria-label="HEX 颜色"]').setValue('rgb(1)')
+    await color.get('button[aria-label="应用 HEX 颜色"]').trigger('click')
     expect(color.emitted('update:modelValue')?.at(-1)).toEqual(['#ff8800'])
+    expect((color.get('input[aria-label="HEX 颜色"]').element as HTMLInputElement).value).toBe('rgb(1)')
+    expect(color.get('[role=alert]').text()).toContain('HEX')
+    await color.get('input[aria-label="HEX 颜色"]').setValue('')
+    expect((color.get('input[aria-label="HEX 颜色"]').element as HTMLInputElement).value).toBe('')
+    expect(color.emitted('update:modelValue')).toHaveLength(2)
     expect(color.findAll('input[type=range]')).toHaveLength(1)
   })
 

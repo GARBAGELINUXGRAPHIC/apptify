@@ -33,7 +33,8 @@ export const catalog: CatalogItem[] = [
   item('AppleRate', '评分', '表单', '记录真实的感受。', 'v-model · max · label · readonly · disabled', '<apple-rate v-model="rating" label="体验评分" />'),
   item('AppleForm', '表单验证', '表单', '把完整提交做好。', 'validator(FormData) => boolean|string|Promise · loading · disabled | submit(FormData), invalid, reset | methods: validate(), submit(), reset()', '<apple-form :validator="validate" @submit="submit">\n  <apple-input v-model="name" name="name" label="姓名" required />\n  <apple-button type="submit">提交</apple-button>\n</apple-form>'),
   item('AppleFormField', '表单字段', '表单', '为自定义控件补齐标签与验证信息。', 'label · for · error · hint · required · disabled | default({id,disabled,required,aria-invalid,aria-describedby})', '<apple-form-field label="个人网站" :error="error">\n  <template #default="field">\n    <input v-bind="field" v-model="website" class="apple-control" type="url" />\n  </template>\n</apple-form-field>'),
-  item('AppleNavibar', '顶部导航栏', '导航', '随可用宽度折叠的顶部导航。', 'v-model · items · brand · brandHref · fixed · breakpoint=640 · label · motion | change(value,item), toggle(open) | slots: brand, item, actions', '<apple-navibar v-model="page" brand="Apptify" :items="pages" />'),
+  item('AppleNavibar', '顶部导航栏', '导航', '随可用宽度折叠的顶部导航。', 'v-model · items · brand · brandHref · fixed · breakpoint=640 · hideOnPreview · label · motion | change(value,item), toggle(open) | slots: brand, item, actions', '<apple-navibar v-model="page" brand="Apptify" :items="pages" />'),
+  item('AppleAside', '侧栏容器', '导航', '图片归位后，导航自然恢复。', 'hideOnPreview=true · motion | slot: default | 布局由调用方提供', '<apple-aside :hide-on-preview="false">\n  <apple-list :items="items" />\n</apple-aside>'),
   item('AppleTabs', '标签页', '导航', '内容各归其位。', 'v-model · items[{label,value,disabled}] | slot: default({value})', '<apple-tabs v-model="tab" :items="tabs">\n  <template #default="{ value }">{{ value }}</template>\n</apple-tabs>'),
   item('AppleTabBar', '页签栏', '导航', '相邻页面，自然衔接。', 'v-model · items · label · disabled · motion | slot: default({value})', '<apple-tab-bar v-model="tab" :items="tabs">\n  <template #default="{value}">{{ value }}</template>\n</apple-tab-bar>'),
   item('AppleBreadcrumbs', '面包屑', '导航', '始终知道身在何处。', 'items[{label,value,href,disabled}] · label', '<apple-breadcrumbs :items="[{label:\'首页\',value:\'home\',href:\'/\'},{label:\'设置\',value:\'settings\'}]" />'),
@@ -70,3 +71,13 @@ export const catalog: CatalogItem[] = [
   item('AppleMarquee', '通知栏', '移动交互', '简短消息，保持可见。', 'text · duration(seconds) · paused · label · motion', '<apple-marquee text="新的内容已经准备好。" :duration="24" />'),
 ]
 export const groups = ['全部组件', '基础', '表单', '导航', '数据展示', '反馈', '移动交互']
+
+export const componentId = (name: string) => name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+export const sections = [
+  { id: 'basics', label: '基础' },
+  { id: 'forms', label: '表单' },
+  { id: 'navigation', label: '导航' },
+  { id: 'data', label: '数据展示' },
+  { id: 'feedback', label: '反馈' },
+  { id: 'mobile', label: '移动交互' },
+].map(section => ({ ...section, items: catalog.filter(item => item.group === section.label) }))

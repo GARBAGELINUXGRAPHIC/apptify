@@ -398,6 +398,36 @@ describe('menus and tooltips', () => {
 })
 
 describe('image viewer', () => {
+  const originalAnimate = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'animate')
+  beforeEach(() => {
+    // jsdom has no WAAPI. Model its lifetime so return-animation cleanup and
+    // the shared scroll lock are checked before and after completion.
+    Object.defineProperty(HTMLElement.prototype, 'animate', { configurable: true, value: (_frames: Keyframe[], options: KeyframeAnimationOptions) => {
+      let timer: ReturnType<typeof setTimeout>
+      let finish!: () => void
+      const finished = new Promise<void>(resolve => { finish = () => { clearTimeout(timer); resolve() } })
+      timer = setTimeout(finish, Number(options.duration) || 0)
+      return { finished, cancel: finish, finish }
+    } })
+  })
+  afterEach(() => {
+    if (originalAnimate) Object.defineProperty(HTMLElement.prototype, 'animate', originalAnimate)
+    else Reflect.deleteProperty(HTMLElement.prototype, 'animate')
+  })
+  it('can reduce motion while a photo is still loading with an infinite spinner', async () => {
+    const wrapper = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/pending.png'], motion: 'full' }, attachTo: document.body }))
+    await settle()
+    const finishTransition = vi.fn(), finishSpinner = vi.fn(() => { throw new Error('Cannot finish an infinite animation') })
+    Object.defineProperty(wrapper.find('.apple-image-viewer').element, 'getAnimations', { value: () => [
+      { effect: { getComputedTiming: () => ({ endTime: 360 }) }, finish: finishTransition },
+      { effect: { getComputedTiming: () => ({ endTime: Infinity }) }, finish: finishSpinner },
+    ] })
+    await wrapper.setProps({ motion: 'reduced' })
+    expect(finishTransition).toHaveBeenCalledOnce()
+    expect(finishSpinner).not.toHaveBeenCalled()
+    expect(wrapper.find('[aria-label="图片加载中"]').exists()).toBe(true)
+  })
+
   it('cleans up gestures on image changes and close, and renders load errors', async () => {
     const wrapper = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'], motion: 'none' }, attachTo: document.body }))
     await settle()
@@ -415,6 +445,7 @@ describe('image viewer', () => {
     await wrapper.find('.apple-viewer-image').trigger('load')
     const destroySecond = vi.spyOn(wrapper.vm.panzoom!, 'destroy')
     await wrapper.setProps({ modelValue: false })
+    await finishLeave()
     expect(destroySecond).toHaveBeenCalledOnce()
     await wrapper.setProps({ modelValue: true })
     await settle()

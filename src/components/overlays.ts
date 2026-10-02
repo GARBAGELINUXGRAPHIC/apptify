@@ -1,3 +1,4 @@
+import { isTouchDevice } from '../core/device'
 import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import {
   Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, markRaw, mergeProps, nextTick,
@@ -13,7 +14,11 @@ import { ripple } from '../core/motion'
 import { AppleButton } from './button'
 import { AppleAutoSize } from './motion'
 import { isTouchImageDevice, touchImageQuery } from '../core/image-geometry'
+import { photoEasing, photoMotion, photoPageTiming } from '../core/image-motion'
 import { createMobileImageViewer } from './mobile-image-viewer'
+import { enterDesktopPhoto } from '../core/desktop-image-enter'
+import { returnDesktopPhoto } from '../core/desktop-image-return'
+import { holdPreviewNavigation } from '../core/preview-navigation'
 
 type Motion = 'inherit' | 'auto' | 'full' | 'reduced' | 'none'
 type CloseReason = 'escape' | 'backdrop' | 'cancel' | 'confirm' | 'close'
@@ -42,8 +47,8 @@ const iconButton = (label: string, icon: Component, onClick: () => void, attrs =
   ripple(h('button', { type: 'button', class: 'apple-overlay-icon', 'aria-label': label, title: label, onClick, ...attrs }, [h(icon, { size: 20, 'aria-hidden': true })]), !(attrs as { disabled?: boolean }).disabled)
 
 const durationOf = (motion: string) => motion === 'none' ? 0 : motion === 'reduced' ? 120 : 320
-const presence = (name: string, motion: string, node: VNode | null, afterLeave: () => void) =>
-  h(Transition, { name, appear: true, css: motion !== 'none', duration: durationOf(motion), onAfterLeave: afterLeave }, { default: () => node })
+const presence = (name: string, motion: string, node: VNode | null, afterLeave: () => void, duration: number | { enter: number; leave: number } = durationOf(motion), afterEnter?: () => void) =>
+  h(Transition, { name, appear: true, css: motion !== 'none', duration, onAfterLeave: afterLeave, onAfterEnter: afterEnter }, { default: () => node })
 
 interface Layer {
   element: HTMLElement
@@ -293,8 +298,10 @@ export const AppleSnackbar = defineComponent({
     motion: motionProp,
   },
   emits: ['update:modelValue', 'close', 'action', 'after-close'],
+  setup: () => ({ isTouchDevice }),
   data: () => ({ timer: null as ReturnType<typeof setTimeout> | null, remaining: 0, started: 0, hovered: false, focused: false }),
   watch: {
+    isTouchDevice(touch: boolean) { if (touch && this.hovered) { this.hovered = false; this.resume() } },
     modelValue() { this.restart() },
     duration() { this.restart() },
     message() { this.restart() },
@@ -332,8 +339,8 @@ export const AppleSnackbar = defineComponent({
       role: ['error', 'danger'].includes(this.tone) ? 'alert' : 'status',
       'aria-atomic': true, 'data-apple-motion': motion,
       style: { '--apple-overlay-duration': `${durationOf(motion)}ms` },
-      onMouseenter: () => { this.hovered = true; this.pause() },
-      onMouseleave: () => { this.hovered = false; this.resume() },
+      onMouseenter: () => { if (!isTouchDevice.value) { this.hovered = true; this.pause() } },
+      onMouseleave: () => { if (!isTouchDevice.value) { this.hovered = false; this.resume() } },
       onFocusin: () => { this.focused = true; this.pause() },
       onFocusout: (event: FocusEvent) => {
         if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) { this.focused = false; this.resume() }
@@ -446,10 +453,10 @@ export const ApplePopover = defineComponent({
       this.$emit('update:modelValue', open)
     },
     hover(open: boolean) {
-      if (!this.openOnHover) return
+      if (isTouchDevice.value || !this.openOnHover) return
       if (this.hoverTimer) clearTimeout(this.hoverTimer)
       if (open) this.setOpen(true)
-      else this.hoverTimer = setTimeout(() => this.setOpen(false), 100)
+      else this.hoverTimer = setTimeout(() => { if (!isTouchDevice.value) this.setOpen(false) }, 100)
     },
     position() {
       const anchor = this.$refs.anchor as HTMLElement | undefined
@@ -681,10 +688,19 @@ export const AppleImageViewer = defineComponent({
   data: () => ({
     disposeLayer: null as (() => void) | null, depth: 0, isTop: false, current: 0,
     panzoom: null as PanzoomObject | null, loaded: false, failed: false, rotation: 0,
+    pageDirection: 1,
+    pageWidth: 390,
+    enterController: null as AbortController | null,
+    entering: null as Promise<void> | null,
+    returning: null as Promise<void> | null,
+    returnController: null as AbortController | null,
+    releaseNavigation: null as (() => void) | null,
+    preloaded: markRaw(new Set<string>()),
     pointerStart: null as { x: number; y: number } | null,
     mobile: isTouchImageDevice(), viewportQuery: null as MediaQueryList | null,
   }),
   computed: {
+    resolvedMotion(): string { return motionOf(this, this.motion) },
     safeIndex(): number { return Math.max(0, Math.min(this.index, this.images.length - 1)) },
     currentImage(): AppleViewerImage | undefined {
       const image = this.images[this.current]
@@ -692,11 +708,18 @@ export const AppleImageViewer = defineComponent({
     },
   },
   watch: {
+    resolvedMotion(value: string) {
+      if (value !== 'full') (this.$refs.panel as HTMLElement | undefined)?.getAnimations?.({ subtree: true }).forEach(animation => {
+        // The loading spinner is infinite; finish() would throw before Vue can disable it.
+        if (Number.isFinite(Number(animation.effect?.getComputedTiming().endTime))) animation.finish()
+      })
+    },
     modelValue() {
       if (this.modelValue) this.syncViewport()
-      if (!this.mobile) { this.resetImage(); void this.syncLayer() }
+      if (!this.mobile && this.modelValue) { this.resetImage(); void this.syncLayer() }
     },
-    safeIndex(value: number) { this.current = value },
+    safeIndex(value: number) { if (value !== this.current) { this.pageDirection = value > this.current ? 1 : -1; this.current = value } },
+    current() { this.resetImage() },
     'currentImage.src'() { this.resetImage() },
     'images.length'() { this.current = Math.max(0, Math.min(this.current, this.images.length - 1)) },
   },
@@ -707,7 +730,7 @@ export const AppleImageViewer = defineComponent({
     this.syncViewport()
     void this.syncLayer()
   },
-  beforeUnmount() { this.viewportQuery?.removeEventListener('change', this.syncViewport); this.panzoom?.destroy(); this.disposeLayer?.() },
+  beforeUnmount() { this.viewportQuery?.removeEventListener('change', this.syncViewport); this.enterController?.abort(); this.returnController?.abort(); this.panzoom?.destroy(); this.disposeLayer?.(); this.releaseNavigation?.() },
   methods: {
     syncViewport() {
       // Keep the chosen interaction until the preview's closing animation finishes.
@@ -715,30 +738,80 @@ export const AppleImageViewer = defineComponent({
       this.mobile = isTouchImageDevice()
     },
     resetImage() {
+      this.pageWidth = (this.$refs.panel as HTMLElement | undefined)?.clientWidth || this.pageWidth
+      // A leaving page keeps the pose actually on screen, including interrupted zooms.
+      const canvas = this.$refs.canvas as HTMLElement | undefined
+      if (canvas) {
+        const transform = getComputedStyle(canvas).transform
+        canvas.style.transition = 'none'; canvas.style.transform = transform
+      }
       this.panzoom?.destroy(); this.panzoom = null
       this.loaded = false; this.failed = false; this.rotation = 0
     },
-    imageLoaded() {
+    imageLoaded(event?: Event) {
       const canvas = this.$refs.canvas as HTMLElement | undefined
       if (!canvas || !this.modelValue) return
+      if (event && event.target !== canvas.querySelector('img')) return
       this.loaded = true
       this.panzoom?.destroy()
       this.panzoom = markRaw(Panzoom(canvas, { minScale: 0.1, maxScale: 10, animate: false, cursor: 'grab' }))
+      for (const direction of [-1, 1]) {
+        const index = this.current + direction, count = this.images.length
+        if (!count || !this.loop && (index < 0 || index >= count)) continue
+        const entry = this.images[(index + count) % count], src = typeof entry === 'string' ? entry : entry.src
+        if (this.preloaded.has(src)) continue
+        this.preloaded.add(src)
+        const image = new Image()
+        image.src = src
+        void image.decode?.().catch(() => this.preloaded.delete(src))
+      }
+    },
+    catchZoom() {
+      const canvas = this.$refs.canvas as HTMLElement | undefined
+      if (!canvas || !this.panzoom || !canvas.getAnimations?.().length) return
+      const transform = getComputedStyle(canvas).transform, pose = new DOMMatrixReadOnly(transform)
+      const options = { animate: false, force: true, silent: true }
+      this.panzoom.zoom(pose.a, options)
+      this.panzoom.pan(pose.m41 / pose.a, pose.m42 / pose.a, options)
+      canvas.style.transition = 'none'; canvas.style.transform = transform
+    },
+    zoomOptions() { return { animate: this.resolvedMotion === 'full', duration: photoMotion.zoom, easing: photoEasing } },
+    finishEntry() {
+      const panel = this.$refs.panel as HTMLElement | undefined
+      if (!panel?.querySelector('.apple-viewer-enter-photo')) return
+      panel.getAnimations({ subtree: true }).forEach(animation => {
+        if (Number.isFinite(Number(animation.effect?.getComputedTiming().endTime))) animation.finish()
+      })
     },
     stepZoom(direction: number) {
-      this.panzoom?.zoom(this.panzoom.getScale() * Math.exp(direction * 0.2), { animate: false })
+      this.finishEntry()
+      this.panzoom?.zoom(this.panzoom.getScale() * Math.exp(direction * 0.2), this.zoomOptions())
+    },
+    toggleZoom(event: MouseEvent) {
+      this.finishEntry()
+      if (!this.panzoom || !this.isTop) return
+      if (this.panzoom.getScale() > 1.001) this.panzoom.reset(this.zoomOptions())
+      else {
+        const bounds = (this.$refs.panel as HTMLElement).getBoundingClientRect()
+        this.panzoom.zoom(2, { ...this.zoomOptions(), focal: {
+          x: (event.clientX - bounds.left - bounds.width / 2) * 2,
+          y: (event.clientY - bounds.top - bounds.height / 2) * 2,
+        } })
+      }
     },
     navigate(direction: number) {
       const next = this.current + direction
       const count = this.images.length
-      if (count && (this.loop || next >= 0 && next < count)) this.change(this.current, (next + count) % count)
+      if (count && (this.loop || next >= 0 && next < count)) this.change(this.current, (next + count) % count, direction)
     },
     async syncLayer() {
       if (!this.modelValue || this.mobile) return
       this.current = this.safeIndex
       await nextTick()
       const panel = this.$refs.panel as HTMLElement | undefined
-      if (!panel || !this.modelValue || this.disposeLayer) return
+      if (!panel || !this.modelValue) return
+      this.releaseNavigation ??= holdPreviewNavigation(this.origin?.(this.current, false) ?? panel.ownerDocument.activeElement ?? panel)
+      if (this.disposeLayer) return
       this.disposeLayer = registerLayer({
         element: panel, restore: panel.ownerDocument.activeElement as HTMLElement | null,
         close: this.close, persistent: () => !this.modelValue, modal: true, trap: true,
@@ -752,6 +825,8 @@ export const AppleImageViewer = defineComponent({
     },
     afterClose() {
       if (this.modelValue) return
+      this.panzoom?.destroy(); this.panzoom = null
+      this.releaseNavigation?.(); this.releaseNavigation = null
       this.disposeLayer?.(); this.disposeLayer = null
       this.$emit('after-close')
     },
@@ -761,6 +836,8 @@ export const AppleImageViewer = defineComponent({
       event.preventDefault()
       const panel = this.$refs.panel as HTMLElement | undefined
       if (!panel || !this.panzoom) return
+      this.finishEntry()
+      this.catchZoom()
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? panel.clientHeight || window.innerHeight : 1
       // Use distance, not Panzoom's fixed wheel step. Every fractional delta contributes.
       const scale = Math.max(0.1, Math.min(10, this.panzoom.getScale() * Math.exp(-event.deltaY * unit * 0.002)))
@@ -771,8 +848,10 @@ export const AppleImageViewer = defineComponent({
         y: (event.clientY - bounds.top - bounds.height / 2) * scale,
       } })
     },
-    change(_previous: number, index: number) {
+    change(previous: number, index: number, direction = index > previous ? 1 : -1) {
       if (index === this.current) return
+      this.finishEntry()
+      this.pageDirection = direction
       this.current = index
       this.$emit('update:index', index)
       this.$emit('change', index)
@@ -788,28 +867,43 @@ export const AppleImageViewer = defineComponent({
       onAfterClose: () => { this.syncViewport(); this.$emit('after-close') },
       onError: (event: Event) => this.$emit('error', event),
     })
-    const motion = motionOf(this, this.motion)
+    const currentImage = this.currentImage
+    const motion = this.resolvedMotion
+    const paging = photoPageTiming(this.pageWidth, 0, this.pageWidth)
+    const pageDuration = motion === 'full' ? paging.duration : durationOf(motion)
     const viewer = this.modelValue ? h('div', mergeProps(this.$attrs, {
       ref: 'panel', class: 'apple-image-viewer', role: 'dialog', tabindex: -1,
       'aria-label': '图片预览', 'aria-modal': this.isTop ? 'true' : undefined,
-      'data-apple-motion': motion, style: { zIndex: overlayZIndex(this.depth), '--apple-viewer-return-z': imageReturnZIndex(this.depth), '--apple-overlay-duration': `${durationOf(motion)}ms` },
+      'data-apple-motion': motion, style: {
+        zIndex: overlayZIndex(this.depth), '--apple-viewer-return-z': imageReturnZIndex(this.depth), '--apple-overlay-duration': `${durationOf(motion)}ms`,
+        '--apple-photo-ease': photoEasing, '--apple-photo-page-ease': paging.easing, '--apple-photo-page-duration': `${pageDuration}ms`,
+        '--apple-photo-open-duration': `${motion === 'full' ? photoMotion.open : durationOf(motion)}ms`,
+        '--apple-photo-close-duration': `${motion === 'full' ? photoMotion.close : durationOf(motion)}ms`,
+        '--apple-photo-zoom-duration': `${photoMotion.zoom}ms`,
+      },
       onWheel: this.zoom,
-      onPointerdownCapture: (event: PointerEvent) => { this.pointerStart = { x: event.clientX, y: event.clientY } },
+      onPointerdownCapture: (event: PointerEvent) => {
+        if ((event.target as HTMLElement).closest('.apple-viewer-pages')) this.catchZoom()
+        this.pointerStart = { x: event.clientX, y: event.clientY }
+      },
     }), [
-      this.currentImage ? [
-        h('div', {
-          key: this.currentImage.src, ref: 'canvas', class: 'apple-viewer-canvas',
+      currentImage ? [
+        h('div', { class: 'apple-viewer-pages' }, [h(Transition, {
+          name: this.pageDirection > 0 ? 'apple-viewer-page-next' : 'apple-viewer-page-prev',
+          css: motion !== 'none', duration: pageDuration,
+        }, { default: () => h('div', { key: `${this.current}:${currentImage.src}`, class: 'apple-viewer-page' }, [h('div', {
+          ref: 'canvas', class: 'apple-viewer-canvas',
           onClick: (event: MouseEvent) => {
             if (event.target === event.currentTarget && this.isTop && (!this.pointerStart || Math.hypot(event.clientX - this.pointerStart.x, event.clientY - this.pointerStart.y) < 4)) this.close()
           },
         }, [h('img', {
-          class: 'apple-viewer-image', src: this.currentImage.src, alt: this.currentImage.alt ?? '', draggable: false,
+          class: 'apple-viewer-image', src: currentImage.src, alt: currentImage.alt ?? '', draggable: false,
           style: { visibility: this.loaded ? 'visible' : 'hidden', transform: `rotate(${this.rotation}deg)` },
           onLoad: this.imageLoaded,
           onError: (event: Event) => { this.failed = true; this.loaded = false; this.$emit('error', event) },
           onDragstart: (event: DragEvent) => event.preventDefault(),
-          onDblclick: () => this.panzoom?.getScale() === 1 ? this.panzoom.zoom(2, { animate: false }) : this.panzoom?.reset({ animate: false }),
-        })]),
+          onDblclick: this.toggleZoom,
+        })])]) })]),
         iconButton('关闭图片预览', X, this.close, { class: 'apple-overlay-icon apple-viewer-close' }),
         this.images.length > 1 ? iconButton('上一张', ChevronLeft, () => this.navigate(-1), { class: 'apple-overlay-icon apple-viewer-prev', disabled: !this.loop && this.current <= 0 }) : null,
         this.images.length > 1 ? iconButton('下一张', ChevronRight, () => this.navigate(1), { class: 'apple-overlay-icon apple-viewer-next', disabled: !this.loop && this.current >= this.images.length - 1 }) : null,
@@ -817,15 +911,43 @@ export const AppleImageViewer = defineComponent({
           iconButton('缩小', ZoomOut, () => this.stepZoom(-1), { disabled: !this.loaded }),
           h('span', { class: 'apple-viewer-count', 'aria-live': 'polite' }, `${this.current + 1} / ${this.images.length}`),
           iconButton('放大', ZoomIn, () => this.stepZoom(1), { disabled: !this.loaded }),
-          iconButton('旋转', RotateCcw, () => { this.rotation -= 90 }, { disabled: !this.loaded }),
+          iconButton('旋转', RotateCcw, () => { this.finishEntry(); this.rotation -= 90 }, { disabled: !this.loaded }),
         ]),
-        this.loaded && (this.currentImage.title || this.currentImage.alt) ? h('div', { class: 'apple-viewer-title' }, this.currentImage.title || this.currentImage.alt) : null,
+        this.loaded && (currentImage.title || currentImage.alt) ? h('div', { class: 'apple-viewer-title' }, currentImage.title || currentImage.alt) : null,
         !this.loaded ? h('div', { class: 'apple-viewer-status', role: 'status' }, this.failed
           ? [h(CircleAlert, { size: 28 }), h('p', '图片加载失败')]
           : [h(LoaderCircle, { class: 'apple-overlay-spin', size: 32, 'aria-label': '图片加载中' })]) : null,
       ] : h('div', { class: 'apple-viewer-empty' }, [iconButton('关闭图片预览', X, this.close), h('p', '暂无图片')]),
     ]) : null
-    return portal(this, presence('apple-viewer-presence', motion, viewer, this.afterClose))
+    return portal(this, h(Transition, {
+      name: 'apple-viewer-presence', appear: true, css: motion !== 'none',
+      onEnter: (element: Element, done: () => void) => {
+        const controller = markRaw(new AbortController())
+        this.enterController = controller
+        this.entering = Promise.resolve(this.returning).then(() => {
+          if (!controller.signal.aborted) return enterDesktopPhoto(element as HTMLElement, this.origin?.(this.current, false) ?? null, motion, controller.signal)
+        })
+        void this.entering.finally(done)
+      },
+      onEnterCancelled: () => this.enterController?.abort(),
+      onBeforeLeave: (element: Element) => {
+        element.classList.add('apple-viewer-return')
+        this.releaseNavigation?.(); this.releaseNavigation = null
+      },
+      onLeave: (element: Element, done: () => void) => {
+        this.enterController?.abort()
+        this.returnController?.abort()
+        const controller = markRaw(new AbortController())
+        this.returnController = controller
+        this.returning = Promise.resolve(this.entering).then(() => {
+          if (!controller.signal.aborted) return returnDesktopPhoto(element as HTMLElement, this.origin?.(this.current) ?? null, motion, controller.signal)
+        })
+        void this.returning.finally(done)
+      },
+      onLeaveCancelled: () => this.returnController?.abort(),
+      onAfterLeave: this.afterClose,
+      onAfterEnter: () => { if (this.modelValue) this.origin?.(this.current) },
+    }, { default: () => viewer }))
   },
 })
 

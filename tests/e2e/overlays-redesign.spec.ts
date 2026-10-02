@@ -1,15 +1,7 @@
+import { activeCard, openComponent } from './component-navigation'
 import { expect, test, type Page } from '@playwright/test'
 
-async function openComponent(page: Page, tag: string) {
-  const navigation = page.getByRole('button', { name: '打开组件导航', exact: true })
-  if (await navigation.isVisible()) await navigation.click()
-  await page.getByRole('searchbox', { name: '搜索组件' }).fill(tag)
-  if (await navigation.isVisible()) await navigation.click()
-  await expect(page.locator('.gallery-page.apple-page-leave-active, .gallery-view.apple-slide-x-leave-active')).toHaveCount(0)
-  await page.locator('.catalog-item').filter({ has: page.getByText(tag, { exact: true }) }).click()
-  await expect(page.locator('.gallery-page.apple-page-leave-active, .gallery-view.apple-slide-x-leave-active')).toHaveCount(0)
-  await expect(page.locator('.detail-footer')).toContainText(`<${tag} />`)
-}
+
 
 test('image wheel zoom responds to tiny deltas and preserves its focal point across event batches', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
@@ -43,8 +35,9 @@ test('image wheel zoom responds to tiny deltas and preserves its focal point acr
   await expect.poll(async () => (await image.boundingBox())!.x).toBeCloseTo(original.x + 40, 1)
   await viewer.getByRole('button', { name: '旋转', exact: true }).click()
   await expect(image).toHaveCSS('transform', 'matrix(0, -1, 1, 0, 0, 0)')
-  await page.screenshot({ path: 'artifacts/image-continuous-zoom.png' })
+  await page.screenshot({ path: '/tmp/apptify-checks/image-continuous-zoom.png' })
   await viewer.getByRole('button', { name: '下一张', exact: true }).click()
+  await expect(viewer.locator('.apple-viewer-page')).toHaveCount(1)
   await expect(image).toHaveAttribute('src', /airpods/)
   await expect(image).toBeVisible()
   await expect.poll(scale).toBeCloseTo(1, 5)
@@ -52,23 +45,23 @@ test('image wheel zoom responds to tiny deltas and preserves its focal point acr
 })
 
 for (const width of [390, 1440]) {
-  test(`image hover scales only its surface without moving layout at ${width}px`, async ({ page }) => {
+  test(`compact image hover keeps its surface and layout stationary at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await openComponent(page, 'apple-image')
-    const figure = page.locator('.component-demo .apple-image').first()
+    const figure = activeCard(page).locator('.component-demo .apple-image').first()
     const surface = figure.locator('.apple-image__surface')
     await expect(figure).toHaveClass(/apple-image--loaded/)
     await figure.scrollIntoViewIfNeeded()
     const bounds = await figure.boundingBox()
-    const footer = await page.locator('.detail-footer').boundingBox()
+    const footer = await activeCard(page).locator('.component-source').boundingBox()
     // Move the pointer without Playwright scrolling the layout during the measurement.
     const surfaceBounds = (await surface.boundingBox())!
     await page.mouse.move(surfaceBounds.x + surfaceBounds.width / 2, surfaceBounds.y + surfaceBounds.height / 2)
-    await expect.poll(() => surface.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).a)).toBeCloseTo(1.04)
+    await expect(surface).toHaveCSS('transform', 'none')
     expect(await figure.boundingBox()).toEqual(bounds)
-    expect(await page.locator('.detail-footer').boundingBox()).toEqual(footer)
+    expect(await activeCard(page).locator('.component-source').boundingBox()).toEqual(footer)
     expect(await figure.evaluate(element => getComputedStyle(element).transform)).toBe('none')
-    await page.screenshot({ path: `artifacts/image-hover-${width}.png` })
+    await page.screenshot({ path: `/tmp/apptify-checks/image-hover-${width}.png` })
     await figure.locator('.apple-image__trigger').first().click()
     const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
     await expect(viewer).toBeVisible()
@@ -85,7 +78,7 @@ for (const width of [390, 1440]) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: '组件总览。' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /让界面自然，\s*让细节动人。/ })).toBeVisible()
 })
 
 for (const width of [1440, 390]) {
@@ -113,7 +106,10 @@ for (const width of [1440, 390]) {
         return { offset: axis === 'x' ? matrix.m41 : matrix.m42, opacity: style.opacity }
       }, example.axis)
       expect(moving.offset).toBeGreaterThan(0)
-      expect(moving.opacity).toBe('1')
+      if (example.tag === 'apple-dialog') {
+        expect(Number(moving.opacity)).toBeGreaterThan(0)
+        expect(Number(moving.opacity)).toBeLessThan(1)
+      } else expect(moving.opacity).toBe('1')
       await expect(dialog).toHaveCount(0)
       expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
       await expect(trigger).toBeFocused()
@@ -135,6 +131,7 @@ for (const width of [1440, 390]) {
     await page.mouse.wheel(0, -120)
     await expect.poll(() => viewer.locator('.apple-viewer-canvas').evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).a)).toBeGreaterThan(before)
     await viewer.getByRole('button', { name: '下一张', exact: true }).click()
+    await expect(viewer.locator('.apple-viewer-page')).toHaveCount(1)
     await expect(viewer.locator('.apple-viewer-image')).toHaveAttribute('src', /airpods-max-orange/)
     await expect(viewer.locator('.apple-viewer-image')).toBeVisible()
     const displayed = await viewer.locator('.apple-viewer-image').evaluate(element => {
@@ -146,7 +143,7 @@ for (const width of [1440, 390]) {
     expect(displayed.height).toBeGreaterThan(250)
     expect(displayed.naturalWidth).toBeGreaterThan(0)
     expect(displayed.opacity).toBe(1)
-    await page.screenshot({ path: `artifacts/lightbox-redesign-${width}.png` })
+    await page.screenshot({ path: `/tmp/apptify-checks/lightbox-redesign-${width}.png` })
     await page.keyboard.press('Escape')
     await expect(page.locator('.apple-viewer-presence-leave-active')).toHaveCount(1)
     expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden')
@@ -195,8 +192,8 @@ test('popover uses translucent backdrop filtering and retains its panel through 
     const style = getComputedStyle(element)
     return { filter: style.backdropFilter, background: style.backgroundColor }
   })
-  expect(glass.filter).toContain('blur(')
-  expect(glass.background).toMatch(/(?:0\.82|82%)/)
+  expect(glass.filter).toBe('blur(12px) saturate(2)')
+  expect(glass.background).toBe('rgba(255, 255, 255, 0.314)')
   await page.keyboard.press('Escape')
   await expect(page.locator('.apple-popover-presence-leave-active')).toHaveCount(1)
   await expect(popover).toHaveCount(0)
@@ -220,17 +217,16 @@ test('closing a nested dialog does not expose the lower layer to a second Escape
   await expect(lower).toHaveCount(0)
 })
 
-test('Escape closes the theme list before its containing preferences drawer', async ({ page }) => {
-  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
-  const drawer = page.getByRole('dialog', { name: '外观与动效', exact: true })
-  const theme = drawer.getByRole('combobox', { name: '主题', exact: true })
-  await theme.click()
-  await expect(drawer.getByRole('listbox')).toBeVisible()
-  await theme.press('Escape')
-  await expect(drawer.getByRole('listbox')).toHaveCount(0)
-  await expect(drawer).toBeVisible()
+test('account example replaces its popup and Escape returns to the page', async ({ page }) => {
+  const trigger = page.getByRole('button', { name: '打开用户菜单', exact: true })
+  await trigger.click()
+  const popup = page.getByRole('dialog', { name: '用户菜单', exact: true })
+  await popup.getByRole('button', { name: /Login/ }).click()
+  const dialog = page.getByRole('dialog', { name: '登录示例', exact: true })
+  await expect(dialog).toBeVisible()
+  await expect(popup).toHaveCount(0)
   expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden')
-  await theme.press('Escape')
-  await expect(drawer).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
   expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
 })

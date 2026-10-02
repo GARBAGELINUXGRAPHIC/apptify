@@ -1,17 +1,13 @@
+import { activeCard, openComponent } from './component-navigation'
 import { expect, test, type Page } from '@playwright/test'
 
-async function openComponent(page: Page, tag: string) {
-  await page.getByRole('searchbox', { name: '搜索组件' }).fill(tag)
-  await page.locator('.catalog-item').filter({ has: page.getByText(tag, { exact: true }) }).click()
-  await expect(page.locator('.detail-footer')).toContainText(`<${tag} />`)
-  await expect(page.locator('.component-demo')).toBeVisible()
-}
+
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: '组件总览。' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /让界面自然，\s*让细节动人。/ })).toBeVisible()
 })
 
 test('virtual table keeps a bounded DOM, scrolls through all records, and resizes columns by dragging', async ({ page }) => {
@@ -38,12 +34,12 @@ test('virtual table keeps a bounded DOM, scrolls through all records, and resize
   await table.getByRole('button', { name: '名称', exact: true }).click()
   await expect.poll(() => table.locator('.apple-table__scroll').evaluate(element => element.scrollTop)).toBe(0)
   await expect(visibleRows.first()).toContainText('组件 0001')
-  await page.screenshot({ path: 'artifacts/content-virtual-table.png' })
+  await page.screenshot({ path: '/tmp/apptify-checks/content-virtual-table.png' })
 })
 
 test('tree row clicks expand and selection uses a static flat background like the sidebar', async ({ page }) => {
   await openComponent(page, 'apple-tree')
-  const tree = page.getByRole('tree')
+  const tree = activeCard(page).getByRole('tree', { name: '树形列表', exact: true })
   await tree.locator('.apple-tree__row').filter({ hasText: '设计资源' }).click()
   await expect(tree.getByRole('treeitem', { name: '组件', exact: true })).toBeVisible()
   await expect(tree.locator('.apple-selection-indicator')).toHaveCount(0)
@@ -59,16 +55,16 @@ test('tree row clicks expand and selection uses a static flat background like th
   expect(sampling.radius).toBe('0px')
   await expect(tree.getByRole('treeitem', { name: '项目文件', exact: true })).toHaveAttribute('aria-selected', 'true')
   await expect(tree.locator('.is-selected')).toHaveCount(1)
-  const sidebarColor = await page.locator('.sidebar .nav-item.active').evaluate(element => getComputedStyle(element).backgroundColor)
+  const sidebarColor = await page.locator('.sidebar .apple-tree__row.is-selected').evaluate(element => getComputedStyle(element).backgroundColor)
   await expect(tree.locator('.is-selected')).toHaveCSS('background-color', sidebarColor)
   await expect(tree.locator('.apple-selection-indicator')).toHaveCount(0)
   await tree.evaluate(async element => { await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => undefined))) })
-  await page.screenshot({ path: 'artifacts/content-tree-selection.png', animations: 'disabled' })
+  await page.screenshot({ path: '/tmp/apptify-checks/content-tree-selection.png', animations: 'disabled' })
 })
 
 test('tabs translate the panel and selection indicator instead of fading', async ({ page }) => {
   await openComponent(page, 'apple-tabs')
-  const tabs = page.locator('.component-demo .apple-tabs')
+  const tabs = activeCard(page).locator('.component-demo .apple-tabs')
   await tabs.getByRole('tab', { name: '概览', exact: true }).hover()
   await page.mouse.down()
   await expect(tabs.locator('.v-ripple__container')).toHaveCount(0)
@@ -91,7 +87,7 @@ test('tabs translate the panel and selection indicator instead of fading', async
 
 test('accordion animates measured height and retains inert content on close', async ({ page }) => {
   await openComponent(page, 'apple-accordion')
-  const accordion = page.locator('.apple-accordion')
+  const accordion = activeCard(page).locator('.component-demo .apple-accordion')
   const region = accordion.getByRole('region', { includeHidden: true }).first()
   const opening = await accordion.evaluate(async element => {
     const region = element.querySelector<HTMLElement>('.apple-accordion__region')!
@@ -114,29 +110,28 @@ test('accordion animates measured height and retains inert content on close', as
 test('pagination remains square on a narrow viewport', async ({ page }) => {
   await openComponent(page, 'apple-pagination')
   await page.setViewportSize({ width: 320, height: 740 })
-  const buttons = page.locator('.component-demo .apple-pagination button')
+  const buttons = activeCard(page).locator('.component-demo .apple-pagination__pages > button')
   for (const button of await buttons.all()) {
     const rect = (await button.boundingBox())!
     expect(rect.width).toBeCloseTo(44, 3)
     expect(rect.height).toBeCloseTo(44, 3)
   }
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
 })
 
-test('floating actions escape transformed content while retaining their provider theme and bottom order', async ({ page }) => {
+test('floating actions stay inside their feed preview and retain their provider theme', async ({ page }) => {
   await openComponent(page, 'apple-floating-group')
   const group = page.getByRole('group', { name: '快捷操作', exact: true })
   await expect(group).toBeVisible()
   expect(await group.evaluate(element => element.parentElement?.hasAttribute('data-apple-portals'))).toBe(true)
-  const backTop = group.getByRole('button', { name: '回到顶部', exact: true })
-  const bell = group.getByRole('button', { name: '查看通知', exact: true })
-  await expect.poll(async () => { const rect = (await backTop.boundingBox())!; return Math.abs(rect.y + rect.height - 980) }).toBeLessThan(.1)
-  const rect = (await backTop.boundingBox())!
-  expect(rect.y).toBeGreaterThan((await bell.boundingBox())!.y)
-  expect(rect.x + rect.width).toBeCloseTo(1440 - 20, 1)
-  expect(rect.y + rect.height).toBeCloseTo(1000 - 20, 1)
-  await page.locator('main').evaluate(element => { element.style.transform = 'translateY(80px)' })
-  const shifted = (await backTop.boundingBox())!
-  expect(shifted.y).toBeCloseTo(rect.y, 1)
+  const bounds = (await activeCard(page).boundingBox())!
+  const buttons = await group.getByRole('button').all()
+  for (const button of buttons) {
+    const rect = (await button.boundingBox())!
+    expect(rect.x).toBeGreaterThanOrEqual(bounds.x)
+    expect(rect.y).toBeGreaterThanOrEqual(bounds.y)
+    expect(rect.x + rect.width).toBeLessThanOrEqual(bounds.x + bounds.width)
+    expect(rect.y + rect.height).toBeLessThanOrEqual(bounds.y + bounds.height)
+  }
   expect(await group.evaluate(element => getComputedStyle(element).getPropertyValue('--apple-surface').trim())).not.toBe('')
 })

@@ -56,7 +56,7 @@ describe('shared motion rules', () => {
     await button.trigger('mouseup')
     parent.dataset.appleMotion = 'none'
     await button.trigger('mousedown')
-    expect(button.findAll('.v-ripple__animation')).toHaveLength(1)
+    expect(button.findAll('.v-ripple__animation')).toHaveLength(0)
     button.unmount()
   })
 

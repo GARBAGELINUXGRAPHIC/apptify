@@ -3,7 +3,9 @@ import { Teleport, defineComponent, h, markRaw, mergeProps, nextTick, type CSSPr
 import { CircleAlert, LoaderCircle, X } from 'lucide-vue-next'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
 import { boundPhoto, clamp, fitPhoto, thumbnailGeometry, type PhotoGeometry, type PhotoPoint, type PhotoSize } from '../core/image-geometry'
+import { photoEasing, photoFlightFrame, photoFlightSize, photoMotion, photoPageTiming, readPhotoGeometry } from '../core/image-motion'
 import type { AppleViewerImage } from './overlays'
+import { holdPreviewNavigation } from '../core/preview-navigation'
 
 type Phase = 'preparing' | 'opening' | 'open' | 'settling' | 'closing'
 interface Gesture {
@@ -18,23 +20,11 @@ interface PhotoLayer {
   top: (value: boolean, depth: number) => void; modal: boolean; trap: boolean
   persistent: () => boolean; arrows?: (event: KeyboardEvent) => void
 }
-const easing = 'cubic-bezier(.22,.8,.2,1)'
 const tapDelay = 200
-// A Hermite curve carries the release velocity into the snap and ends at rest.
-// Shorten fast snaps so the curve stays monotonic rather than overshooting a page.
-const pageTiming = (distance: number, velocity: number, width: number) => {
-  if (Math.abs(distance) < .1) return { duration: 0, easing: 'linear' }
-  let duration = clamp(220 + Math.abs(distance) / Math.max(1, width) * 160, 220, 400)
-  if (velocity) duration = Math.min(duration, Math.abs(distance / velocity) * (distance * velocity > 0 ? 2.5 : 1))
-  const slope = velocity * duration / distance
-  return { duration, easing: `cubic-bezier(.33333333,${slope / 3},.66666667,1)` }
-}
-const frameStyle = (rect: PhotoGeometry): CSSProperties => ({
-  left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`,
-  transform: 'none', borderRadius: `${rect.radius}px`, clipPath: `inset(${rect.inset.map(n => `${n}px`).join(' ')} round ${rect.radius}px)`,
-})
-const imageStyle = (rect: PhotoGeometry): CSSProperties => ({
-  left: `${rect.image.left}px`, top: `${rect.image.top}px`, width: `${rect.image.width}px`, height: `${rect.image.height}px`,
+interface Flight { base: PhotoSize; pose: Keyframe }
+const frameStyle = (flight: Flight): CSSProperties => ({
+  left: 0, top: 0, width: `${flight.base.width}px`, height: `${flight.base.height}px`,
+  transformOrigin: '0 0', transform: String(flight.pose.transform), clipPath: String(flight.pose.clipPath),
 })
 
 // The factory shares the existing document layer stack without creating another stack.
@@ -51,15 +41,17 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
     data: () => ({
       present: false, current: 0, phase: 'preparing' as Phase, isTop: false, depth: 0,
       viewport: { width: 0, height: 0 } as PhotoSize,
+      viewportOrigin: { x: 0, y: 0 } as PhotoPoint,
       sizes: {} as Record<number, PhotoSize>, failures: {} as Record<number, boolean>,
       scale: 1, pan: { x: 0, y: 0 } as PhotoPoint, drag: { x: 0, y: 0 } as PhotoPoint, swipe: 0,
       paging: null as { from: number; direction: number } | null,
       zooming: false,
-      flight: null as PhotoGeometry | null, background: 0, chrome: 0,
+      flight: null as Flight | null, background: 0, chrome: 0,
       pointers: markRaw(new Map<number, PhotoPoint>()), gesture: null as Gesture | null,
       pendingTap: null as { point: PhotoPoint; time: number; index: number } | null, tapTimer: null as number | null,
       masked: null as Mask | null, animations: markRaw([] as Animation[]), epoch: 0, suppressClickUntil: 0,
       disposeLayer: null as (() => void) | null, resizeObserver: null as ResizeObserver | null,
+      releaseNavigation: null as (() => void) | null,
     }),
     computed: {
       resolvedMotion(): string {
@@ -89,7 +81,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
       },
     },
     mounted() { if (this.modelValue) void this.openViewer() },
-    beforeUnmount() { this.clearTap(); this.cancelAnimations(); this.restoreThumbnail(); this.resizeObserver?.disconnect(); this.disposeLayer?.() },
+    beforeUnmount() { this.clearTap(); this.cancelAnimations(); this.restoreThumbnail(); this.resizeObserver?.disconnect(); this.disposeLayer?.(); this.releaseNavigation?.() },
     methods: {
       clearTap() {
         if (this.tapTimer !== null) window.clearTimeout(this.tapTimer)
@@ -113,7 +105,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         }, tapDelay)
       },
       cancelAnimations() { this.epoch++; this.animations.splice(0).forEach(animation => animation.cancel()) },
-      async animate(entries: Array<{ element: HTMLElement; from: Keyframe; to: Keyframe }>, duration: number, curve = easing) {
+      async animate(entries: Array<{ element: HTMLElement; from: Keyframe; to: Keyframe }>, duration: number, curve = photoEasing) {
         const epoch = this.epoch
         if (!duration) return epoch === this.epoch
         const animations = entries.filter(entry => typeof entry.element.animate === 'function').map(({ element, from, to }) =>
@@ -127,6 +119,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         if (!panel) return
         const rect = panel.getBoundingClientRect()
         this.viewport = { width: rect.width, height: rect.height }
+        this.viewportOrigin = { x: rect.left, y: rect.top }
       },
       async openViewer() {
         if (this.present && this.phase !== 'closing') return
@@ -141,6 +134,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         const panel = this.$refs.panel as HTMLElement | undefined
         if (!panel || !this.modelValue) return
         this.measure()
+        this.releaseNavigation ??= holdPreviewNavigation(this.origin?.(this.current, false) ?? panel.ownerDocument.activeElement ?? panel)
         if (!this.disposeLayer) this.disposeLayer = registerLayer({
           element: panel, restore: panel.ownerDocument.activeElement as HTMLElement | null,
           close: () => this.close(), persistent: () => this.phase === 'closing', modal: true, trap: true,
@@ -219,21 +213,21 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         const chromeFrom = liveChrome?.firstElementChild ? Number(getComputedStyle(liveChrome.firstElementChild).opacity) : this.chrome
         this.cancelAnimations()
         this.zooming = false
-        const duration = this.resolvedMotion === 'none' ? 0 : this.resolvedMotion === 'reduced' ? 120 : opening ? 440 : 420
+        const duration = this.resolvedMotion === 'none' ? 0 : this.resolvedMotion === 'reduced' ? 120 : opening ? photoMotion.open : photoMotion.close
         const full = this.resolvedMotion === 'full'
-        this.flight = full ? from : null
+        const base = photoFlightSize(from, to)
+        this.flight = full ? { base, pose: photoFlightFrame(from, base) } : null
         this.background = backdropFrom; this.chrome = chromeFrom
         this.phase = opening ? 'opening' : 'closing'
+        if (!opening) { this.releaseNavigation?.(); this.releaseNavigation = null }
         await nextTick()
         const panel = this.$refs.panel as HTMLElement | undefined
         const frame = panel?.querySelector<HTMLElement>('.apple-viewer-canvas')
-        const photo = frame?.querySelector<HTMLElement>('.apple-viewer-image')
         const backdrop = this.$refs.backdrop as HTMLElement | undefined
         const header = this.$refs.chrome as HTMLElement | undefined
         const entries: Array<{ element: HTMLElement; from: Keyframe; to: Keyframe }> = []
-        if (full && frame && photo) {
-          entries.push({ element: frame, from: frameStyle(from) as Keyframe, to: frameStyle(to) as Keyframe })
-          entries.push({ element: photo, from: imageStyle(from) as Keyframe, to: imageStyle(to) as Keyframe })
+        if (full && frame) {
+          entries.push({ element: frame, from: photoFlightFrame(from, base), to: photoFlightFrame(to, base) })
         }
         if (backdrop) entries.push({ element: backdrop, from: { opacity: backdropFrom }, to: { opacity: opening ? 1 : 0 } })
         // Fade each control, keeping the photo inside its backdrop-filter sampling area.
@@ -241,7 +235,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         const epoch = this.epoch
         if (!await this.animate(entries, duration) || epoch !== this.epoch) return false
         this.background = opening ? 1 : 0; this.chrome = opening ? 1 : 0
-        this.flight = full ? to : null
+        this.flight = full ? { base, pose: photoFlightFrame(to, base) } : null
         await nextTick()
         this.cancelAnimations()
         return true
@@ -271,17 +265,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         const photo = frame?.querySelector<HTMLElement>('.apple-viewer-image')
         const bounds = panel?.getBoundingClientRect()
         let from = this.normalGeometry()
-        if (frame && photo && bounds) {
-          const rect = frame.getBoundingClientRect(), painted = photo.getBoundingClientRect()
-          const css = getComputedStyle(frame)
-          const values = css.clipPath.match(/^inset\(([^)]*)\)/)?.[1].split('round')[0].trim().split(/\s+/).map(value => parseFloat(value)) ?? [0]
-          const inset: [number, number, number, number] = [values[0], values[1] ?? values[0], values[2] ?? values[0], values[3] ?? values[1] ?? values[0]]
-          from = {
-            left: rect.left - bounds.left, top: rect.top - bounds.top, width: rect.width, height: rect.height,
-            image: { left: painted.left - rect.left, top: painted.top - rect.top, width: painted.width, height: painted.height },
-            radius: parseFloat(css.borderRadius) || 0, inset,
-          }
-        }
+        if (frame && photo && bounds) from = readPhotoGeometry(frame, photo, bounds)
         const thumbnail = this.maskThumbnail(this.phase !== 'preparing' && this.phase !== 'opening')
         const to = thumbnail && bounds ? thumbnailGeometry(thumbnail, bounds) ?? from : from
         this.pointers.clear(); this.gesture = null; this.suppressClickUntil = performance.now() + 400
@@ -292,6 +276,8 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         if (!await flight) return
         this.restoreThumbnail(); this.present = false
         await nextTick()
+        if (this.present || this.modelValue) return
+        this.releaseNavigation?.(); this.releaseNavigation = null
         this.resizeObserver?.disconnect(); this.disposeLayer?.(); this.disposeLayer = null
         this.$emit('after-close')
       },
@@ -312,7 +298,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         const frame = panel.querySelector<HTMLElement>('.apple-viewer-canvas')
         const pose = frame ? getComputedStyle(frame).transform : 'none', opacity = this.backdropOpacity
         const previous = this.current, swipe = this.swipe, stride = this.viewport.width + 20
-        const timing = pageTiming((changed ? -direction * stride : 0) - swipe, velocity, this.viewport.width)
+        const timing = photoPageTiming((changed ? -direction * stride : 0) - swipe, velocity, this.viewport.width)
         this.cancelAnimations(); this.phase = 'settling'; this.paging = { from: previous, direction: changed ? direction : 0 }
         this.current = index; this.swipe = 0
         if (changed) {
@@ -355,8 +341,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         return elapsed >= 8 && performance.now() - last.time < 80 ? (last.x - first.x) / elapsed : 0
       },
       point(event: MouseEvent): PhotoPoint {
-        const bounds = (this.$refs.panel as HTMLElement).getBoundingClientRect()
-        return { x: event.clientX - bounds.left, y: event.clientY - bounds.top }
+        return { x: event.clientX - this.viewportOrigin.x, y: event.clientY - this.viewportOrigin.y }
       },
       startGesture(multiple = false) {
         const points = [...this.pointers.values()]
@@ -379,6 +364,8 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
             const frame = slide?.querySelector<HTMLElement>('.apple-viewer-canvas')
             const pose = new DOMMatrixReadOnly(frame ? getComputedStyle(frame).transform : undefined)
             this.scale = pose.a; this.pan = { x: pose.m41, y: pose.m42 }
+            this.background = Number(getComputedStyle(this.$refs.backdrop as HTMLElement).opacity)
+            this.drag = { x: 0, y: 0 }
           }
           this.cancelAnimations(); this.paging = null; this.zooming = false; this.swipe = offset; this.phase = 'open'
         }
@@ -462,16 +449,18 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         const before = frame ? getComputedStyle(frame).transform : 'none'
         const positions = slides.map(slide => getComputedStyle(slide).transform)
         const opacity = this.backdropOpacity
-        this.cancelAnimations(); this.phase = 'settling'
-        this.scale = clamp(this.scale, 1, 8); this.pan = boundPhoto(this.pan, this.fitted, this.viewport, this.scale)
+        const scale = clamp(this.scale, 1, 8), pan = boundPhoto(this.pan, this.fitted, this.viewport, scale)
+        if (scale === this.scale && pan.x === this.pan.x && pan.y === this.pan.y && !this.drag.x && !this.drag.y && opacity === 1) return
+        this.cancelAnimations(); this.phase = 'settling'; this.zooming = true
+        this.scale = scale; this.pan = pan
         this.drag = { x: 0, y: 0 }; this.swipe = 0; this.background = 1
         await nextTick()
         const entries = slides.map((slide, i) => ({ element: slide, from: { transform: positions[i] }, to: { transform: getComputedStyle(slide).transform } }))
         if (frame) entries.push({ element: frame, from: { transform: before }, to: { transform: getComputedStyle(frame).transform } })
         const backdrop = this.$refs.backdrop as HTMLElement
-        const duration = this.resolvedMotion === 'full' ? 240 : 0
+        const duration = this.resolvedMotion === 'full' ? photoMotion.settle : 0
         if (!await this.animate([...entries, { element: backdrop, from: { opacity }, to: { opacity: 1 } }], duration)) return
-        this.cancelAnimations(); this.phase = 'open'
+        this.cancelAnimations(); this.zooming = false; this.phase = 'open'
       },
       async toggleZoom(point: PhotoPoint) {
         if (!this.isTop || this.phase !== 'open' || !this.loaded) return
@@ -494,7 +483,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         await nextTick()
         const entries = slides.map((slide, i) => ({ element: slide, from: { transform: positions[i] }, to: { transform: getComputedStyle(slide).transform } }))
         entries.push({ element: frame, from: { transform: before }, to: { transform: getComputedStyle(frame).transform } })
-        if (!await this.animate(entries, this.resolvedMotion === 'full' ? 240 : 0, 'cubic-bezier(.25,.1,.25,1)')) return
+        if (!await this.animate(entries, this.resolvedMotion === 'full' ? photoMotion.zoom : 0)) return
         this.cancelAnimations(); this.zooming = false; this.phase = 'open'
       },
       zoom(event: WheelEvent) {
@@ -544,7 +533,7 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
           }, [h('img', {
             class: ['apple-viewer-photo', active ? 'apple-viewer-image' : 'apple-viewer-neighbor-image'],
             src: picture.src, alt: picture.alt ?? '', draggable: false, 'data-index': index,
-            style: active && this.flight ? imageStyle(this.flight) : { left: 0, top: 0, width: `${fitted.width}px`, height: `${fitted.height}px` },
+            style: { left: 0, top: 0, width: `${active && this.flight ? this.flight.base.width : fitted.width}px`, height: `${active && this.flight ? this.flight.base.height : fitted.height}px` },
             onLoad: (event: Event) => this.imageLoaded(index, event.target as HTMLImageElement), onError: (event: Event) => this.imageFailed(index, event),
             onDragstart: (event: DragEvent) => event.preventDefault(),
           })])])

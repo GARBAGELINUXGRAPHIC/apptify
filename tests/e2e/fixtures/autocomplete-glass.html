@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Autocomplete glass states</title>
+<style>body { margin: 0; } main { padding: 24px; max-width: 440px; } .backdrop { min-height: 420px; padding: 18px; background-image: repeating-conic-gradient(#77777730 0% 25%, transparent 0% 50%); background-size: 16px 16px; }</style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { createAppleUI, AppleProvider, AppleAutocomplete, AppleButton } from '/src/index.ts'
+const query = new URLSearchParams(location.search)
+const apple = createAppleUI({ theme: query.get('theme') || 'light', persist: false, glass: { opacity: Number(query.get('opacity') ?? 80 / 255 * 100), blur: Number(query.get('blur') ?? 12) } })
+createApp({
+  data: () => ({ value: null, loading: false }),
+  render() { return h(AppleProvider, {}, () => h('main', [
+    h('section', { class: 'backdrop' }, h(AppleAutocomplete, { modelValue: this.value, 'onUpdate:modelValue': value => this.value = value, label: '搜索设备', loading: this.loading, items: [{ label: 'MacBook Air', value: 'mac' }, { label: 'iPad Pro', value: 'ipad' }, { label: 'AirPods Max', value: 'airpods' }] })),
+    h(AppleButton, { id: 'loading', onClick: () => this.loading = !this.loading }, () => '切换加载'),
+  ])) },
+}).use(apple).mount('#app')
+</script></body></html>
