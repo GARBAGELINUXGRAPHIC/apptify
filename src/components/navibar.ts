@@ -107,7 +107,7 @@ export const AppleNavibar = defineComponent({
   },
   render() {
     const context = this.apple as AppleContext | null
-    const mode = resolveMotion(this.motion, context?.motion.mode, context?.motion.reduced)
+    const mode = resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced)
     const menuLabel = `${this.open ? '关闭' : '打开'}${this.label}`
     const navigation = h('nav', { ref: 'links', id: `${this.uid}-navigation`, class: 'apple-navibar__links', 'aria-label': this.label, 'aria-hidden': this.collapsed && !this.open || undefined }, this.items.map(item => h(item.href ? 'a' : 'button', {
       key: item.value, class: ['apple-navibar__item', { 'is-active': item.value === this.activeValue }],

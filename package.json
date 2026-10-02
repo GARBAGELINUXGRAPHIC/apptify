@@ -1,6 +1,6 @@
 {
   "name": "apptify",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "An Apple-inspired, responsive Vue 3 component library with Vuetify ripple.",
   "type": "module",
   "license": "MIT",

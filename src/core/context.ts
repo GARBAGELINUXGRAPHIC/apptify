@@ -1,4 +1,4 @@
-import { inject, markRaw, reactive, shallowRef, type Component, type InjectionKey, type PropType, type Ref } from 'vue'
+import { inject, markRaw, ref, type Component, type InjectionKey, type PropType, type Ref } from 'vue'
 
 export type Motion = 'auto' | 'full' | 'reduced' | 'none'
 export type ComponentMotion = Motion | 'inherit'
@@ -58,13 +58,13 @@ export interface OverlayEntry extends OverlayOptions { id: string; kind: NonNull
 export interface OverlayHandle<T = unknown> { id: string; close(value?: T): void; update(patch: Partial<OverlayOptions>): void; result: Promise<T | undefined> }
 
 export function createOverlayService() {
-  const entries = reactive<OverlayEntry[]>([])
+  const entries = ref<OverlayEntry[]>([])
   const resolvers = new Map<string, (value: unknown) => void>()
   let nextId = 0
   const close = (id: string, value?: unknown) => {
-    const index = entries.findIndex(entry => entry.id === id)
+    const index = entries.value.findIndex(entry => entry.id === id)
     if (index < 0) return
-    entries.splice(index, 1)
+    entries.value.splice(index, 1)
     resolvers.get(id)?.(value)
     resolvers.delete(id)
   }
@@ -74,21 +74,21 @@ export function createOverlayService() {
       const id = `apple-overlay-${++nextId}`
       const entry = { ...options, id, kind: options.kind ?? 'dialog', component: options.component ? markRaw(options.component) : undefined }
       const result = new Promise<T | undefined>(resolve => resolvers.set(id, resolve as (value: unknown) => void))
-      entries.push(entry)
+      entries.value.push(entry)
       return {
         id, result, close: (value?: T) => close(id, value),
         update: patch => {
-          const active = entries.find(item => item.id === id)
+          const active = entries.value.find(item => item.id === id)
           if (active) Object.assign(active, { ...patch, ...(patch.component ? { component: markRaw(patch.component) } : {}) })
         },
       }
     },
     close,
     closeTop(value?: unknown) {
-      const entry = [...entries].reverse().find(item => item.kind !== 'snackbar')
+      const entry = [...entries.value].reverse().find(item => item.kind !== 'snackbar')
       if (entry) close(entry.id, value)
     },
-    clear() { [...entries].forEach(entry => close(entry.id)) },
+    clear() { [...entries.value].forEach(entry => close(entry.id)) },
   }
 }
 
@@ -101,37 +101,38 @@ export interface AppleOptions {
 }
 
 export function createApple(options: AppleOptions = {}) {
-  const themes = reactive<Record<string, AppleTheme>>(Object.fromEntries(
+  const themes = ref<Record<string, AppleTheme>>(Object.fromEntries(
     Object.entries({ ...builtInThemes, ...options.themes }).map(([name, theme]) => [name, { ...theme, tokens: { ...theme.tokens } }]),
   ))
-  const systemDark = shallowRef(false)
+  const systemDark = ref(false)
   const storageKey = options.storageKey ?? 'apptify:preferences'
   const persist = () => {
     if (!options.persist || typeof window === 'undefined') return
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.name, motion: motion.mode })) } catch { /* Storage may be disabled. */ }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, motion: motion.value.mode })) } catch { /* Storage may be disabled. */ }
   }
-  const theme = reactive({
-    name: options.theme ?? 'system', themes,
-    get resolved(): string { return theme.name === 'system' ? (systemDark.value ? 'dark' : 'light') : theme.name },
-    get current(): AppleTheme { return themes[theme.resolved] ?? themes.light },
+  const theme = ref({
+    name: options.theme ?? 'system',
+    get themes(): Record<string, AppleTheme> { return themes.value },
+    get resolved(): string { return theme.value.name === 'system' ? (systemDark.value ? 'dark' : 'light') : theme.value.name },
+    get current(): AppleTheme { return themes.value[theme.value.resolved] ?? themes.value.light },
     set(name: string) {
-      if (name !== 'system' && !themes[name]) throw new Error(`Unknown Apple theme: ${name}`)
-      theme.name = name
+      if (name !== 'system' && !themes.value[name]) throw new Error(`Unknown Apple theme: ${name}`)
+      theme.value.name = name
       persist()
     },
     register(name: string, tokens: ThemeTokens, scheme: 'light' | 'dark' = 'light') {
       if (name === 'system') throw new Error('The theme name "system" is reserved')
-      themes[name] = { scheme, tokens: { ...builtInThemes[scheme].tokens, ...tokens } }
+      themes.value[name] = { scheme, tokens: { ...builtInThemes[scheme].tokens, ...tokens } }
     },
   })
-  if (theme.name !== 'system' && !themes[theme.name]) throw new Error(`Unknown Apple theme: ${theme.name}`)
-  const motion = reactive({
+  if (theme.value.name !== 'system' && !themes.value[theme.value.name]) throw new Error(`Unknown Apple theme: ${theme.value.name}`)
+  const motion = ref({
     mode: options.motion ?? 'auto', reduced: false,
-    set(mode: Motion) { motion.mode = mode; persist() },
+    set(mode: Motion) { motion.value.mode = mode; persist() },
   })
   const messages = createMessageBus()
   const overlays = createOverlayService()
-  const portalTarget: Ref<HTMLElement | undefined> = shallowRef()
+  const portalTarget: Ref<HTMLElement | undefined> = ref()
   let attached = 0
   let detachMedia = () => {}
   const context = {
@@ -146,20 +147,20 @@ export function createApple(options: AppleOptions = {}) {
       if (options.persist) {
         try {
           const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')
-          if (stored.theme === 'system' || themes[stored.theme]) theme.name = stored.theme
-          if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.mode = stored.motion
+          if (stored.theme === 'system' || themes.value[stored.theme]) theme.value.name = stored.theme
+          if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.value.mode = stored.motion
         } catch { /* Ignore invalid preferences, not application state. */ }
       }
       if (!window.matchMedia) return
       const dark = window.matchMedia('(prefers-color-scheme: dark)')
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
-      const sync = () => { systemDark.value = dark.matches; motion.reduced = reduce.matches }
+      const sync = () => { systemDark.value = dark.matches; motion.value.reduced = reduce.matches }
       const storage = (event: StorageEvent) => {
         if (!options.persist || event.key !== storageKey || !event.newValue) return
         try {
           const value = JSON.parse(event.newValue)
-          if (value.theme === 'system' || themes[value.theme]) theme.name = value.theme
-          if (['auto', 'full', 'reduced', 'none'].includes(value.motion)) motion.mode = value.motion
+          if (value.theme === 'system' || themes.value[value.theme]) theme.value.name = value.theme
+          if (['auto', 'full', 'reduced', 'none'].includes(value.motion)) motion.value.mode = value.motion
         } catch { /* Other tabs may contain invalid preferences. */ }
       }
       sync()
@@ -177,7 +178,7 @@ export function createApple(options: AppleOptions = {}) {
   }
   messages.onMessage<OverlayOptions>('showDiag', value => context.dialog(value))
   messages.onMessage('closeDiag', () => overlays.closeTop())
-  return markRaw(context) as typeof context
+  return markRaw(context)
 }
 export type AppleContext = ReturnType<typeof createApple>
 export const appleKey: InjectionKey<AppleContext> = Symbol('apptify')
@@ -188,5 +189,5 @@ export function useApple(): AppleContext {
 }
 
 export function themeStyle(context: AppleContext): Record<string, string> {
-  return Object.fromEntries(Object.entries(context.theme.current.tokens).map(([key, value]) => [`--apple-${key}`, value]))
+  return Object.fromEntries(Object.entries(context.theme.value.current.tokens).map(([key, value]) => [`--apple-${key}`, value]))
 }

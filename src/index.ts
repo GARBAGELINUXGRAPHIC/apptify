@@ -1,5 +1,5 @@
-import type { App } from 'vue'
-import { appleKey, createApple, type AppleOptions } from './core/context'
+import { markRaw, type App } from 'vue'
+import { appleKey, createApple, type AppleOptions, type AppleContext } from './core/context'
 import { foundationComponents } from './components/foundation'
 import { formComponents } from './components/forms'
 import { contentComponents } from './components/content'
@@ -25,9 +25,9 @@ export * from './core/motion'
 
 export const components = { ...foundationComponents, ...formComponents, ...contentComponents, ...overlayComponents, ...motionComponents, ...navigationComponents }
 
-export function createAppleUI(options: AppleOptions = {}) {
+export function createAppleUI(options: AppleOptions = {}): AppleContext & { install(app: App): void } {
   const context = createApple(options)
-  return {
+  return markRaw({
     ...context,
     install(app: App) {
       app.provide(appleKey, context)
@@ -38,7 +38,7 @@ export function createAppleUI(options: AppleOptions = {}) {
       for (const [name, component] of Object.entries(components)) app.component(name, component)
       app.onUnmount(() => context.dispose())
     },
-  }
+  })
 }
 
 type AppleGlobalComponents = typeof components

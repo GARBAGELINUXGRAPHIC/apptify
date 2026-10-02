@@ -34,7 +34,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleButton` | M；`variant=primary`（primary/secondary/outline/ghost/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot。纯图标按钮须提供 label。只有允许完整动效时启用 Ripple。 |
 | `AppleLink` | `href`、`external`、`disabled` | default slot；external 使用新窗口并设置 `noopener noreferrer`。 |
 | `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=small`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
-| `AppleImage` | M；必填 `src`、`alt`；`preview=true`、`gallery: string[]`、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption slot；默认点击预览；图片错误状态；squared 覆盖 aspectRatio。 |
+| `AppleImage` | M；必填 `src`、`alt`；`preview=true`、`gallery: (string/AppleViewerImage)[]`、`galleryLayout=compact`（compact/tiled，所有设备）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption slot；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，tiled 填满同一矩形；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
 | `AppleContainer` | `width=1200`（number/string） | default slot；数字宽度按 px，宽度不会超过可用空间。 |
 | `AppleStack` | `direction=column`、`gap=16`、`align=stretch`、`wrap=true` | default slot；Flex 布局；数字 gap 按 px。 |
@@ -143,12 +143,12 @@ Table 另支持 `virtual=false`、`height=360`、`rowHeight=48`、`overscan=5`�
 | `AppleDrawer` | 同 Modal；`placement=right`（left/right）；`width=440` | 默认无 footer；全高侧边抽屉。 |
 | `AppleSheet` | 同 Modal；`width=440` | 默认无 footer；底部面板，移动端全宽；桌面样式最小设计宽度 540px，仍受可用宽度约束。 |
 | `AppleSnackbar` | `v-model: boolean=true`、`message`、`title`、`tone=default`（default/info/success/warning/danger/error）、`duration=4000`、`action`、`closable=true` | `close(value,reason)`、`action()`；default slot；duration 单位毫秒，0 常驻；直接使用时位置由业务布局决定。 |
-| `AppleOverlayHost` | 无公开配置 | 自动渲染当前上下文 overlays.entries；Provider 已包含，不要重复挂载。 |
+| `AppleOverlayHost` | 无公开配置 | 自动渲染当前上下文 overlays.entries.value；Provider 已包含，不要重复挂载。 |
 | `ApplePopover` | `v-model?: boolean`、`label='更多'`、`disabled`、`placement=bottom`（top/bottom/left/right）、`align=start`（start/center/end）、`width=280`、`role=dialog`、`openOnHover`、`trapFocus=true`、`panelClass` | `open()`、`close()`；activator `{props,open,close,isOpen}`、default `{close}`；支持非受控模式与屏幕边缘避让。 |
 | `AppleTooltip` | 必填 `text`；`placement=top`、`disabled` | default slot 为触发元素；悬停/焦点显示，Escape 关闭；短文本提示。 |
 | `AppleMenu` | `v-model?: boolean`、`label='操作'`、`items: AppleMenuItem[]`、`selected`、`disabled` | `select(value,item)`；activator slot 同 Popover、item slot `{item}`；选择后关闭，方向键/Home/End。 |
 | `AppleActionSheet` | `v-model: boolean`、`title`、`message`、`items: AppleMenuItem[]`、`cancelText='取消'` | `select(value,item)`、`close(value,reason)`；默认插槽支持自定义模板，提供 `select(item)`、`close(value)`，覆盖 items 内容；取消按钮保留。无拖拽指示条。 |
-| `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop` | `change(index)`、`close()`、`error(event)`；缩放与手势来自 @panzoom/panzoom，滚轮按实际滚动量连续缩放并保持鼠标焦点。 |
+| `AppleImageViewer` | `v-model: boolean`、`images: (string/AppleViewerImage)[]`、`v-model:index=0`、`loop`、`origin?: (index) => HTMLImageElement/null` | `change(index)`、`close()`、`after-close()`、`error(event)`；非触屏设备使用 @panzoom/panzoom；触屏设备双指缩放并平移、双击围绕点击位置放大至 2 倍（再次双击恢复）、单击等待 200ms 后退出、松手回到图片边界、左右切图延续松手速度且可中途接住、下滑退出，上划不退出；顶部显示当前序号/总数；双端预览按钮采用半透明模糊与 200% 饱和度；origin 提供原位过渡落点（AppleImage 自动传入）。 |
 
 Modal 公共属性：`title`、`message`、`ariaLabel='对话框'`、`persistent`、`loading`、`closeOnConfirm=true`、`confirmText='确定'`、`cancelText='取消'`、`showFooter`、`closable=true`、`width`、`tone=default`。Dialog 默认 width 为 480px。空按钮文本会隐藏对应按钮。
 
@@ -184,10 +184,12 @@ Modal slots：`title`、default `{close}`、footer `{close,confirm,cancel}`。�
 
 | API | 作用 |
 | --- | --- |
-| `theme.set(name)` | 切换注册主题或 system。未知名称抛出错误。 |
-| `theme.register(name,tokens,scheme='light')` | 注册自定义主题并补齐基础 token。 |
-| `theme.name / resolved / current / themes` | 当前配置名、解析后名称、主题内容、主题注册表。 |
-| `motion.set(mode)` | 即时修改全局动效策略。 |
+| `theme.value.set(name)` | 切换注册主题或 system。未知名称抛出错误。 |
+| `theme.value.register(name,tokens,scheme='light')` | 注册自定义主题并补齐基础 token。 |
+| `theme.value.name / resolved / current / themes` | 当前配置名、解析后名称、主题内容、主题注册表。 |
+| `overlays.entries.value` | 当前弹层列表，`Ref<OverlayEntry[]>`。 |
+| `portalTarget.value` | 弹层挂载 DOM 元素。 |
+| `motion.value.set(mode)` | 即时修改全局动效策略。 |
 | `onMessage(channel,listener)` | 注册监听器，返回取消订阅函数。 |
 | `sendMessage(channel,payload?)` | 返回该 channel 全部监听器的返回值数组。 |
 | `dialog(options)` | 打开 dialog 并返回独立句柄。 |

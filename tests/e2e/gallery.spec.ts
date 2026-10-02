@@ -1,4 +1,5 @@
 import { expect, test, webkit, type Page } from '@playwright/test'
+import { swipeImage } from './image-gestures'
 
 async function openComponent(page: Page, tag: string) {
   const navigationToggle = page.getByRole('button', { name: '打开组件导航', exact: true })
@@ -27,6 +28,8 @@ async function expectNoDocumentOverflow(page: Page) {
 }
 
 async function loadOverviewImages(page: Page) {
+  const touch = await page.evaluate(() => navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches)
+  await expect(page.locator('.media-specimen .apple-image')).toHaveClass(touch ? /apple-image--mobile/ : /^(?!.*apple-image--mobile)/)
   const images = page.locator('.overview .apple-image img')
   expect(await images.count()).toBeGreaterThanOrEqual(1)
   for (const image of await images.all()) {
@@ -74,7 +77,7 @@ test('theme changes immediately without navigation and supports named themes', a
   expect(navigationCount).toBe(0)
   await loadOverviewImages(page)
   await page.screenshot({ path: 'artifacts/desktop-dark.png', fullPage: true, animations: 'disabled' })
-  await page.getByRole('button', { name: '外观设置', exact: true }).click()
+  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
   const drawer = page.getByRole('dialog', { name: '外观与动效' })
   await drawer.getByRole('combobox', { name: '主题', exact: true }).click()
   await drawer.getByRole('option', { name: '玫瑰', exact: true }).click()
@@ -87,14 +90,14 @@ test('theme changes immediately without navigation and supports named themes', a
 test('manual motion levels and operating-system reduced motion stop continuous animation', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await openComponent(page, 'apple-spinner')
-  await page.getByRole('button', { name: '外观设置', exact: true }).click()
+  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
   const drawer = page.getByRole('dialog', { name: '外观与动效' })
   await drawer.getByRole('combobox', { name: '动效等级', exact: true }).click()
   await drawer.getByRole('option', { name: '关闭', exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(page.locator('.apple-provider').first()).toHaveAttribute('data-apple-motion', 'none')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
-  await page.getByRole('button', { name: '外观设置', exact: true }).click()
+  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
   await drawer.getByRole('combobox', { name: '动效等级', exact: true }).click()
   await drawer.getByRole('option', { name: '完整', exact: true }).click()
   await page.keyboard.press('Escape')
@@ -313,11 +316,11 @@ test('WebKit mobile smoke covers layout, input, layered overlays, and image view
     await page.keyboard.press('Escape')
     await expect(page.locator('[role="dialog"]')).toHaveCount(0)
     await openComponent(page, 'apple-image')
-    await page.locator('.component-demo .apple-image__trigger').click()
+    await page.locator('.component-demo .apple-image__trigger').first().click()
     const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
     await expect(viewer).toBeVisible()
     await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0))).toBe(true)
-    await viewer.getByRole('button', { name: '下一张', exact: true }).click()
+    await swipeImage(viewer)
     await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 2')
     await viewer.getByRole('button', { name: '关闭图片预览', exact: true }).click()
     await expect(viewer).toHaveCount(0)

@@ -8,7 +8,7 @@ describe('foundation integration', () => {
   it('updates tokens and motion in the mounted provider immediately', async () => {
     const context=createApple({theme:'light'})
     const wrapper=mount(AppleProvider, {global:{provide:{[appleKey as symbol]:context}}, slots:{default:() => h(AppleButton, null, ()=> 'Continue')}})
-    context.theme.set('dark');context.motion.set('none')
+    context.theme.value.set('dark');context.motion.value.set('none')
     await nextTick()
     expect(wrapper.attributes('data-apple-theme')).toBe('dark')
     expect(wrapper.attributes('data-apple-motion')).toBe('none')
@@ -19,9 +19,9 @@ describe('foundation integration', () => {
   it('gives nested providers independent hosts and inherited updates', async () => {
     const context=createApple({theme:'light'})
     const wrapper=mount(AppleProvider, {global:{provide:{[appleKey as symbol]:context}}, slots:{default:() => h(AppleProvider, null, ()=>h('p','Nested'))}})
-    context.theme.set('rose');await nextTick()
+    context.theme.value.set('rose');await nextTick()
     expect(wrapper.findAll('.apple-provider').map(w=>w.attributes('data-apple-theme'))).toEqual(['rose','rose'])
-    context.theme.register('rose', {accent:'#8a2852'})
+    context.theme.value.register('rose', {accent:'#8a2852'})
     await nextTick()
     expect(wrapper.findAll('.apple-provider').every(w=>w.attributes('style').includes('--apple-accent: #8a2852'))).toBe(true)
     context.dialog({title:'Only once'})
@@ -35,7 +35,7 @@ describe('foundation integration', () => {
     expect(wrapper.attributes('data-apple-theme')).toBe('dark')
     await wrapper.setProps({theme:'rose'})
     expect(wrapper.attributes('data-apple-theme')).toBe('rose')
-    expect(context.theme.name).toBe('light')
+    expect(context.theme.value.name).toBe('light')
     wrapper.unmount()
   })
   it('blocks disabled/loading buttons and uses button as the default type', async () => {

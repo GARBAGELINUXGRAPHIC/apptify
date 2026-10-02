@@ -21,7 +21,7 @@ describe('shared motion rules', () => {
     const wrapper = mount(AppleAutoSize, { attachTo: document.body, global: { provide: { [appleKey as symbol]: context } }, slots: { default: '<div>Content</div>' } })
     height = 100; resize()
     expect((wrapper.element as HTMLElement).style.overflow).toBe('clip')
-    context.motion.set('none'); await nextTick()
+    context.motion.value.set('none'); await nextTick()
     expect(cancel).toHaveBeenCalled()
     expect((wrapper.element as HTMLElement).style.overflow).toBe('')
     height = 160; resize()

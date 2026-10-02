@@ -115,6 +115,8 @@ button { font: inherit; }
 .component-demo > .apple-form { max-width: 420px; }
 .component-demo .apple-form .apple-field { margin-bottom: 18px; }
 .component-demo > .apple-image { max-width: 560px; }
+.demo-image { max-width: 560px; }
+.demo-image-layout { display: block; }
 .demo-product { max-width: 330px; margin-inline: auto; }
 .demo-product .apple-image { margin-top: 10px; }
 .demo-copy { padding: 24px 0; color: var(--apple-secondary); }

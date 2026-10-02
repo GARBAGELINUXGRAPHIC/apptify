@@ -33,7 +33,7 @@ npm install /absolute/path/apptify/apptify-0.1.0.tgz
 npm install vue@^3.5 vuetify@^3.9
 ```
 
-Vue 与 Vuetify 是 peer dependencies。图标使用 `lucide-vue-next`，图片预览的缩放与手势使用 `@panzoom/panzoom`。本库没有要求安装 Vuetify 插件或导入其完整样式，也不需要 `<v-app>`。
+Vue 与 Vuetify 是 peer dependencies。图标使用 `lucide-vue-next`，桌面图片预览的缩放与手势使用 `@panzoom/panzoom`，手机端使用图片边界约束的 Pointer Events 手势。本库没有要求安装 Vuetify 插件或导入其完整样式，也不需要 `<v-app>`。
 
 ## 接入应用
 
@@ -108,18 +108,20 @@ export default {
 
 ## 主题与动效
 
+共享响应式状态统一使用 `ref`：`theme`、`motion`、`overlays.entries` 和 `portalTarget`。在 JavaScript 中通过 `.value` 访问；嵌套访问（如 `$apple.theme.value.name`）也需显式使用 `.value`。
+
 内置主题为 `light`、`dark`、`graphite`、`rose`；`system` 表示跟随系统浅深色。主题即时生效，不需要刷新页面。设置 `persist: true` 才会保存主题名称、动效等级并同步其他标签页的同名存储设置；自定义主题定义应通过初始化 `themes` 配置或启动时的 `register()` 再次提供。
 
 ```js
-this.$apple.theme.set('dark')
-this.$apple.theme.register('forest', {
+this.$apple.theme.value.set('dark')
+this.$apple.theme.value.register('forest', {
   accent: '#237047',
   'accent-text': '#ffffff',
   bg: '#f4f7f5',
   surface: '#ffffff',
 }, 'light')
-this.$apple.theme.set('forest')
-this.$apple.motion.set('reduced')
+this.$apple.theme.value.set('forest')
+this.$apple.motion.value.set('reduced')
 ```
 
 `register(name, tokens, scheme)` 自动补齐对应浅色或深色主题的默认 token。可覆盖 `bg`、`surface`、`surface-alt`、`text`、`secondary`、`border`、`accent`、`accent-text`、`danger`、`success`、`warning`、`shadow`、`radius`，对应 `--apple-*` CSS 变量。注册后先调用 `set()` 才会切换；`system` 是保留名称。
@@ -246,6 +248,7 @@ notice.update({ message: '同步完成', tone: 'success', duration: 2500 })
   alt="桌面工作区"
   :gallery="['/images/workspace.webp', '/images/detail.webp']"
   :index="0"
+  gallery-layout="compact"
 />
 
 <apple-image-viewer
@@ -256,7 +259,7 @@ notice.update({ message: '同步完成', tone: 'success', duration: 2500 })
 />
 ```
 
-示例图片路径需要替换为业务资源。`AppleImage` 默认支持点击预览，可用 `:preview="false"` 关闭。独立 Viewer 支持图库、缩放、拖动、旋转、触屏手势、键盘切换和有标签的工具按钮；核心图片交互由已有图库引擎处理。
+示例图片路径需要替换为业务资源。`AppleImage` 默认支持点击预览，可用 `:preview="false"` 关闭。手机端的图片组支持 `gallery-layout="compact"`（固定框内横滑，默认）和 `gallery-layout="tiled"`（在矩形内平铺），组内每张预览图都会渲染。预览支持双指缩放与同时平移、双击放大或恢复、松手边界回弹、左右滑动切图、单击或下滑退出，顶部显示序号。手机单击等待 200ms 区分双击；双击围绕点击位置放大至 2 倍，再次双击恢复；拖动、双指操作、切图及关闭会取消等待中的单击。切图延续松手速度，快速轻扫也能翻页，动画可由下一次触摸接住；循环首尾只移动相邻图片。打开和关闭通过贝塞尔缓动连接原图位置；退出前同步横滑预览的位置，当前缩略图保持黑色占位直到落回。`AppleImage` 统一使用同一组件入口，根据 `navigator.maxTouchPoints` 或 `(any-pointer: coarse)` 判断触屏能力，不按屏幕宽度区分；触屏设备使用手势预览，非触屏设备保留缩放、拖动、旋转、左右按钮与键盘控制。双端预览按钮均使用半透明背景、backdrop blur 和 200% 饱和度。独立 Viewer 可传入 `:origin="index => thumbnailElements[index]"` 接入原位动画。
 
 ## 移动端与边界
 
@@ -274,7 +277,7 @@ notice.update({ message: '同步完成', tone: 'success', duration: 2500 })
 | `<apple-card title subtitle text icon icon-color>` | 保留这些属性与默认 slot，并增加 `media`、`title`、`icon`、`actions` slots。 |
 | `zoom="big/small/none"`、`shadow="normal/static/focused/none"` | 继续支持；新默认 `zoom="small"`，不保证旧尺寸和缩放数值完全一致。 |
 | `icon="mdi-home"` | 不再识别 MDI 字符串。导入 Lucide 组件并通过 `:icon="Home"` 传入；Card 的字符串 icon 被当作图片 URL。 |
-| `globalTheme` / `fancyAnimation` 模块常量 | 改用响应式 `theme.set()` / `motion.set()`；不需要刷新，也不要再直接读写旧 localStorage 键。 |
+| `globalTheme` / `fancyAnimation` 模块常量 | 改用响应式 `theme.value.set()` / `motion.value.set()`；不需要刷新，也不要再直接读写旧 localStorage 键。 |
 | `sendMessage('showSnackbar', { type, text })` | 在 `this.$apple.sendMessage()` 或当前注入上下文上兼容；`showSnackBar`、`showMessage` 别名也保留。 |
 | `sendMessage('showDiag', { title, message })` | 仍可通过当前上下文发送；推荐使用返回独立句柄与 Promise 的 `dialog()`。 |
 | `btn: [{ bgColor, text, clickEvent }]` | **不直接兼容**。简单对话框用 `confirmText` / `cancelText`，复杂交互用声明式 `#footer` 或动态组件。 |

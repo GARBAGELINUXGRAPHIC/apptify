@@ -61,13 +61,15 @@ for (const width of [390, 1440]) {
     await figure.scrollIntoViewIfNeeded()
     const bounds = await figure.boundingBox()
     const footer = await page.locator('.detail-footer').boundingBox()
-    await surface.hover()
+    // Move the pointer without Playwright scrolling the layout during the measurement.
+    const surfaceBounds = (await surface.boundingBox())!
+    await page.mouse.move(surfaceBounds.x + surfaceBounds.width / 2, surfaceBounds.y + surfaceBounds.height / 2)
     await expect.poll(() => surface.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).a)).toBeCloseTo(1.04)
     expect(await figure.boundingBox()).toEqual(bounds)
     expect(await page.locator('.detail-footer').boundingBox()).toEqual(footer)
     expect(await figure.evaluate(element => getComputedStyle(element).transform)).toBe('none')
     await page.screenshot({ path: `artifacts/image-hover-${width}.png` })
-    await figure.locator('.apple-image__trigger').click()
+    await figure.locator('.apple-image__trigger').first().click()
     const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
     await expect(viewer).toBeVisible()
     const viewerBounds = await viewer.boundingBox()
@@ -129,7 +131,7 @@ for (const width of [1440, 390]) {
     await expect.poll(() => viewer.locator('.apple-viewer-image').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
     await expect(page.locator('.apple-viewer-presence-enter-active')).toHaveCount(0)
     const before = await viewer.locator('.apple-viewer-canvas').evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).a)
-    await viewer.locator('.apple-viewer-image').hover()
+    await viewer.hover()
     await page.mouse.wheel(0, -120)
     await expect.poll(() => viewer.locator('.apple-viewer-canvas').evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).a)).toBeGreaterThan(before)
     await viewer.getByRole('button', { name: '下一张', exact: true }).click()
@@ -219,7 +221,7 @@ test('closing a nested dialog does not expose the lower layer to a second Escape
 })
 
 test('Escape closes the theme list before its containing preferences drawer', async ({ page }) => {
-  await page.getByRole('button', { name: '外观设置', exact: true }).click()
+  await page.getByRole('button', { name: '动效偏好', exact: true }).click()
   const drawer = page.getByRole('dialog', { name: '外观与动效', exact: true })
   const theme = drawer.getByRole('combobox', { name: '主题', exact: true })
   await theme.click()

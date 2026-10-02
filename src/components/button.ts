@@ -17,7 +17,7 @@ export const AppleButton = defineComponent({
   emits: ['click'],
   render() {
     const context = this.apple as AppleContext | null
-    const motion = resolveMotion(this.motion, context?.motion.mode, context?.motion.reduced)
+    const motion = resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced)
     const blocked = this.disabled || this.loading
     const node = h(this.href && !blocked ? 'a' : 'button', {
       ...this.$attrs, class: ['apple-button', `apple-button--${this.variant}`, `apple-button--${this.size}`, { 'apple-button--icon': this.iconOnly }, this.$attrs.class],

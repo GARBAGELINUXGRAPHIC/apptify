@@ -11,6 +11,8 @@ import { appleKey, resolveMotion, type AppleContext, type OverlayEntry } from '.
 import { ripple } from '../core/motion'
 import { AppleButton } from './button'
 import { AppleAutoSize } from './motion'
+import { isTouchImageDevice, touchImageQuery } from '../core/image-geometry'
+import { createMobileImageViewer } from './mobile-image-viewer'
 
 type Motion = 'inherit' | 'auto' | 'full' | 'reduced' | 'none'
 type CloseReason = 'escape' | 'backdrop' | 'cancel' | 'confirm' | 'close'
@@ -29,7 +31,7 @@ const contextOf = (vm: unknown): AppleContext | undefined =>
   (vm as { apple?: AppleContext }).apple
 const motionOf = (vm: unknown, value: Motion) => {
   const context = contextOf(vm)
-  return resolveMotion(value, context?.motion.mode ?? 'auto', context?.motion.reduced ?? false)
+  return resolveMotion(value, context?.motion.value.mode ?? 'auto', context?.motion.value.reduced ?? false)
 }
 const portal = (vm: unknown, node: VNode): VNode => {
   const target = contextOf(vm)?.portalTarget.value
@@ -350,7 +352,7 @@ export const AppleOverlayHost = defineComponent({
   inject: { apple: { from: appleKey, default: undefined } },
   data: () => ({ present: [] as Array<{ entry: OverlayEntry; open: boolean }> }),
   computed: {
-    activeEntries(): OverlayEntry[] { return [...(contextOf(this)?.overlays.entries ?? [])] },
+    activeEntries(): OverlayEntry[] { return [...(contextOf(this)?.overlays.entries.value ?? [])] },
   },
   watch: {
     activeEntries: {
@@ -660,7 +662,8 @@ export const AppleActionSheet = defineComponent({
   },
 })
 
-export interface AppleViewerImage { src: string; alt?: string; title?: string }
+export interface AppleViewerImage { src: string; alt?: string; title?: string; width?: number; height?: number }
+const AppleMobileImageViewer = createMobileImageViewer(registerLayer)
 export const AppleImageViewer = defineComponent({
   name: 'AppleImageViewer',
   inheritAttrs: false,
@@ -671,12 +674,14 @@ export const AppleImageViewer = defineComponent({
     index: { type: Number, default: 0 },
     loop: Boolean,
     motion: motionProp,
+    origin: Function as PropType<(index: number, reveal?: boolean) => HTMLImageElement | null>,
   },
   emits: ['update:modelValue', 'update:index', 'change', 'close', 'after-close', 'error'],
   data: () => ({
     disposeLayer: null as (() => void) | null, depth: 0, isTop: false, current: 0,
     panzoom: null as PanzoomObject | null, loaded: false, failed: false, rotation: 0,
     pointerStart: null as { x: number; y: number } | null,
+    mobile: isTouchImageDevice(), viewportQuery: null as MediaQueryList | null,
   }),
   computed: {
     safeIndex(): number { return Math.max(0, Math.min(this.index, this.images.length - 1)) },
@@ -686,14 +691,28 @@ export const AppleImageViewer = defineComponent({
     },
   },
   watch: {
-    modelValue() { this.resetImage(); void this.syncLayer() },
+    modelValue() {
+      if (this.modelValue) this.syncViewport()
+      if (!this.mobile) { this.resetImage(); void this.syncLayer() }
+    },
     safeIndex(value: number) { this.current = value },
     'currentImage.src'() { this.resetImage() },
     'images.length'() { this.current = Math.max(0, Math.min(this.current, this.images.length - 1)) },
   },
-  mounted() { this.current = this.safeIndex; void this.syncLayer() },
-  beforeUnmount() { this.panzoom?.destroy(); this.disposeLayer?.() },
+  mounted() {
+    this.current = this.safeIndex
+    this.viewportQuery = window.matchMedia?.(touchImageQuery) ?? null
+    this.viewportQuery?.addEventListener('change', this.syncViewport)
+    this.syncViewport()
+    void this.syncLayer()
+  },
+  beforeUnmount() { this.viewportQuery?.removeEventListener('change', this.syncViewport); this.panzoom?.destroy(); this.disposeLayer?.() },
   methods: {
+    syncViewport() {
+      // Keep the chosen interaction until the preview's closing animation finishes.
+      if (this.disposeLayer || this.$refs.mobileViewer && (this.$refs.mobileViewer as { present?: boolean }).present) return
+      this.mobile = isTouchImageDevice()
+    },
     resetImage() {
       this.panzoom?.destroy(); this.panzoom = null
       this.loaded = false; this.failed = false; this.rotation = 0
@@ -714,7 +733,7 @@ export const AppleImageViewer = defineComponent({
       if (count && (this.loop || next >= 0 && next < count)) this.change(this.current, (next + count) % count)
     },
     async syncLayer() {
-      if (!this.modelValue) return
+      if (!this.modelValue || this.mobile) return
       this.current = this.safeIndex
       await nextTick()
       const panel = this.$refs.panel as HTMLElement | undefined
@@ -759,6 +778,15 @@ export const AppleImageViewer = defineComponent({
     },
   },
   render() {
+    if (this.mobile) return h(AppleMobileImageViewer, {
+      ...this.$attrs, ref: 'mobileViewer', modelValue: this.modelValue, images: this.images,
+      index: this.index, loop: this.loop, motion: this.motion, origin: this.origin,
+      'onUpdate:modelValue': (value: boolean) => this.$emit('update:modelValue', value),
+      'onUpdate:index': (value: number) => this.$emit('update:index', value),
+      onChange: (value: number) => this.$emit('change', value), onClose: () => this.$emit('close'),
+      onAfterClose: () => { this.syncViewport(); this.$emit('after-close') },
+      onError: (event: Event) => this.$emit('error', event),
+    })
     const motion = motionOf(this, this.motion)
     const viewer = this.modelValue ? h('div', mergeProps(this.$attrs, {
       ref: 'panel', class: 'apple-image-viewer', role: 'dialog', tabindex: -1,

@@ -50,7 +50,10 @@
       <apple-image src="/images/airpods-max-orange.jpg" alt="橙色 AirPods Max 耳机" aspect-ratio="1" fit="contain" />
       <template #actions><apple-button @click="notify('已加入购物袋')">加入购物袋</apple-button><apple-button variant="ghost" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></template>
     </apple-card>
-    <apple-image v-else-if="name === 'AppleImage'" src="/images/lake.jpg" alt="山间湖泊与小屋" :gallery="images" />
+    <apple-stack v-else-if="name === 'AppleImage'" class="demo-image">
+      <apple-segmented-control v-model="imageLayout" class="demo-image-layout" :items="[{label:'省空间',value:'compact'},{label:'平铺',value:'tiled'}]" label="图片组布局" />
+      <apple-image src="/images/lake.jpg" alt="山间湖泊与小屋" :gallery="images" :gallery-layout="imageLayout" />
+    </apple-stack>
     <apple-stack v-else-if="name === 'AppleAvatar'"><apple-slider v-model="avatarSize" label="头像尺寸" :min="24" :max="72" :step="8" /><apple-stack direction="row" align="center"><apple-avatar name="林初" :size="avatarSize" /><apple-avatar name="Alex" :size="avatarSize" /><apple-avatar name="Taylor" :size="avatarSize" square /></apple-stack></apple-stack>
     <apple-stack v-else-if="name === 'AppleAvatarGroup'"><apple-stepper v-model="avatarMax" label="显示人数" :min="1" :max="5" /><apple-avatar-group :items="people" :max="avatarMax" :size="44" label="设计团队" /></apple-stack>
     <apple-stack v-else-if="name === 'AppleBadge'" direction="row" align="center"><apple-badge :value="unread"><apple-button variant="secondary" :icon="icons.Bell" @click="unread++">新消息</apple-button></apple-badge><apple-button variant="ghost" :disabled="!unread" @click="unread = 0">全部已读</apple-button></apple-stack>
@@ -137,7 +140,7 @@ export default defineComponent({
   name: 'ComponentDemo', props: { name: { type: String, required: true } }, emits: ['navigate'],
   data() { return {
     icons: markRaw({ Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
-    searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageViewer: false, viewerIndex: 0,
+    searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageViewer: false, viewerIndex: 0, imageLayout: 'compact' as 'compact' | 'tiled',
     virtualTable:false, virtualRows:markRaw(Array.from({length:5000},(_,i)=>({id:i+1,name:`组件 ${String(i+1).padStart(4,'0')}`,category:i%2?'基础':'表单',status:'已发布',updated:'09-26'}))),
     timelineDirection:'vertical' as 'vertical'|'horizontal', skeletonVariant:'text' as 'text'|'avatar'|'card'|'list'|'table'|'image', skeletonVariants:[{label:'文本',value:'text'},{label:'头像',value:'avatar'},{label:'卡片',value:'card'},{label:'列表',value:'list'},{label:'表格',value:'table'},{label:'图片',value:'image'}],
     dateFormat:'YYYY/MM/DD HH:mm', dateFormats:[{label:'年 / 月',value:'YYYY/MM'},{label:'年 / 月 / 日',value:'YYYY/MM/DD'},{label:'日期与时分',value:'YYYY/MM/DD HH:mm'},{label:'日期与时分秒',value:'YYYY/MM/DD HH:mm:ss'},{label:'时分',value:'HH:mm'},{label:'时分秒',value:'HH:mm:ss'}],
@@ -172,7 +175,7 @@ export default defineComponent({
     },
     refresh(done: () => void) { this.timers.push(setTimeout(() => { this.refreshText = `更新于 ${new Date().toLocaleTimeString('zh-CN')}`; done() }, 700)) },
     loadMore(done: () => void) { this.timers.push(setTimeout(() => { this.itemsCount = Math.min(12, this.itemsCount + 3); done() }, 500)) },
-    toTop() { window.scrollTo({top:0,behavior:this.$apple.motion.mode === 'none' || this.$apple.motion.reduced ? 'instant':'smooth'}) },
+    toTop() { window.scrollTo({top:0,behavior:this.$apple.motion.value.mode === 'none' || this.$apple.motion.value.reduced ? 'instant':'smooth'}) },
   },
 })
 </script>

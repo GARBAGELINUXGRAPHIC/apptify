@@ -9,7 +9,7 @@ export const AppleAutoSize = defineComponent({
   inject: { apple: { from: appleKey, default: null } },
   props: { ...motionProps, axis: { type: String as PropType<'height' | 'both'>, default: 'height' } },
   computed: {
-    motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.mode, context?.motion.reduced) },
+    motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced) },
   },
   watch: { motionMode(mode) { if (mode !== 'full') { const state = sizes.get(this); state?.animation?.cancel(); if (state) { state.animation = undefined; state.reset() } } } },
   mounted() {
@@ -52,7 +52,7 @@ export const AppleTransition = defineComponent({
   props: { ...motionProps, name: { type: String as PropType<'page' | 'slide-x' | 'slide-y' | 'fade'>, default: 'slide-y' }, mode: { type: String as PropType<'out-in' | 'in-out' | 'default'>, default: 'out-in' }, appear: { type: Boolean, default: true } },
   render() {
     const context = this.apple as AppleContext | null
-    const mode = resolveMotion(this.motion, context?.motion.mode, context?.motion.reduced)
+    const mode = resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced)
     return h(Transition, { ...this.$attrs, name: mode === 'full' ? `apple-${this.name}` : 'apple-fade', mode: this.mode === 'default' ? undefined : this.mode, appear: this.appear, css: mode !== 'none' }, this.$slots)
   },
 })
