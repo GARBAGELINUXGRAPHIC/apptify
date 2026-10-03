@@ -15,13 +15,16 @@ async function closeFrames(page: Page, anchorSelector: string, scrollDuringLeave
     const el = Array.from(document.querySelectorAll<HTMLElement>(panelSelector.replaceAll(':visible',''))).find(p => getComputedStyle(p).display !== 'none') ?? panel
     const anchor = document.querySelector<HTMLElement>(anchorSelector)!
     const frames = []
+    let scrolled = false
     ;(document.activeElement ?? document.body).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     for (let i = 0; i < 24; i++) {
-      if (scrollDuringLeave && i === 4) window.scrollBy({ top: 400, behavior: 'instant' })
       await new Promise(requestAnimationFrame)
       if (!el.isConnected || getComputedStyle(el).display === 'none') break
       const css = getComputedStyle(el), m = new DOMMatrix(css.transform), p = el.getBoundingClientRect(), a = anchor.getBoundingClientRect()
       frames.push({ side: el.dataset.placement, dx: m.m41, dy: m.m42, top: p.top - m.m42, bottom: p.bottom - m.m42, anchorTop: a.top, anchorBottom: a.bottom, clip: css.clipPath, opacity: Number(css.opacity) })
+      if (scrollDuringLeave && !scrolled && Math.abs(m.m41) + Math.abs(m.m42) > .01) {
+        window.scrollBy({ top: 400, behavior: 'instant' }); scrolled = true
+      }
     }
     return frames
   }, { panelSelector, anchorSelector, scrollDuringLeave })
@@ -84,9 +87,9 @@ test('a leaving field keeps live placement until the retained DOM is removed',as
   await page.setViewportSize({width:1280,height:700});await page.goto('/components')
   const selector='#apple-select [role=combobox]',trigger=page.locator(selector)
   await trigger.evaluate(el=>{window.scrollBy({top:el.getBoundingClientRect().top-600,behavior:'instant'});(el as HTMLElement).focus({preventScroll:true});(el as HTMLElement).click()})
-  await page.waitForTimeout(350)
+  await page.waitForTimeout(500)
   const frames=await closeFrames(page,selector,true)
-  expect(frames.some(f=>f.side==='top'&&f.dy>0)).toBe(true)
+  expect(frames.some(f=>f.side==='top'&&f.dy>0), JSON.stringify(frames)).toBe(true)
   const flipped=frames.filter(f=>f.side==='bottom')
   expect(flipped.length).toBeGreaterThan(1)
   for(const f of flipped){expect(f.dy).toBeLessThanOrEqual(0);expect(Math.abs(f.top-f.anchorBottom-8)).toBeLessThan(1)}
@@ -128,18 +131,18 @@ for(const side of ['left','right'])test(`an open ${side} Popover tracks horizont
   expect(side==='left'?closing.dx<0:closing.dx>0).toBe(true)
 })
 
-test('nested scrollport and live content use actual available space without oscillation', async ({ page }) => {
+test('nested scrollport and live content use viewport space without oscillation', async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 800 }); await page.goto('/tests/e2e/fixtures/popup-geometry.html?scroll')
   await page.evaluate(() => (window as any).popupHarness.move(120, 320)); await page.getByRole('button', { name: 'Open' }).click(); await page.waitForTimeout(350)
   const panel = page.locator('.apple-popover')
-  expect((await geometry(panel)).side).toBe('top')
+  expect((await geometry(panel)).side).toBe('bottom')
   await page.locator('.scrollport').evaluate(el => { el.scrollTop = 260 })
   await expect(panel).toHaveAttribute('data-placement','bottom')
   await page.evaluate(() => (window as any).popupHarness.grow(700)); await page.waitForTimeout(400)
   const samples = []
   for (let i = 0; i < 6; i++) { samples.push(await geometry(panel)); await page.waitForTimeout(20) }
   expect(new Set(samples.map(p => p.side)).size).toBe(1)
-  for (const p of samples) { expect(p.y).toBeGreaterThanOrEqual(34); expect(p.bottom).toBeLessThanOrEqual(438) }
+  for (const p of samples) { expect(p.y).toBeGreaterThanOrEqual(8); expect(p.bottom).toBeLessThanOrEqual(792) }
 })
 
 test('transformed provider, teleported child menu, rapid reversals and motion policies', async ({ page }) => {
@@ -207,19 +210,19 @@ test('real inline Navibar flips above the bar, closes from that edge and resets 
   await trigger.evaluate(el=>(el as HTMLElement).click());await expect(panel).toBeHidden()
 })
 
-for (const kind of ['select','autocomplete','cascader','date','time','color']) test(`${kind} constrains to nested scrollports, follows resize, and reverses without reflow`,async({page})=>{
+for (const kind of ['select','autocomplete','cascader','date','time','color']) test(`${kind} escapes nested scrollports, follows viewport resize, and reverses without reflow`,async({page})=>{
   await page.setViewportSize({width:600,height:800});await page.goto(`/tests/e2e/fixtures/popup-geometry.html?kind=${kind}&scroll`)
   await page.evaluate(()=>(window as any).popupHarness.move(50,335))
   const selector=kind==='color'?'.apple-color-picker':kind==='date'||kind==='time'?'.apple-date-input .apple-field__icon':'[role=combobox]'
   const trigger=page.locator(selector).first()
   await trigger.evaluate(el=>{(el as HTMLElement).focus({preventScroll:true});(el as HTMLElement).click()});await page.waitForTimeout(350)
   const panel=page.locator(panelSelector).last(), before=await geometry(panel)
-  expect(before.side).toBe('top');expect(before.y).toBeGreaterThanOrEqual(33.9)
+  expect(before.side).toBe(kind === 'date' ? 'top' : 'bottom');expect(before.y).toBeGreaterThanOrEqual(7.9)
+  expect(before.side === 'top' ? before.y < 26 : before.bottom > 446).toBe(true)
   await page.locator('.scrollport').evaluate(el=>{el.scrollTop=315});await page.waitForTimeout(80)
-  const after=await geometry(panel);expect(after.side).toBe('bottom');expect(after.bottom).toBeLessThanOrEqual(438.1)
+  const after=await geometry(panel);expect(after.side).toBe('bottom');expect(after.bottom).toBeLessThanOrEqual(792.1)
   await page.setViewportSize({width:320,height:700});await page.waitForTimeout(80)
-  const port = (await page.locator('.scrollport').boundingBox())!
-  expect((await geometry(panel)).right).toBeLessThanOrEqual(port.x + port.width - 9.9)
+  expect((await geometry(panel)).right).toBeLessThanOrEqual(312.1)
   await trigger.evaluate(el=>el.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));await page.waitForTimeout(45)
   await trigger.evaluate((el,kind)=>kind==='autocomplete'?el.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})):(el as HTMLElement).click(),kind);await page.waitForTimeout(350)
   await expect(panel).toBeVisible()

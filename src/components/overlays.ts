@@ -1,9 +1,10 @@
 import { createPopupPositioner, type PopupPositioner } from '../core/popup-placement'
 import { animatePopup, freezePopup, preparePopup, resetPopup } from '../core/popup-motion'
+import { OverlaySurface, showOverlaySurface, hideOverlaySurface } from '../core/overlay-surface'
 import { isTouchDevice } from '../core/device'
 import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import {
-  Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, markRaw, mergeProps, nextTick,
+  Teleport, Transition, TransitionGroup, cloneVNode, defineComponent, h, markRaw, mergeProps, nextTick, withDirectives, vShow,
   type Component, type PropType, type VNode,
 } from 'vue'
 import {
@@ -125,6 +126,11 @@ function registerLayer(layer: Layer): () => void {
     doc.addEventListener('keydown', state.keydown, true)
     doc.addEventListener('focusin', state.focusin)
   }
+  // A viewer opened above a promoted dialog must join the same rendering
+  // layer. Root viewers keep their return-under-navigation behavior.
+  if (layer.element.classList.contains('apple-image-viewer') && state.layers.some(entry => entry.element.closest('[data-apple-overlay-surface]'))) {
+    showOverlaySurface(layer.element)
+  }
   state.layers.push(layer)
   const arrows = (event: KeyboardEvent) => {
     if (state!.layers.at(-1) !== layer || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return
@@ -202,15 +208,19 @@ function createModal(name: string, kind: ModalKind) {
       motion: motionProp,
     },
     emits: ['update:modelValue', 'close', 'confirm', 'cancel', 'open', 'after-close'],
-    data: () => ({ disposeLayer: null as (() => void) | null, isTop: false, depth: 0 }),
+    data() { return { disposeLayer: null as (() => void) | null, isTop: false, depth: 0, present: this.modelValue } },
     computed: {
       resolvedMotion(): string { return motionOf(this, this.motion) },
     },
     watch: {
-      modelValue() { void this.syncLayer() },
+      modelValue(value: boolean) { if (value) this.present = true; void this.syncLayer() },
     },
     mounted() { void this.syncLayer() },
-    beforeUnmount() { this.disposeLayer?.() },
+    beforeUnmount() {
+      const backdrop = (this.$refs.panel as HTMLElement | undefined)?.parentElement
+      if (backdrop) freezePopup(backdrop)
+      this.disposeLayer?.()
+    },
     methods: {
       async syncLayer() {
         if (!this.modelValue) return
@@ -229,6 +239,7 @@ function createModal(name: string, kind: ModalKind) {
       },
       afterClose() {
         if (this.modelValue) return
+        this.present = false
         this.disposeLayer?.()
         this.disposeLayer = null
         this.$emit('after-close')
@@ -270,13 +281,33 @@ function createModal(name: string, kind: ModalKind) {
           this.confirmText ? h(AppleButton, { variant: this.tone === 'danger' ? 'danger' : 'primary', loading: this.loading, disabled: this.loading, motion: this.motion, onClick: this.confirm }, { default: () => this.confirmText }) : null,
         ]) : null,
       ])
-      const backdrop = this.modelValue ? h('div', {
+      const backdrop = this.present ? withDirectives(h('div', {
         class: ['apple-overlay-backdrop', `apple-overlay-backdrop--${kind}`],
         'data-apple-motion': this.resolvedMotion,
         style: { zIndex: overlayZIndex(this.depth), '--apple-overlay-duration': `${durationOf(this.resolvedMotion)}ms` },
         onClick: (event: MouseEvent) => { if (event.target === event.currentTarget && this.isTop) this.dismiss('backdrop') },
-      }, [panel]) : null
-      return portal(this, presence('apple-modal-presence', this.resolvedMotion, backdrop, this.afterClose))
+      }, [panel]), [[vShow, this.modelValue], [OverlaySurface]]) : null
+      const clearMotion = (element: Element) => {
+        element.classList.remove('apple-modal-presence-enter-active', 'apple-modal-presence-leave-active')
+        resetPopup(element)
+      }
+      return portal(this, h(Transition, {
+        css: false, appear: true, persisted: true,
+        onBeforeEnter: (element: Element) => preparePopup(element),
+        onEnter: (element: Element, done: () => void) => {
+          showOverlaySurface(element as HTMLElement)
+          element.classList.add('apple-modal-presence-enter-active')
+          animatePopup(element, true, done)
+        },
+        onLeave: (element: Element, done: () => void) => {
+          element.classList.add('apple-modal-presence-leave-active')
+          animatePopup(element, false, done)
+        },
+        onAfterEnter: clearMotion,
+        onAfterLeave: (element: Element) => { hideOverlaySurface(element as HTMLElement); clearMotion(element); this.afterClose() },
+        onEnterCancelled: (element: Element) => { freezePopup(element); element.classList.remove('apple-modal-presence-enter-active') },
+        onLeaveCancelled: (element: Element) => { freezePopup(element); element.classList.remove('apple-modal-presence-leave-active') },
+      }, { default: () => backdrop }))
     },
   })
 }
@@ -432,21 +463,21 @@ export const ApplePopover = defineComponent({
     motion: motionProp,
   },
   emits: ['update:modelValue', 'open', 'close', 'after-close'],
-  data: () => ({
+  data() { return {
     internalOpen: false, depth: 0, isTop: false,
+    present: !!this.modelValue && !this.disabled,
     disposeLayer: null as (() => void) | null,
     disposePosition: null as (() => void) | null,
     hoverTimer: null as ReturnType<typeof setTimeout> | null,
     positioned: false,
     positioner: null as PopupPositioner | null,
     positionPanel: null as HTMLElement | null,
-    interruptedPopup: undefined as number | undefined,
-  }),
+  } },
   computed: {
     opened(): boolean { return !this.disabled && (this.modelValue ?? this.internalOpen) },
   },
   watch: {
-    opened() { this.position(); void this.syncLayer() },
+    opened(value: boolean) { if (value) this.present = true; this.position(); void this.syncLayer() },
     placement() { this.position() }, align() { this.position() },
   },
   mounted() { void this.syncLayer() },
@@ -472,6 +503,7 @@ export const ApplePopover = defineComponent({
     preparePosition(panel: HTMLElement) {
       const anchor = this.$refs.anchor as HTMLElement | undefined
       if (!anchor) return
+      showOverlaySurface(panel)
       if (this.positionPanel !== panel) {
         this.disposeLayer?.(); this.disposeLayer = null
         this.disposePosition?.(); this.disposePosition = null
@@ -508,6 +540,7 @@ export const ApplePopover = defineComponent({
     },
     afterClose() {
       if (this.opened) return
+      this.present = false
       this.disposeLayer?.(); this.disposeLayer = null
       this.disposePosition?.(); this.disposePosition = null
       this.positioner?.destroy(); this.positioner = null; this.positionPanel = null
@@ -526,7 +559,7 @@ export const ApplePopover = defineComponent({
       ? activator.map((node, index) => index === 0 ? cloneVNode(node, activatorProps) : node)
       : [h(AppleButton, { variant: 'secondary', ...activatorProps }, { default: () => this.label })]
     const motion = motionOf(this, this.motion)
-    const panel = this.opened ? h('div', mergeProps(this.$attrs, {
+    const panel = this.present ? withDirectives(h('div', mergeProps(this.$attrs, {
       id, ref: 'panel', role: this.role, tabindex: this.role === 'tooltip' ? undefined : -1,
       'aria-label': this.role === 'tooltip' ? undefined : this.label,
       'data-apple-motion': motion,
@@ -538,14 +571,14 @@ export const ApplePopover = defineComponent({
         visibility: this.positioned ? 'visible' : 'hidden',
       },
       onMouseenter: () => this.hover(true), onMouseleave: () => this.hover(false),
-    }), [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: () => this.setOpen(false) }) })]) : null
+    }), [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: () => this.setOpen(false) }) })]), [[vShow, this.opened]]) : null
     const clearMotion = (element: Element) => {
       element.classList.remove('apple-popover-presence-enter-active', 'apple-popover-presence-leave-active')
       resetPopup(element)
     }
     const popup = portal(this, h(Transition, {
-      css: false, appear: true,
-      onBeforeEnter: (element: Element) => { preparePopup(element, true, this.interruptedPopup); this.interruptedPopup = undefined },
+      css: false, appear: true, persisted: true,
+      onBeforeEnter: (element: Element) => preparePopup(element),
       onEnter: (element: Element, done: () => void) => {
         this.preparePosition(element as HTMLElement)
         element.classList.add('apple-popover-presence-enter-active')
@@ -558,12 +591,11 @@ export const ApplePopover = defineComponent({
       },
       onAfterEnter: clearMotion,
       onAfterLeave: (element: Element) => {
-        const value = freezePopup(element)
-        this.interruptedPopup = this.opened ? value : undefined
+        hideOverlaySurface(element as HTMLElement)
         clearMotion(element); this.afterClose()
       },
-      onEnterCancelled: (element: Element) => { freezePopup(element); clearMotion(element) },
-      onLeaveCancelled: (element: Element) => { freezePopup(element); clearMotion(element) },
+      onEnterCancelled: (element: Element) => { freezePopup(element); element.classList.remove('apple-popover-presence-enter-active') },
+      onLeaveCancelled: (element: Element) => { freezePopup(element); element.classList.remove('apple-popover-presence-leave-active') },
     }, { default: () => panel }))
     return h('span', {
       ref: 'anchor', class: 'apple-popover-anchor',

@@ -5,7 +5,8 @@ for (const width of [390, 1440]) {
     test(`${kind} completes its entire exit before removal at ${width}px`, async ({ page }, info) => {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(`/tests/e2e/fixtures/modal-motion.html?kind=${kind}`)
-      await page.locator('#open').click()
+      await page.locator('#open').focus()
+      await page.locator('#open').press('Enter')
       await expect(page.locator('.apple-modal-presence-enter-active')).toHaveCount(0)
       const frames = await page.locator('.apple-overlay-backdrop').evaluate(async (backdrop) => {
         const panel = backdrop.querySelector<HTMLElement>('.apple-modal')!

@@ -9,12 +9,30 @@ import { AppleRipple, AppleSelection, motionDuration } from '../src/core/motion'
 afterEach(() => { document.body.innerHTML = ''; vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 describe('shared motion rules', () => {
+  it('does not animate content size when only an ancestor transform changes', () => {
+    let resize = () => {}
+    vi.stubGlobal('ResizeObserver', class { constructor(callback: () => void) { resize = callback } observe() {} disconnect() {} })
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(200)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(100)
+    const previous = HTMLElement.prototype.animate
+    const animate = vi.fn(() => ({ cancel: vi.fn(), onfinish: null }))
+    HTMLElement.prototype.animate = animate as unknown as typeof previous
+    const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 194, height: 97 } as DOMRect)
+    const wrapper = mount(AppleAutoSize, { slots: { default: '<div>Content</div>' } })
+    rect.mockReturnValue({ width: 200, height: 100 } as DOMRect)
+    resize()
+    expect((wrapper.element as HTMLElement).style.overflow).toBe('')
+    expect(animate).not.toHaveBeenCalled()
+    wrapper.unmount()
+    HTMLElement.prototype.animate = previous
+  })
   it('cancels a running size animation and releases clipping when motion is disabled', async () => {
     let resize = () => {}
     let height = 40
     const cancel = vi.fn()
     vi.stubGlobal('ResizeObserver', class { constructor(callback: () => void) { resize = callback } observe() {} disconnect() {} })
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({ x: 0, y: 0, left: 0, top: 0, width: 100, height, right: 100, bottom: height, toJSON() {} }))
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(() => height)
     const previous = HTMLElement.prototype.animate
     HTMLElement.prototype.animate = vi.fn(() => ({ cancel, onfinish: null })) as unknown as typeof previous
     const context = createApple({ motion: 'full' })

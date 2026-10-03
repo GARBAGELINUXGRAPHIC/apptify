@@ -1,3 +1,4 @@
+@property --apple-modal-progress { syntax: "<number>"; inherits: true; initial-value: 1; }
 .apple-overlay-host { display: contents; }
 .apple-overlay-backdrop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); isolation: isolate; }
 /* Composite the scrim independently without repainting the full-screen background. */
@@ -40,8 +41,8 @@
 .apple-snackbar-content strong { font-weight: 600; }
 .apple-snackbar-action { flex-shrink: 0; max-width: 30%; min-height: 44px; border: 0; padding: 8px; border-radius: 8px; background: transparent; color: var(--apple-accent, #0071e3); font: inherit; font-size: 14px; cursor: pointer; overflow-wrap: anywhere; }
 .apple-popover-anchor { display: inline-flex; max-width: 100%; vertical-align: middle; }
-.apple-popover { box-sizing: border-box; position: fixed; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; padding: 18px; border: 1px solid color-mix(in srgb, var(--apple-border, #d2d2d7) 65%, transparent); border-radius: 8px; color: var(--apple-text, #1d1d1f); background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .31372549)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); box-shadow: 0 12px 36px rgb(0 0 0 / 14%); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; outline: none; transition: width var(--apple-duration, 320ms) var(--apple-ease, ease), background-color var(--apple-fast, 120ms); }
-.apple-tooltip { max-width: min(280px, calc(100vw - 24px)); padding: 7px 11px; font-size: 12px; font-weight: 500; pointer-events: auto; }
+.apple-popover { box-sizing: border-box; position: fixed; max-width: var(--apple-popup-available-width, calc(100dvw - 16px)); max-height: var(--apple-popup-available-height, calc(100dvh - 16px)); overflow-y: auto; overscroll-behavior: contain; padding: 18px; border: 1px solid color-mix(in srgb, var(--apple-border, #d2d2d7) 65%, transparent); border-radius: 8px; color: var(--apple-text, #1d1d1f); background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .31372549)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); box-shadow: 0 12px 36px rgb(0 0 0 / 14%); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; outline: none; transition: width var(--apple-duration, 320ms) var(--apple-ease, ease), background-color var(--apple-fast, 120ms); }
+.apple-tooltip { max-width: min(280px, var(--apple-popup-available-width, calc(100dvw - 24px))); padding: 7px 11px; font-size: 12px; font-weight: 500; pointer-events: auto; }
 .apple-menu { padding: 6px; }
 .apple-menu-item { position: relative; overflow: hidden; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; border: 0; padding: 10px 12px; border-radius: 5px; color: var(--apple-text, #1d1d1f); background: transparent; font: inherit; text-align: left; cursor: pointer; transition: background-color var(--apple-fast, 120ms), color var(--apple-fast, 120ms); }
 .apple-menu-item--danger { color: var(--apple-danger, #d93025); }
@@ -98,14 +99,12 @@
 .apple-image-viewer--mobile[data-phase=closing] { pointer-events: none; }
 .apple-overlay-spin { animation: apple-overlay-spin .8s linear infinite; }
 @keyframes apple-overlay-spin { to { transform: rotate(360deg); } }
-.apple-modal-presence-enter-active::before, .apple-modal-presence-leave-active::before { transition: opacity var(--apple-overlay-duration, 320ms) var(--apple-ease, ease); will-change: opacity; }
-.apple-modal-presence-enter-active .apple-modal, .apple-modal-presence-leave-active .apple-modal { transition: transform var(--apple-overlay-duration, 320ms) var(--apple-ease, cubic-bezier(.2, .8, .2, 1)); will-change: transform; }
-.apple-modal-presence-enter-active .apple-dialog, .apple-modal-presence-leave-active .apple-dialog { transition-property: transform, opacity; will-change: transform, opacity; }
-.apple-modal-presence-enter-from::before, .apple-modal-presence-leave-to::before { opacity: 0; }
-.apple-modal-presence-enter-from .apple-dialog, .apple-modal-presence-leave-to .apple-dialog { transform: translateY(32px) scale(.97); opacity: 0; }
-.apple-modal-presence-enter-from .apple-drawer--right, .apple-modal-presence-leave-to .apple-drawer--right { transform: translateX(100%); }
-.apple-modal-presence-enter-from .apple-drawer--left, .apple-modal-presence-leave-to .apple-drawer--left { transform: translateX(-100%); }
-.apple-modal-presence-enter-from .apple-sheet, .apple-modal-presence-leave-to .apple-sheet { transform: translateY(100%); }
+/* One animated value drives the scrim and full surface, including reversals. */
+.apple-overlay-backdrop::before { opacity: var(--apple-modal-progress); }
+.apple-dialog { transform: translateY(calc((1 - var(--apple-modal-progress)) * 32px)) scale(calc(.97 + var(--apple-modal-progress) * .03)); opacity: var(--apple-modal-progress); }
+.apple-drawer--right { transform: translateX(calc((1 - var(--apple-modal-progress)) * 100%)); }
+.apple-drawer--left { transform: translateX(calc((var(--apple-modal-progress) - 1) * 100%)); }
+.apple-sheet { transform: translateY(calc((1 - var(--apple-modal-progress)) * 100%)); }
 .apple-popover-presence-enter-active, .apple-popover-presence-leave-active { transition: none; }
 .apple-popover-presence-enter-from, .apple-popover-presence-leave-to { transform: translate(var(--apple-popup-x, 0px), var(--apple-popup-y, -10px)); opacity: 0; }
 .apple-tooltip.apple-popover-presence-enter-from, .apple-tooltip.apple-popover-presence-leave-to { transform: translate(var(--apple-popup-x, 0px), var(--apple-popup-y, 10px)); }
@@ -117,11 +116,10 @@
 .apple-viewer-presence-leave-to[data-apple-motion=full] .apple-viewer-pages { transform: scale(.98); }
 .apple-viewer-presence-leave-to { opacity: 0; }
 .apple-modal-presence-leave-active, .apple-popover-presence-leave-active, .apple-viewer-presence-leave-active, .apple-toast-leave-active { pointer-events: none; }
-[data-apple-motion="reduced"].apple-overlay-backdrop { transition: opacity var(--apple-overlay-duration, 120ms) var(--apple-ease, ease); }
+[data-apple-motion="reduced"].apple-overlay-backdrop { opacity: var(--apple-modal-progress); }
 [data-apple-motion="reduced"].apple-overlay-backdrop .apple-dialog { opacity: 1; }
 [data-apple-motion="reduced"].apple-overlay-backdrop::before { opacity: 1; transition: none; }
-[data-apple-motion="reduced"].apple-modal-presence-enter-from, [data-apple-motion="reduced"].apple-modal-presence-leave-to { opacity: 0; }
-[data-apple-motion="reduced"].apple-overlay-backdrop .apple-modal, [data-apple-motion="reduced"].apple-popover, [data-apple-motion="reduced"].apple-snackbar { transform: none !important; }
+[data-apple-motion="none"].apple-overlay-backdrop .apple-modal, [data-apple-motion="reduced"].apple-overlay-backdrop .apple-modal, [data-apple-motion="reduced"].apple-popover, [data-apple-motion="reduced"].apple-snackbar { transform: none !important; }
 [data-apple-motion="reduced"].apple-toast-enter-active, [data-apple-motion="reduced"].apple-toast-leave-active { transition-property: opacity; }
 [data-apple-motion="reduced"].apple-toast-enter-from, [data-apple-motion="reduced"].apple-toast-leave-to { opacity: 0; }
 [data-apple-motion="none"].apple-overlay-backdrop, [data-apple-motion="none"] .apple-modal, [data-apple-motion="none"].apple-snackbar, [data-apple-motion="none"].apple-popover, [data-apple-motion="none"].apple-image-viewer, [data-apple-motion="none"] .apple-overlay-icon, [data-apple-motion="none"] .apple-menu-item, [data-apple-motion="none"] .apple-action-sheet-item, [data-apple-motion="none"] .apple-overlay-spin { transition: none !important; animation: none !important; }

@@ -36,3 +36,5 @@
 .apple-navibar[data-apple-motion=none] > .apple-navibar__bar, .apple-navibar[data-apple-motion=reduced] > .apple-navibar__bar,
 .apple-aside[data-apple-motion=none], .apple-aside[data-apple-motion=reduced] { transition: none; }
 @media (prefers-reduced-motion: reduce) { .apple-navibar > .apple-navibar__bar, .apple-aside { transition: none; } }
+
+.apple-navibar__menu[data-placement] { width: var(--apple-popup-anchor-width); max-width: var(--apple-popup-available-width, calc(100dvw - 16px)); max-height: var(--apple-popup-available-height, calc(100dvh - 16px)); overflow-y: auto; overscroll-behavior: contain; }

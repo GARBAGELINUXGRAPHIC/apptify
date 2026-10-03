@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body { margin: 0; min-height: 1600px; background: #f5f5f7; }
+.provider { transform: translate(20px, 10px); width: 250px; contain: layout; }
+.container { position: relative; margin: 30px 10px; width: 190px; height: 170px; overflow: auto; border: 2px solid #888; }
+.content { position: relative; height: 900px; padding: 24px 8px; box-sizing: border-box; }
+.row { min-height: 44px; margin: 0; padding: 8px; box-sizing: border-box; }
+</style></head><body><div id="app"></div><script type="module">
+import { createApp, h, ref } from 'vue'
+import { createAppleUI, AppleProvider, AppleSelect, AppleAutocomplete, AppleDatePicker, AppleColorPicker, ApplePopover, AppleMenu, AppleDialog, AppleDrawer, AppleSheet } from '/src/index.ts'
+const params = new URLSearchParams(location.search), kind = params.get('kind') || 'select'
+const opened = ref(false), version = ref(0), count = ref(params.has('long') ? 70 : 4), motion = ref('full')
+const items = () => Array.from({ length: count.value }, (_, index) => ({ label: `Option ${index + 1}`, value: index }))
+const component = { select: AppleSelect, autocomplete: AppleAutocomplete, date: AppleDatePicker, time: AppleDatePicker, color: AppleColorPicker, popover: ApplePopover, menu: AppleMenu, dialog: AppleDialog, drawer: AppleDrawer, sheet: AppleSheet }[kind]
+const modal = ['dialog', 'drawer', 'sheet'].includes(kind)
+window.overlayHarness = { toggle: value => opened.value = value, change: () => version.value++, grow: value => count.value = value, motion: value => motion.value = value }
+const contents = () => [h('div', { id: 'version' }, `Revision ${version.value}`), ...items().map(item => h('p', { class: 'row', key: item.value }, item.label)), h(AppleSelect, { label: 'Nested choice', items: items() })]
+createApp({ render() { return h(AppleProvider, { class: 'provider', motion: motion.value }, () => h('div', { class: 'container' }, h('div', { class: 'content' }, [
+  modal ? h('button', { id: 'open', onClick: () => opened.value = true }, 'Open') : null,
+  h(component, { label: 'Open', title: 'Window', type: kind === 'time' ? 'time' : 'datetime-local', items: items(), ...(modal || kind === 'popover' || kind === 'menu' ? { modelValue: opened.value, 'onUpdate:modelValue': value => opened.value = value } : {}) }, { default: contents }),
+]))) } }).use(createAppleUI()).mount('#app')
+</script></body></html>

@@ -3,6 +3,9 @@ import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core
 import { motionDuration } from '../core/motion'
 
 const sizes = new WeakMap<object, { observer?: ResizeObserver; animation?: Animation; width: number; height: number; reset: () => void }>()
+// Layout dimensions exclude an ancestor's entrance transform. A scaled dialog
+// must not make its content look smaller and start a second height animation.
+const layoutSize = (element: HTMLElement) => ({ width: element.offsetWidth, height: element.offsetHeight })
 
 export const AppleAutoSize = defineComponent({
   name: 'AppleAutoSize',
@@ -15,14 +18,14 @@ export const AppleAutoSize = defineComponent({
   mounted() {
     const outer = this.$el as HTMLElement
     const inner = this.$refs.inner as HTMLElement
-    const initial = inner.getBoundingClientRect()
+    const initial = layoutSize(inner)
     const state: { observer?: ResizeObserver; animation?: Animation; width: number; height: number; reset: () => void } = { width: initial.width, height: initial.height, reset: () => { outer.style.overflow = ''; inner.style.width = '' } }
     sizes.set(this, state)
     if (typeof ResizeObserver === 'undefined') return
     state.observer = new ResizeObserver(() => {
-      const next = inner.getBoundingClientRect()
+      const next = layoutSize(inner)
       if (Math.abs(next.height - state.height) < .5 && (this.axis !== 'both' || Math.abs(next.width - state.width) < .5)) return
-      const current = state.animation ? outer.getBoundingClientRect() : state
+      const current = state.animation ? layoutSize(outer) : state
       const from = { height: `${current.height}px`, ...(this.axis === 'both' ? { width: `${current.width}px` } : {}) }
       const to = { height: `${next.height}px`, ...(this.axis === 'both' ? { width: `${next.width}px` } : {}) }
       state.animation?.cancel()

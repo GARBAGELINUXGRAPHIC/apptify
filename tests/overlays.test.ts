@@ -9,6 +9,7 @@ import {
 } from '../src/components/overlays'
 
 const wrappers: VueWrapper[] = []
+const originalAnimate = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'animate')
 const mounted = <T extends VueWrapper>(wrapper: T): T => { wrappers.push(wrapper); return wrapper }
 const settle = async () => { await nextTick(); await flushPromises(); await nextTick() }
 const finishLeave = async () => {
@@ -23,6 +24,19 @@ const finishLeave = async () => {
 beforeEach(() => {
   config.global.stubs.transition = false
   config.global.stubs['transition-group'] = false
+  // jsdom has no Web Animations implementation. Keep modal animations in
+  // flight until finish, so lifecycle/lock assertions still exercise a leave.
+  // The browser suite checks the actual interpolated frames and reversals.
+  Object.defineProperty(HTMLElement.prototype, 'animate', { configurable: true, get() {
+    if (!this.classList.contains('apple-overlay-backdrop')) return originalAnimate?.value
+    return (frames: Keyframe[], options: KeyframeAnimationOptions) => {
+      const from = Number(frames[0]['--apple-modal-progress']), to = Number(frames[1]['--apple-modal-progress'])
+      this.style.setProperty('--apple-modal-progress', String((from + to) / 2))
+      const animation = { onfinish: null as (() => void) | null, effect: { getComputedTiming: () => ({ progress: .5 }) }, cancel: () => clearTimeout(timer) }
+      const timer = setTimeout(() => animation.onfinish?.(), Number(options.duration))
+      return animation
+    }
+  } })
 })
 
 afterEach(() => {
@@ -33,6 +47,8 @@ afterEach(() => {
   vi.useRealTimers()
   delete config.global.stubs.transition
   delete config.global.stubs['transition-group']
+  if (originalAnimate) Object.defineProperty(HTMLElement.prototype, 'animate', originalAnimate)
+  else delete (HTMLElement.prototype as any).animate
 })
 
 describe('overlay lifecycle', () => {

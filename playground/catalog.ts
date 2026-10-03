@@ -62,7 +62,7 @@ export const catalog: CatalogItem[] = [
   item('ApplePullRefresh', '下拉刷新', '移动交互', '轻轻下拉，获取新内容。', 'v-model(refreshing) · threshold · label · disabled | refresh(done)', '<apple-pull-refresh @refresh="async done => { await reload(); done() }">内容</apple-pull-refresh>'),
   item('AppleInfiniteScroll', '无限滚动', '移动交互', '浏览，不必被翻页打断。', 'loading · finished · error · disabled · distance | load(done), retry(done)', '<apple-infinite-scroll :finished="finished" @load="async done => { await loadMore(); done() }">内容</apple-infinite-scroll>'),
   item('AppleBackTop', '回到顶部', '移动交互', '回到开始，毫不费力。', 'threshold · label', '<apple-back-top :threshold="400" />'),
-  item('AppleFloatingGroup', '悬浮操作组', '移动交互', '常用操作，触手可及。', 'backTop · threshold · target · label · motion | default', '<apple-floating-group :threshold="300">\n  <apple-button icon-only :icon="Plus" label="添加" />\n</apple-floating-group>'),
+  item('AppleFloatingGroup', '悬浮操作组', '移动交互', '常用操作，触手可及。', 'backTop · threshold · target · label · motion | default', '<apple-floating-group :threshold="300" />'),
   item('AppleAutoSize', '自适应尺寸', '基础', '内容变化，布局随行。', 'axis(height|both) · motion | default', '<apple-auto-size><div v-if="expanded">详情内容</div></apple-auto-size>'),
   item('AppleTransition', '动效容器', '基础', '为页面保留连续感。', 'name(page|slide-x|slide-y|fade) · mode · appear · motion | default', '<apple-transition name="page"><router-view /></apple-transition>'),
 ]

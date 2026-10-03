@@ -4,8 +4,8 @@
   "files": {
     "index.html": "75f6d93e3962ddca97a13b666a04d98ba9b263b6c288171383db764215034fea",
     "playground/App.vue": "ef3f06f80758a3d4198ee90eb05f766a89b6156b4899fd566f8dca9b42e0ffc9",
-    "playground/ComponentDemo.vue": "29eef7251a4ea001bcd3f0fe0c8469d8b001dd74bfaaa7ad285a5509e81d3c3a",
-    "playground/catalog.ts": "c4ef24d9c643fa4259d385c8ee0628e09271f7dce72367d5fb9c4ce61e1c421f",
+    "playground/ComponentDemo.vue": "4e34a26608e9e8f33e09cce3942ecc0d42293511e8bf7d74420d2e7875e62137",
+    "playground/catalog.ts": "3aecd5190d37533ecd9427da3a2c9ed3b18b6f2f04a51c543ff88dfe52070e59",
     "playground/components/ComponentIndex.vue": "2223f76786ef3dd1658fbb1ce29246e9bd155343d2e9bea9cb0674bc4a4ef879",
     "playground/components/PageFooter.vue": "29c3ae396450c961aa13f3edc7d6b15f9dd12e95033242328fbe2093fb5ff0eb",
     "playground/components/UserMenu.vue": "e584cc4c97c8e5a582be259f5aafc0ac355f4339133f6f572f079d979aa96c10",

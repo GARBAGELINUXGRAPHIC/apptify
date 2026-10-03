@@ -155,6 +155,9 @@
 .apple-selection-indicator[hidden] { display: none; }
 .apple-auto-size { min-width: 0; }
 .apple-auto-size__inner { display: flow-root; min-width: 0; }
+/* Reset the UA popover box without overriding each surface's own styles. */
+:where([data-apple-overlay-surface][popover]) { box-sizing: border-box; width: auto; height: auto; max-width: none; max-height: none; margin: 0; inset: auto; padding: 0; border: 0; background: transparent; color: inherit; overflow: visible; }
+:where([data-apple-overlay-surface][popover])::backdrop { background: transparent; pointer-events: none; }
 .apple-page-enter-active,.apple-page-leave-active,.apple-slide-x-enter-active,.apple-slide-x-leave-active,.apple-slide-y-enter-active,.apple-slide-y-leave-active { transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-page-enter-active { transition: transform var(--apple-duration) var(--apple-ease), opacity var(--apple-duration) var(--apple-ease); }
 .apple-page-enter-from { opacity: 0; }
