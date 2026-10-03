@@ -47,14 +47,14 @@
       </apple-grid>
     </apple-stack>
     <apple-card v-else-if="name === 'AppleCard'" class="demo-product" title="AirPods Max" subtitle="每个音符，都更动听。" eyebrow="声音，出类拔萃。">
-      <apple-image src="/images/airpods-max-orange.jpg" alt="橙色 AirPods Max 耳机" aspect-ratio="1" fit="contain" />
+      <apple-image :gallery="{ src: '/images/airpods-max-orange.jpg', alt: '橙色 AirPods Max 耳机' }" aspect-ratio="1" fit="contain" />
       <template #actions><apple-button @click="notify('已加入购物袋')">加入购物袋</apple-button><apple-button variant="ghost" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></template>
     </apple-card>
     <apple-stack v-else-if="name === 'AppleImage'" class="demo-image">
       <apple-segmented-control v-model="imageLayout" :items="[{label:'省空间',value:'compact'},{label:'平铺',value:'tiled'},{label:'换行平铺',value:'tiled-wrap'}]" label="图片组布局" />
       <apple-switch v-model="imageCarousel" label="轮播模式" />
       <apple-switch v-model="imageSquare" label="强制 1:1（裁剪）" />
-      <apple-image src="/images/lake.jpg" alt="山间湖泊与小屋" :carousel="imageCarousel" :gallery="imageCarousel ? slides : galleryImages" :gallery-layout="imageLayout" :gallery-shape="imageSquare ? 'square' : 'natural'" />
+      <apple-image :carousel="imageCarousel" :gallery="imageCarousel ? slides : galleryImages" :gallery-layout="imageLayout" :gallery-shape="imageSquare ? 'square' : 'natural'" />
     </apple-stack>
     <apple-stack v-else-if="name === 'AppleAvatar'"><apple-slider v-model="avatarSize" label="头像尺寸" :min="24" :max="72" :step="8" /><apple-stack direction="row" align="center"><apple-avatar name="林初" :size="avatarSize" /><apple-avatar name="Alex" :size="avatarSize" /><apple-avatar name="Taylor" :size="avatarSize" square /></apple-stack></apple-stack>
     <apple-stack v-else-if="name === 'AppleAvatarGroup'"><apple-stepper v-model="avatarMax" label="显示人数" :min="1" :max="5" /><apple-avatar-group :items="people" :max="avatarMax" :size="44" label="设计团队" /></apple-stack>
@@ -110,7 +110,6 @@
     <apple-popover v-else-if="name === 'ApplePopover'" label="更多选项"><template #activator><apple-button variant="secondary" :icon="icons.MoreHorizontal">更多选项</apple-button></template><p>已同步到 iCloud</p><apple-switch v-model="checked" label="自动同步" /></apple-popover>
     <apple-tooltip v-else-if="name === 'AppleTooltip'" text="添加到收藏"><apple-button variant="secondary" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></apple-tooltip>
     <apple-menu v-else-if="name === 'AppleMenu'" :items="actions" label="更多操作" @select="notify('操作已完成')" />
-    <apple-stack v-else-if="name === 'AppleImageViewer'"><apple-image :src="images[viewerIndex]" :alt="viewerIndex === 0 ? '山间湖泊与小屋' : '橙色 AirPods Max 耳机'" :preview="false" aspect-ratio="16/9" /><apple-button :icon="icons.ZoomIn" @click="imageViewer = true">浏览照片</apple-button><apple-image-viewer v-model="imageViewer" v-model:index="viewerIndex" :images="images" loop /></apple-stack>
     <template v-else-if="name === 'AppleActionSheet'">
       <apple-button @click="actionSheet = true">选择操作</apple-button>
       <apple-action-sheet v-model="actionSheet" title="山间的一刻" message="收藏这份灵感，或与朋友分享。" @select="notify('操作已完成')">
@@ -148,7 +147,7 @@ export default defineComponent({
   name: 'ComponentDemo', props: { name: { type: String, required: true } }, emits: ['navigate'],
   data() { return {
     icons: markRaw({ Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
-    searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageViewer: false, viewerIndex: 0, imageLayout: 'compact' as 'compact' | 'tiled' | 'tiled-wrap', imageSquare: false, imageCarousel: false,
+    searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageLayout: 'compact' as 'compact' | 'tiled' | 'tiled-wrap', imageSquare: false, imageCarousel: false,
     virtualTable: false, transitionBackward: false,
     timelineDirection:'vertical' as 'vertical'|'horizontal', skeletonVariant:'text' as 'text'|'avatar'|'card'|'list'|'table'|'image', skeletonVariants:[{label:'文本',value:'text'},{label:'头像',value:'avatar'},{label:'卡片',value:'card'},{label:'列表',value:'list'},{label:'表格',value:'table'},{label:'图片',value:'image'}],
     dateFormat:'YYYY/MM/DD HH:mm', dateFormats:[{label:'年 / 月',value:'YYYY/MM'},{label:'年 / 月 / 日',value:'YYYY/MM/DD'},{label:'日期与时分',value:'YYYY/MM/DD HH:mm'},{label:'日期与时分秒',value:'YYYY/MM/DD HH:mm:ss'},{label:'时分',value:'HH:mm'},{label:'时分秒',value:'HH:mm:ss'}],
@@ -185,7 +184,7 @@ export default defineComponent({
     virtualRows() { return this.virtualTable ? Array.from({length:5000},(_,i)=>({id:i+1,name:`组件 ${String(i+1).padStart(4,'0')}`,category:i%2?'基础':'表单',status:'已发布',updated:'09-26'})) : [] },
     demoClass(): string {
       const compact = ['AppleSearch', 'AppleProvider', 'AppleAvatar', 'AppleAvatarGroup', 'AppleInput', 'AppleTextarea', 'AppleSelect', 'AppleAutocomplete', 'AppleCheckbox', 'AppleRadioGroup', 'AppleSwitch', 'AppleSlider', 'AppleStepper', 'AppleSegmentedControl', 'AppleDatePicker', 'AppleColorPicker', 'AppleUpload', 'AppleOtpInput', 'AppleCascader', 'AppleRate', 'AppleForm', 'AppleFormField', 'AppleProgress', 'AppleSpinner', 'AppleStatistic', 'AppleTransition']
-      const media = ['AppleImage', 'AppleImageViewer']
+      const media = ['AppleImage']
       return compact.includes(this.name) ? 'component-demo--compact' : media.includes(this.name) ? 'component-demo--media' : 'component-demo--wide'
     },
     searchResults() { return this.settings.filter(item => `${item.label} ${item.description}`.includes(this.searchText.trim())) },

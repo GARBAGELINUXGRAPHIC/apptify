@@ -7,7 +7,7 @@ import { AppleImage } from '../src/components/foundation'
 const slides = [{ value: 1, label: '一', description: '第一张' }, { value: 2, label: '二', description: '第二张' }, { value: 3, label: '三' }]
 const wrappers: ReturnType<typeof mount>[] = []
 function carousel(extra = {}) {
-  const wrapper = mount(AppleImage, { props: { src: '/cover.jpg', alt: '封面', carousel: true, gallery: slides, motion: 'none', ...extra }, slots: { item: ({ item, index, active }: any) => h('article', [h('strong', item.label), h('button', { 'data-active': active, 'data-index': index }, '详情')]) } })
+  const wrapper = mount(AppleImage, { props: { carousel: true, gallery: slides, motion: 'none', ...extra }, slots: { item: ({ item, index, active }: any) => h('article', [h('strong', item.label), h('button', { 'data-active': active, 'data-index': index }, '详情')]) } })
   wrappers.push(wrapper)
   const track = wrapper.get('.apple-image__gallery').element as HTMLElement
   Object.defineProperties(track, { clientWidth: { configurable: true, value: 320 }, scrollWidth: { configurable: true, value: slides.length * 320 } })
@@ -82,12 +82,12 @@ describe('AppleImage carousel mode', () => {
   })
 
   it('renders image metadata captions and keeps normal image previews unchanged', () => {
-    const wrapper = mount(AppleImage, { props: { carousel: true, src: '/one.jpg', alt: '图片', gallery: [{ src: '/one.jpg', label: '标题', description: '介绍' }, { src: '/two.jpg', label: '第二张' }] } })
+    const wrapper = mount(AppleImage, { props: { carousel: true, gallery: [{ src: '/one.jpg', label: '标题', description: '介绍' }, { src: '/two.jpg', label: '第二张' }] } })
     wrappers.push(wrapper)
     expect(wrapper.find('.apple-image__slide-caption').text()).toBe('标题介绍')
     expect(wrapper.get('img').attributes('alt')).toBe('标题')
     expect(wrapper.get('[aria-label="查看标题"]').attributes('aria-controls')).toBe(wrapper.get('.apple-image__gallery').attributes('id'))
-    const normal = mount(AppleImage, { props: { src: '/one.jpg', alt: '普通图片', gallery: ['/one.jpg', '/two.jpg'] } })
+    const normal = mount(AppleImage, { props: { gallery: [{src:'/one.jpg',alt:'普通图片'}, '/two.jpg'] } })
     wrappers.push(normal)
     expect(normal.find('.apple-image__slide').exists()).toBe(false)
     expect(normal.attributes('aria-roledescription')).toBeUndefined()

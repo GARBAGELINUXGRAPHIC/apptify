@@ -77,7 +77,7 @@ test('mobile disclosure selects routes, handles Escape and outside clicks, and r
   await page.screenshot({ path: '/tmp/apptify-checks/navibar-mobile-open.png', animations: 'disabled' })
   await nav.getByRole('link', { name: '设置', exact: true }).click()
   await expect(nav).toBeHidden()
-  await expect(page.getByRole('heading', { name: '设置。', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '设置', exact: true })).toBeVisible()
   await toggle.focus()
   await page.keyboard.press('ArrowDown')
   await expect(nav.getByRole('link', { name: '首页', exact: true })).toBeFocused()

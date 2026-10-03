@@ -4,7 +4,7 @@ import { defineComponent, h, nextTick } from 'vue'
 import { appleKey, createApple } from '../src/core/context'
 import { AppleDatePicker, AppleSelect } from '../src/components/forms'
 import {
-  AppleActionSheet, AppleDialog, AppleDrawer, AppleImageViewer,
+  AppleActionSheet, AppleDialog, AppleDrawer, InternalImageViewer,
   AppleMenu, AppleOverlayHost, ApplePopover, AppleSheet, AppleSnackbar, AppleTooltip,
 } from '../src/components/overlays'
 
@@ -415,7 +415,7 @@ describe('image viewer', () => {
     else Reflect.deleteProperty(HTMLElement.prototype, 'animate')
   })
   it('can reduce motion while a photo is still loading with an infinite spinner', async () => {
-    const wrapper = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/pending.png'], motion: 'full' }, attachTo: document.body }))
+    const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/pending.png'], motion: 'full' }, attachTo: document.body }))
     await settle()
     const finishTransition = vi.fn(), finishSpinner = vi.fn(() => { throw new Error('Cannot finish an infinite animation') })
     Object.defineProperty(wrapper.find('.apple-image-viewer').element, 'getAnimations', { value: () => [
@@ -429,7 +429,7 @@ describe('image viewer', () => {
   })
 
   it('cleans up gestures on image changes and close, and renders load errors', async () => {
-    const wrapper = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'], motion: 'none' }, attachTo: document.body }))
+    const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'], motion: 'none' }, attachTo: document.body }))
     await settle()
     await wrapper.find('.apple-viewer-image').trigger('load')
     const first = wrapper.vm.panzoom!
@@ -454,7 +454,7 @@ describe('image viewer', () => {
   })
   it('uses wheel distance rather than timing or event count, including fractional deltas and units', async () => {
     const scaleAfter = async (deltas: number[], deltaMode = 0) => {
-      const wrapper = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/one.png'], motion: 'none' }, attachTo: document.body }))
+      const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png'], motion: 'none' }, attachTo: document.body }))
       await settle()
       const image = wrapper.find('.apple-viewer-image')
       Object.defineProperties(image.element, { width: { value: 400 }, height: { value: 300 }, naturalWidth: { value: 800 } })
@@ -476,7 +476,7 @@ describe('image viewer', () => {
     expect(await scaleAfter([-100000, 1])).toBeLessThan(10)
   })
   it('zooms with the scroll wheel while preserving the shared scroll lock', async () => {
-    const wrapper = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/one.png'] }, attachTo: document.body }))
+    const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png'] }, attachTo: document.body }))
     await settle()
     const image = wrapper.find('.apple-viewer-image')
     Object.defineProperties(image.element, { width: { value: 400 }, height: { value: 300 }, naturalWidth: { value: 800 } })
@@ -492,7 +492,7 @@ describe('image viewer', () => {
     expect(document.body.style.overflow).toBe('')
   })
   it('labels gallery controls and supports keyboard navigation', async () => {
-    const wrapper = mounted(mount(AppleImageViewer, {
+    const wrapper = mounted(mount(InternalImageViewer, {
       props: { modelValue: true, images: [{ src: '/one.png', alt: '一' }, '/two.png'] }, attachTo: document.body,
     }))
     await settle()
@@ -508,7 +508,7 @@ describe('image viewer', () => {
   })
 
   it('does not navigate the underlying viewer while a dialog is focused', async () => {
-    const viewer = mounted(mount(AppleImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'] }, attachTo: document.body }))
+    const viewer = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'] }, attachTo: document.body }))
     await settle()
     mounted(mount(AppleDialog, { props: { modelValue: true }, slots: { default: () => h('input', { 'aria-label': '内容' }) }, attachTo: document.body }))
     await settle()

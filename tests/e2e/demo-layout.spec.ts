@@ -97,8 +97,8 @@ test('layout and media controls retain their shape after switching', async ({ pa
   }
   await activeCard(page).locator('.component-demo').getByText('省空间', { exact: true }).click()
   await expect(activeCard(page).locator('.component-demo .apple-image')).toHaveAttribute('data-gallery-layout', 'compact')
-  await openDemo(page, 'AppleImageViewer')
-  await page.getByRole('button', { name: '浏览照片', exact: true }).click()
+  await openDemo(page, 'AppleImage')
+  await activeCard(page).locator('.apple-image__trigger').first().click()
   await expect(page.getByRole('dialog', { name: '图片预览', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '关闭图片预览', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '图片预览', exact: true })).toHaveCount(0)

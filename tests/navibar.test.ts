@@ -18,10 +18,11 @@ beforeEach(() => {
   width = 1024
   disconnect.mockClear()
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({ width, height: 64, top: 0, left: 0, right: width, bottom: 64, x: 0, y: 0, toJSON: () => ({}) }))
-  vi.stubGlobal('ResizeObserver', class {
-    constructor(callback: () => void) { resize = callback }
-    observe() {}
-    disconnect = disconnect
+  vi.stubGlobal('ResizeObserver', class ResizeObserverMock {
+    static observers = new Set<() => void>()
+    constructor(private callback: () => void) { resize = () => [...(this.constructor as typeof ResizeObserverMock).observers].forEach(callback => callback()) }
+    observe() { (this.constructor as typeof ResizeObserverMock).observers.add(this.callback) }
+    disconnect() { (this.constructor as typeof ResizeObserverMock).observers.delete(this.callback); disconnect() }
   })
 })
 

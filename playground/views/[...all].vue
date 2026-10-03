@@ -3,26 +3,24 @@
     <apple-card class="paper-404-card" shadow="none" zoom="none">
       <template #title>
         <div class="paper-404-heading">
-          <p class="paper-404-kicker">APPTIFY / 林间小插曲</p>
-          <p class="paper-404-number" aria-hidden="true">404<span>迷路的一页</span></p>
+          <p class="paper-404-number" aria-hidden="true">404</p>
           <h1>页面不存在</h1>
         </div>
       </template>
       <p class="paper-404-copy">有些东西，悄悄溜走了。<br />就像松鼠的橡果，这一页也不知漂去了哪里。</p>
       <div class="paper-404-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
-          <apple-link :href="href" class="paper-404-home" @click="navigate">返回首页 <ArrowUpRight :size="17" aria-hidden="true" /></apple-link>
+          <apple-button :href="href" @click="navigate">返回首页</apple-button>
         </router-link>
         <apple-button variant="ghost" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-button>
       </div>
     </apple-card>
     <NotFoundPaperScene class="paper-404-illustration" />
-    <p class="paper-404-footnote">路可以走错，故事不会白来。</p>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, ArrowUpRight } from 'lucide-vue-next'
+import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import NotFoundPaperScene from '../components/not-found-paper-scene.vue'
 
@@ -35,7 +33,7 @@ function goBack() {
 </script>
 
 <style scoped>
-.paper-404-page { max-width: 1360px; display: grid; grid-template-columns: minmax(260px, .78fr) minmax(0, 1.65fr); align-content: center; align-items: center; column-gap: 16px; padding-top: 38px; padding-bottom: 22px; }
+.paper-404-page { max-width: 1360px; display: grid; grid-template-columns: minmax(260px, .78fr) minmax(0, 1.65fr); align-content: center; align-items: center; column-gap: 16px; padding-top: 38px; padding-bottom: calc(38px + 64px); }
 .paper-404-card { background: transparent; border: 0; overflow: visible; }
 .paper-404-card :deep(.apple-card__body) { padding: 0 0 0 8px; }
 .paper-404-card :deep(.apple-card__heading) { margin: 0; }
@@ -46,8 +44,7 @@ function goBack() {
 .paper-404-heading h1 { font-size: clamp(26px, 2.7vw, 35px); line-height: 1.35; letter-spacing: -.035em; font-weight: 600; margin: 0 0 17px; }
 .paper-404-copy { font-size: 13px; line-height: 1.95; color: var(--apple-secondary); margin: 0; text-wrap: pretty; }
 .paper-404-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 27px; }
-.paper-404-home { gap: 14px; font-size: 13px; font-weight: 500; min-height: 44px; border-bottom: 1px solid color-mix(in srgb, var(--apple-accent) 35%, transparent); }
-.paper-404-actions .apple-button { font-size: 12px; padding-inline: 8px; color: var(--apple-secondary); }
+.paper-404-actions .apple-button--ghost { font-size: 12px; padding-inline: 8px; color: var(--apple-secondary); }
 .paper-404-illustration { min-width: 0; }
 .paper-404-footnote { grid-column: 1 / -1; text-align: center; font-size: 10px; letter-spacing: .09em; color: var(--apple-secondary); margin: 48px 0 0; }
 @media (max-width: 880px) {

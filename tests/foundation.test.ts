@@ -49,7 +49,7 @@ describe('foundation integration', () => {
     wrapper.unmount()
   })
   it('passes image alternative text to the viewer and handles errors', async () => {
-    const wrapper=mount(AppleImage, {props:{src:'/test.jpg',alt:'A test image'}})
+    const wrapper=mount(AppleImage, {props:{gallery:{src:'/test.jpg',alt:'A test image'}}})
     expect(wrapper.find('button').attributes('aria-label')).toBe('放大图片：A test image')
     await wrapper.find('img').trigger('error')
     expect(wrapper.text()).toContain('图片无法加载')

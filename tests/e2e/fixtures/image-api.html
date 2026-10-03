@@ -1,0 +1,14 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Image API</title><style>main{padding:24px}figure{width:320px;margin-bottom:20px!important}</style></head><body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+const api = new URLSearchParams(location.search).has('package') ? await import('apptify') : await import('/src/index.ts')
+await import('apptify/style.css')
+const { AppleProvider, AppleImage, createAppleUI } = api
+for (const name of ['AppleImageViewer','InternalImageViewer']) { if (name in api || name in api.components || name in api.overlayComponents) throw new Error('Viewer API exposed: '+name) }
+if (Object.keys(api.components).length !== 66 || Object.keys(api.overlayComponents).length !== 9) throw new Error('Unexpected component registry')
+const images = [{ src:'/images/lake.jpg',alt:'湖泊',title:'清晨' },{ src:'/images/airpods-max-orange.jpg',alt:'耳机' }]
+createApp({data:()=>({index:0,empty:false}),render(){return h(AppleProvider,{motion:'none'},()=>h('main',[
+ h(AppleImage,{id:'single-object',gallery:images[0]}),h(AppleImage,{id:'single-array',gallery:[images[0]],carousel:true}),
+ h(AppleImage,{id:'multi',carousel:true,gallery:this.empty?[]:images,index:this.index,'onUpdate:index':value=>{this.index=value}}),
+ h('output',{id:'index'},String(this.index)),h('button',{id:'select',onClick:()=>{this.index=1}},'选择第二张'),h('button',{id:'empty',onClick:()=>{this.empty=true}},'清空')
+]))}}).use(createAppleUI()).mount('#app')
+</script></body></html>

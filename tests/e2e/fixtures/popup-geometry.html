@@ -1,0 +1,15 @@
+<!doctype html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{margin:0;min-height:1500px} .anchor{position:absolute;width:220px} .scrollport{position:absolute;left:24px;top:24px;width:560px;max-width:calc(100vw - 48px);height:420px;overflow:auto;border:2px solid #888} .canvas{position:relative;width:900px;height:1100px} .transformed{transform:translate(35px,25px);position:relative}
+</style></head><body><div id="app"></div><script type="module">
+import {createApp,h,ref} from 'vue'
+import {createAppleUI,AppleProvider,AppleSelect,AppleAutocomplete,AppleCascader,AppleColorPicker,AppleDatePicker,ApplePopover,AppleMenu,AppleTooltip} from '/src/index.ts'
+const query=new URLSearchParams(location.search),kind=query.get('kind')||'popover'
+const x=ref(240),y=ref(180),height=ref(140),motion=ref(query.get('motion')||'full'),side=ref(query.get('side')||'bottom'),opened=ref(false)
+const nestedValue=ref(null)
+const options=ref(Array.from({length:5},(_,i)=>({label:`Option ${i+1}`,value:i,children:[{label:'Child',value:'child'}]})))
+window.popupHarness={move:(left,top)=>{x.value=left;y.value=top},grow:value=>{height.value=value;options.value=Array.from({length:value>200?12:2},(_,i)=>({label:`Option ${i+1}`,value:i}))},motion:value=>motion.value=value,side:value=>side.value=value,toggle:value=>opened.value=value}
+const component={select:AppleSelect,autocomplete:AppleAutocomplete,cascader:AppleCascader,color:AppleColorPicker,date:AppleDatePicker,time:AppleDatePicker,popover:ApplePopover,menu:AppleMenu,tooltip:AppleTooltip}[kind]
+const popup=()=>h('div',{class:'anchor',style:{left:`${x.value}px`,top:`${y.value}px`}},[h(component,{label:'Open',text:'Helpful tooltip',motion:motion.value,placement:side.value,align:'center',width:220,items:options.value,type:kind==='time'?'time':'datetime-local',...(kind==='popover'?{modelValue:opened.value,'onUpdate:modelValue':v=>opened.value=v}:{})},kind==='tooltip'?{default:()=>h('button',{id:'tooltip-trigger'},'Hover')}:{default:()=>h('div',{style:query.has('nested-field')?{}:{height:`${height.value}px`}},[h('strong','Popup content'),query.has('nested-field')?h(AppleSelect,{label:'Nested field',items:options.value,modelValue:nestedValue.value,'onUpdate:modelValue':v=>nestedValue.value=v}):null,query.has('nested')?h(AppleMenu,{label:'Child menu',placement:'right',items:options.value}):null])})])
+createApp({render(){return h(AppleProvider,{motion:motion.value,class:query.has('transform')?'transformed':''},()=>query.has('scroll')?h('div',{class:'scrollport'},h('div',{class:'canvas'},popup())):popup())}}).use(createAppleUI()).mount('#app')
+</script></body></html>

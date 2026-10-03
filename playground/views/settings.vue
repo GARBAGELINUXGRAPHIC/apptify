@@ -1,6 +1,6 @@
 <template>
   <main class="main-content settings-page">
-    <header class="page-heading"><div><div class="page-kicker">PREFERENCES</div><h1>设置<span>。</span></h1><p>选择喜欢的外观，找到舒服的交互节奏。</p></div></header>
+    <header class="page-heading"><div style="padding: 0 16px"><h1>设置</h1></div></header>
     <section class="settings-section" aria-labelledby="theme-heading">
       <div class="settings-section-heading"><Palette :size="21" aria-hidden="true" /><div><h2 id="theme-heading">主题</h2><p>应用于所有页面，并保存在这台设备上。</p></div></div>
       <div class="theme-picker" role="group" aria-label="选择主题">
@@ -32,7 +32,6 @@
         <apple-auto-size><div class="motion-preview-content"><apple-button @click="apple.notify('这就是当前的交互效果', { tone: 'success' })">轻点一下</apple-button><p v-if="expanded">舒适的颜色，自然的变化。每一个细节，都跟随你的偏好。</p></div></apple-auto-size>
       </div>
     </section>
-    <div class="settings-reset"><span>偏好会自动保存。</span><apple-button variant="ghost" size="small" @click="reset">恢复默认设置</apple-button></div>
     <PageFooter />
   </main>
 </template>

@@ -1,13 +1,14 @@
 {
   "name": "apptify",
-  "version": "0.4.0",
-  "description": "An Apple-inspired, responsive Vue 3 component library with Vuetify ripple.",
+  "version": "0.5.0",
+  "description": "An Apple-inspired, responsive Vue 3 component library.",
   "type": "module",
   "license": "MIT",
   "files": [
     "dist",
     "docs",
-    "tooling"
+    "tooling",
+    "templates/playground"
   ],
   "main": "./dist/apptify.js",
   "module": "./dist/apptify.js",
@@ -32,8 +33,10 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:package": "npm run build && vite build --config vite.consumer.config.ts",
-    "preview": "vite preview --host 127.0.0.1"
+    "test:package": "npm run prepack && vite build --config vite.consumer.config.ts && node tooling/test-playground-package.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "prepare:playground": "node tooling/prepare-playground.mjs",
+    "prepack": "node tooling/prepare-package.mjs"
   },
   "peerDependencies": {
     "vite-plugin-pages": "^0.32.4",
@@ -64,5 +67,8 @@
     "vite-plugin-pages": {
       "optional": true
     }
+  },
+  "bin": {
+    "apptify-playground": "./tooling/create-playground.mjs"
   }
 }

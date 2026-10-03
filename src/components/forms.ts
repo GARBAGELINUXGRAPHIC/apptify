@@ -1,8 +1,8 @@
-import { FieldPopupPlacement, mountFieldPopup, updateFieldPopup } from '../core/popup-placement'
+import { popupTransition, finishPopup, freezePopup } from '../core/popup-motion'
 import { isTouchDevice } from '../core/device'
-import { defineComponent, h, useId, withDirectives, vShow, Transition, type PropType, type Slots, type VNode, type VNodeChild } from 'vue'
+import { defineComponent, h, useId, withDirectives, vShow, type PropType, type Slots, type VNodeChild } from 'vue'
 import { Check, ChevronDown, Eye, EyeOff, LoaderCircle, Minus, Plus, Star, Upload, X } from 'lucide-vue-next'
-import { AppleSelection, motionDuration, ripple } from '../core/motion'
+import { AppleSelection, ripple } from '../core/motion'
 import { appleKey, resolveMotion, type AppleContext } from '../core/context'
 import { AppleAutoSize } from './motion'
 import { AppleDatePicker } from './date-picker'
@@ -60,99 +60,8 @@ function spinner() { return h(LoaderCircle, { size: 18, class: 'apple-control__s
 function numericValue(event: Event) { return Number((event.target as HTMLInputElement).value) }
 function stringValue(event: Event) { return (event.target as HTMLInputElement).value }
 
-const interruptedMenuHeights = new WeakMap<Element, number>()
-function freezeMenu(element: Element, activeClass: string) {
-  const el = element as HTMLElement
-  // Vue clears transition classes (and v-show's display) before cancellation hooks.
-  el.style.display = ''
-  el.classList.add(activeClass)
-  const height = el.getBoundingClientRect().height
-  el.style.height = `${height}px`
-  el.classList.remove(activeClass)
-  return height
-}
-function menuTransition(content: VNodeChild, persisted = false) {
-  return h(Transition, {
-    name: 'apple-field-menu',
-    persisted,
-    onBeforeEnter: (element: Element) => {
-      (element as HTMLElement).style.height = `${interruptedMenuHeights.get(element) ?? 0}px`
-      interruptedMenuHeights.delete(element)
-    },
-    onEnter: (element: Element) => {
-      const el = element as HTMLElement
-      mountFieldPopup(el)
-      const styles = getComputedStyle(el)
-      const border = parseFloat(styles.borderTopWidth) + parseFloat(styles.borderBottomWidth)
-      void el.offsetHeight
-      el.style.height = `${el.scrollHeight + border}px`
-    },
-    onAfterEnter: (element: Element) => { (element as HTMLElement).style.height = '' },
-    onBeforeLeave: (element: Element) => {
-      const el = element as HTMLElement
-      updateFieldPopup(el)
-      el.style.height = `${el.getBoundingClientRect().height}px`
-      void el.offsetHeight
-    },
-    onLeave: (element: Element) => { (element as HTMLElement).style.height = '0px' },
-    onEnterCancelled: (element: Element) => { freezeMenu(element, 'apple-field-menu-enter-active') },
-    onLeaveCancelled: (element: Element) => { interruptedMenuHeights.set(element, freezeMenu(element, 'apple-field-menu-leave-active')) },
-  }, { default: () => content ? withDirectives(content as VNode, [[FieldPopupPlacement]]) : content })
-}
-
-const colorMenuAnimations = new WeakMap<HTMLElement, { animation: Animation; finish: () => void }>()
-function freezeColorMenu(element: Element) {
-  const el = element as HTMLElement
-  const state = colorMenuAnimations.get(el)
-  if (!state) return
-  const styles = getComputedStyle(el)
-  el.style.clipPath = styles.clipPath
-  el.style.transform = styles.transform
-  state.animation.onfinish = null
-  state.animation.cancel()
-  colorMenuAnimations.delete(el)
-  el.style.willChange = ''
-}
-function animateColorMenu(element: Element, opened: boolean, done: () => void) {
-  const el = element as HTMLElement
-  freezeColorMenu(el)
-  mountFieldPopup(el)
-  updateFieldPopup(el)
-  const styles = getComputedStyle(el)
-  const from = { clipPath: styles.clipPath === 'none' ? 'inset(0 0 0% 0)' : styles.clipPath, transform: styles.transform === 'none' ? 'translateY(0px)' : styles.transform }
-  const above = el.dataset.placement === 'top'
-  const to = { clipPath: opened ? 'inset(0 0 0% 0)' : above ? 'inset(100% 0 0 0)' : 'inset(0 0 100% 0)', transform: opened ? 'translateY(0px)' : `translateY(${above ? 8 : -8}px)` }
-  const duration = motionDuration(el)
-  if (!duration || !el.animate) { Object.assign(el.style, to); done(); return }
-  // Reveal the fixed-size panel without laying out the color controls every frame.
-  el.style.willChange = 'clip-path, transform'
-  const animation = el.animate([from, to], { duration, easing: 'cubic-bezier(.2,.65,.3,1)', fill: 'both' })
-  const finish = () => {
-    Object.assign(el.style, to)
-    animation.onfinish = null
-    animation.cancel()
-    colorMenuAnimations.delete(el)
-    el.style.willChange = ''
-    done()
-  }
-  colorMenuAnimations.set(el, { animation, finish })
-  animation.onfinish = finish
-}
-function colorMenuTransition(content: VNodeChild) {
-  const reset = (element: Element) => { const el = element as HTMLElement; el.style.clipPath = ''; el.style.transform = '' }
-  return h(Transition, {
-    css: false, persisted: true,
-    onBeforeEnter: (element: Element) => {
-      const el = element as HTMLElement
-      if (!el.style.clipPath) { el.style.clipPath = 'inset(0 0 100% 0)'; el.style.transform = 'translateY(-6px)' }
-    },
-    onEnter: (element: Element, done: () => void) => { const el = element as HTMLElement; mountFieldPopup(el); if (el.style.clipPath.includes('100%')) { const above = el.dataset.placement === 'top'; el.style.clipPath = above ? 'inset(100% 0 0 0)' : 'inset(0 0 100% 0)'; el.style.transform = `translateY(${above ? 8 : -8}px)` }; animateColorMenu(element, true, done) },
-    onLeave: (element: Element, done: () => void) => animateColorMenu(element, false, done),
-    onAfterEnter: reset, onAfterLeave: reset,
-    onEnterCancelled: freezeColorMenu,
-    onLeaveCancelled: (element: Element) => { (element as HTMLElement).style.display = ''; freezeColorMenu(element) },
-  }, { default: () => content ? withDirectives(content as VNode, [[FieldPopupPlacement]]) : content })
-}
+function menuTransition(content: VNodeChild, persisted = false) { return popupTransition(content, 'apple-field-menu', persisted) }
+function colorMenuTransition(content: VNodeChild) { return popupTransition(content, 'apple-field-menu', true) }
 
 export const AppleInput = defineComponent({
   name: 'AppleInput', inheritAttrs: false,
@@ -354,10 +263,10 @@ export const AppleColorPicker = defineComponent({
   watch: {
     modelValue(value: string) { if (!this.draftDirty && !this.composing) this.draft = value; const next = hexToHsv(value); if (next.s > 0 && next.v > 0) this.hsv.h = next.h; this.hsv.s = next.s; this.hsv.v = next.v },
     disabled(value: boolean) { if (value) this.close() }, loading(value: boolean) { if (value) this.close() },
-    motionMode(mode: string) { if (mode !== 'full') colorMenuAnimations.get(this.$refs.menu as HTMLElement)?.finish() },
+    motionMode(mode: string) { if (mode !== 'full') finishPopup(this.$refs.menu as HTMLElement) },
   },
   mounted() { this.outside = (event: PointerEvent) => { if (!(this.$el as HTMLElement).contains(event.target as Node)) this.close() }; document.addEventListener('pointerdown', this.outside) },
-  beforeUnmount() { this.endPlane(); freezeColorMenu(this.$refs.menu as HTMLElement); if (this.outside) document.removeEventListener('pointerdown', this.outside) },
+  beforeUnmount() { this.endPlane(); freezePopup(this.$refs.menu as HTMLElement); if (this.outside) document.removeEventListener('pointerdown', this.outside) },
   methods: {
     close(restoreFocus = false) { if (restoreFocus) (this.$refs.trigger as HTMLButtonElement)?.focus({ preventScroll: true }); this.opened = false; this.composing = false; this.endPlane() },
     toggle() { if (this.disabled || this.loading) return; if (this.opened) this.close(); else this.opened = true },

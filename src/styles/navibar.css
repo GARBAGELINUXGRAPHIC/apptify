@@ -21,6 +21,7 @@
 .apple-navibar.is-open > .apple-navibar__backdrop { opacity: 1; visibility: visible; transition-delay: 0s; }
 .apple-navibar__menu { position: absolute; inset: 100% 0 auto; overflow: hidden; max-height: calc(100dvh - var(--apple-navibar-height)); visibility: hidden; transition: height var(--apple-duration) var(--apple-ease), visibility 0s var(--apple-duration); }
 .apple-navibar.is-open .apple-navibar__menu { visibility: visible; transition-delay: 0s; }
+.apple-navibar:not(.apple-navibar--fixed) .apple-navibar__menu { visibility: visible; transition: none; }
 .apple-navibar.is-collapsed .apple-navibar__links { display: flex; flex-direction: column; align-items: stretch; gap: 0; max-height: calc(100dvh - var(--apple-navibar-height)); overflow-y: auto; padding: 10px 17px 16px; border-bottom: 1px solid var(--apple-border); background: var(--apple-navibar-surface); }
 .apple-navibar[data-apple-motion=none] .apple-navibar__menu, .apple-navibar[data-apple-motion=none] .apple-navibar__backdrop { transition: none; }
 .apple-navibar[data-apple-motion=reduced] .apple-navibar__menu, .apple-navibar[data-apple-motion=reduced] .apple-navibar__backdrop { transition: none; }

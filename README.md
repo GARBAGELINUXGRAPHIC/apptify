@@ -4,7 +4,7 @@
 
 设计借鉴 Apple 网站的排版、留白、层次与交互节奏；不是 Apple 官方产品，也不声称全部控件都与 Apple 网站逐像素一致。表格、级联选择、验证码、下拉刷新等能力是在同一套视觉语言下的扩展。
 
-当前导出并注册 **67 个组件**：基础 9 个、表单 18 个、内容与移动交互 28 个、弹层 10 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 66 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
+当前导出并注册 **66 个组件**：基础 9 个、表单 18 个、内容与移动交互 28 个、弹层 9 个、动效 2 个。其中 `AppleOverlayHost` 是由 Provider 自动挂载的基础设施，通常直接使用其余 65 个即可。完整实际 API 见 [组件参考](docs/COMPONENTS.md)。
 
 ## 本地运行与安装
 
@@ -19,21 +19,27 @@ npm ci
 npm run dev
 ```
 
-开发服务器地址以终端输出为准。开发页面是可交互的组件工作台，不是组件库的业务页面模板。
+开发服务器地址以终端输出为准。随包提供完整可编辑 playground 应用模板，导航、布局、登录、设置和404均可复用；删掉首页和组件总览即可开始自己的业务页面。见[模板交付说明](docs/PLAYGROUND-TEMPLATE.md)。
 
 在另一个项目中使用本地包：
 
 ```sh
-# 在本仓库构建并生成 apptify-0.1.0.tgz
+# 在本仓库构建并生成 apptify-0.4.0.tgz
 npm run build
 npm pack
 
 # 在消费项目执行，将路径替换为实际包路径
-npm install /absolute/path/apptify/apptify-0.1.0.tgz
+npm install /absolute/path/apptify/apptify-0.4.0.tgz
 npm install vue@^3.5 vuetify@^3.9
 ```
 
 Vue 与 Vuetify 是 peer dependencies。图标使用 `lucide-vue-next`，桌面图片预览的缩放与手势使用 `@panzoom/panzoom`，手机端使用图片边界约束的 Pointer Events 手势。本库没有要求安装 Vuetify 插件或导入其完整样式，也不需要 `<v-app>`。
+
+## 复制完整应用模板
+
+安装本地 tgz 后执行 `npx --no-install apptify-playground ../my-app`，再在新目录执行 `npm install`、`npm run dev`。复制项目携带本地库归档与完整源码/资源，能独立安装、类型检查与构建。目标目录必须为空。
+
+完整步骤、删除示例页面后的导航与路由行为，以及本地打包验收见[模板交付说明](docs/PLAYGROUND-TEMPLATE.md)。组件库的常规接入方式保持可用。
 
 ## 接入应用
 
@@ -312,22 +318,14 @@ notice.update({ message: '同步完成', tone: 'success', duration: 2500 })
 
 ```vue
 <apple-image
-  src="/images/workspace.webp"
-  alt="桌面工作区"
-  :gallery="['/images/workspace.webp', '/images/detail.webp']"
-  :index="0"
+  :gallery="[{ src: '/images/workspace.webp', alt: '桌面工作区' }, { src: '/images/detail.webp', alt: '工作区细节' }]"
+  v-model:index="imageIndex"
   gallery-layout="compact"
 />
 
-<apple-image-viewer
-  v-model="previewOpen"
-  v-model:index="previewIndex"
-  :images="[{ src: '/images/workspace.webp', alt: '桌面工作区' }]"
-  loop
-/>
 ```
 
-示例图片路径需要替换为业务资源。`AppleImage` 默认支持点击预览，可用 `:preview="false"` 关闭。手机端的图片组支持 `gallery-layout="compact"`（固定框内横滑，默认）和 `gallery-layout="tiled"`（横向平铺，溢出时显示随主题变化的圆角滚动条，支持拖动、轨道点击及键盘操作），组内每张预览图都会渲染。省空间（compact）模式桌面触控板支持自由连续横滑，一次手势可跨越多张图片，垂直滚动仍交给页面；快速连续点击翻页会沿当前画面的位置和速度继续。点击小点跨多张时，直接在当前画面和目标图之间滑动一屏，不快速扫过中间图片；小点保持选中目标，连续改选从当前动画画面衔接。预览支持双指缩放与同时平移、双击放大或恢复、松手边界回弹、左右滑动切图、单击或下滑退出，顶部显示序号。手机单击等待 200ms 区分双击；双击围绕点击位置放大至 2 倍，再次双击恢复；拖动、双指操作、切图及关闭会取消等待中的单击。按钮、键盘和静止松手后的切图使用接近小窗横滑的先加速、后减速曲线，时长随移动距离调整；滑动松手仍以带初速度的阻尼曲线延续手势，快速轻扫也能翻页，翻页、缩放和边界回弹均可由下一次触摸接住；循环首尾只移动相邻图片。打开和关闭通过固定尺寸图片的 transform 与裁剪连接原图位置，避免逐帧修改布局尺寸；退出前同步横滑预览的位置，当前缩略图保持黑色占位直到落回。`AppleImage` 统一使用同一组件入口，根据 `navigator.maxTouchPoints` 或 `(any-pointer: coarse)` 判断触屏能力，不按屏幕宽度区分；触屏设备使用手势预览，非触屏设备保留缩放、拖动、旋转、左右按钮与键盘控制。双端共用图片专用的阻尼节奏：打开 360ms、关闭 300ms、双击缩放 300ms，翻页根据剩余距离与松手速度调整；这些时长独立于通用 UI 过渡。桌面端按钮缩放、双击缩放与旋转平滑过渡，拖动可接住缩放中的实际位置，滚轮仍直接跟随输入。减少动态效果时不执行大幅位移或缩放，关闭动效时立即更新。双端预览按钮均使用半透明背景、backdrop blur 和 200% 饱和度。独立 Viewer 可传入 `:origin="index => thumbnailElements[index]"` 接入原位动画。
+示例图片路径需要替换为业务资源。图片来源仅使用 `gallery`：单图可传 `{ src, alt }` 或单元素数组，多图传数组；不再接受顶层 `src`、`alt`。`index` 从 0 开始，默认 0，可用 `v-model:index` 控制；非有限值归零，越界值限制在有效范围，空项忽略，空列表显示占位且不打开预览。单图的小窗与全屏均不显示翻页箭头。`AppleImage` 默认支持点击预览，可用 `:preview="false"` 关闭。手机端的图片组支持 `gallery-layout="compact"`（固定框内横滑，默认）和 `gallery-layout="tiled"`（横向平铺，溢出时显示随主题变化的圆角滚动条，支持拖动、轨道点击及键盘操作），组内每张预览图都会渲染。省空间（compact）模式桌面触控板支持自由连续横滑，一次手势可跨越多张图片，垂直滚动仍交给页面；快速连续点击翻页会沿当前画面的位置和速度继续。点击小点跨多张时，直接在当前画面和目标图之间滑动一屏，不快速扫过中间图片；小点保持选中目标，连续改选从当前动画画面衔接。预览支持双指缩放与同时平移、双击放大或恢复、松手边界回弹、左右滑动切图、单击或下滑退出，顶部显示序号。手机单击等待 200ms 区分双击；双击围绕点击位置放大至 2 倍，再次双击恢复；拖动、双指操作、切图及关闭会取消等待中的单击。按钮、键盘和静止松手后的切图使用接近小窗横滑的先加速、后减速曲线，时长随移动距离调整；滑动松手仍以带初速度的阻尼曲线延续手势，快速轻扫也能翻页，翻页、缩放和边界回弹均可由下一次触摸接住；打开和关闭通过固定尺寸图片的 transform 与裁剪连接原图位置，避免逐帧修改布局尺寸；退出前同步横滑预览的位置，当前缩略图保持黑色占位直到落回。`AppleImage` 统一使用同一组件入口，根据 `navigator.maxTouchPoints` 或 `(any-pointer: coarse)` 判断触屏能力，不按屏幕宽度区分；触屏设备使用手势预览，非触屏设备保留缩放、拖动、旋转、左右按钮与键盘控制。双端共用图片专用的阻尼节奏：打开 360ms、关闭 300ms、双击缩放 300ms，翻页根据剩余距离与松手速度调整；这些时长独立于通用 UI 过渡。桌面端按钮缩放、双击缩放与旋转平滑过渡，拖动可接住缩放中的实际位置，滚轮仍直接跟随输入。减少动态效果时不执行大幅位移或缩放，关闭动效时立即更新。双端预览按钮均使用半透明背景、backdrop blur 和 200% 饱和度。
 
 ## 移动端与边界
 
@@ -350,7 +348,7 @@ notice.update({ message: '同步完成', tone: 'success', duration: 2500 })
 | `sendMessage('showDiag', { title, message })` | 仍可通过当前上下文发送；推荐使用返回独立句柄与 Promise 的 `dialog()`。 |
 | `btn: [{ bgColor, text, clickEvent }]` | **不直接兼容**。简单对话框用 `confirmText` / `cancelText`，复杂交互用声明式 `#footer` 或动态组件。 |
 | `sendMessage('closeDiag')` | 关闭当前上下文最上面的非通知弹层；不会一次关闭全部层。 |
-| `<e-img src squared gallery index>` | 改为 `<apple-image>`，并补上必需的 `alt`；不注册旧 `e-img` 名称。 |
+| `<e-img src squared gallery index>` | 改为 `<apple-image :gallery="{ src, alt }">`，描述放在图片对象内；不注册旧 `e-img` 名称。 |
 
 ## 验证命令
 

@@ -1,4 +1,5 @@
-import { defineComponent, h, markRaw, nextTick, useId, type PropType } from 'vue'
+import { defineComponent, h, markRaw, nextTick, useId, withDirectives, vShow, type PropType } from 'vue'
+import { popupTransition } from '../core/popup-motion'
 import { Menu, X } from 'lucide-vue-next'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
 import type { AppleItem, AppleValue } from './content'
@@ -139,7 +140,10 @@ export const AppleNavibar = defineComponent({
           'aria-controls': `${this.uid}-navigation`, onClick: () => this.setOpen(!this.open),
           onKeydown: (event: KeyboardEvent) => { if (event.key === 'ArrowDown') { event.preventDefault(); this.setOpen(true); void nextTick(this.focusFirst) } },
         }, [h(this.open ? X : Menu, { size: 20, 'aria-hidden': true })]),
-        this.collapsed ? h('div', { class: 'apple-navibar__menu', inert: !this.open || undefined, style: { height: this.open ? `${this.menuHeight}px` : '0px' } }, [navigation]) : null,
+        this.collapsed ? this.fixed
+          ? h('div', { class: 'apple-navibar__menu', inert: !this.open || undefined, style: { height: this.open ? `${this.menuHeight}px` : '0px' } }, [navigation])
+          : popupTransition(withDirectives(h('div', { class: 'apple-navibar__menu', inert: !this.open || undefined }, [navigation]), [[vShow, this.open]]), 'apple-navibar-pop', true, 0)
+          : null,
       ]),
     ])
   },

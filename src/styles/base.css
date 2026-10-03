@@ -135,6 +135,14 @@
   .apple-image:not(.apple-image--mobile)[data-gallery-layout=compact]:hover:where(:not([data-apple-touch] *)) .apple-image__arrows { opacity: 1; }
   .apple-image:not(.apple-image--mobile)[data-gallery-layout=compact]:hover:where(:not([data-apple-touch] *)) .apple-image__arrow { pointer-events: auto; }
 }
+/* Carousel uses the Image strip while keeping its controls available to touch. */
+.apple-image[data-carousel] .apple-image__gallery--compact { gap: 0; }
+.apple-image[data-carousel] .apple-image__gallery > .apple-image__slide { gap: 0; border-radius: 0; }
+.apple-image[data-carousel] .apple-image__arrows { display: flex; opacity: 1; }
+.apple-image[data-carousel] .apple-image__arrows .apple-image__arrow { pointer-events: auto; }
+.apple-image__slide-picture { display: flex; flex: 1; width: 100%; min-height: 0; padding: 0; border: 0; background: transparent; color: inherit; }
+.apple-image__slide-caption { flex: none; width: 100%; padding: 12px 16px; color: var(--apple-text); background: var(--apple-surface); }
+.apple-image__slide-caption p { margin: 4px 0 0; color: var(--apple-secondary); }
 .apple-image__trigger--placeholder { background: #000; }
 .apple-search { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; background: var(--apple-surface-alt); border: 1px solid transparent; border-radius: 8px; color: var(--apple-secondary); }
 .apple-search { transition: background-color var(--apple-fast), border-color var(--apple-fast), box-shadow var(--apple-fast); }

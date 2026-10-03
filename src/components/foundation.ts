@@ -1,7 +1,7 @@
 import { defineComponent, h, markRaw, nextTick, ref, useId, type PropType, type Component, type CSSProperties } from 'vue'
 import { ArrowUpRight, ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
-import { AppleOverlayHost, AppleImageViewer, type AppleViewerImage } from './overlays'
+import { AppleOverlayHost, InternalImageViewer, type AppleViewerImage } from './overlays'
 import { clamp, isTouchImageDevice, touchImageQuery, type PhotoSize } from '../core/image-geometry'
 import { scrollGallery, stopGalleryScroll } from '../core/image-gallery-motion'
 import { GalleryScrollbar } from './gallery-scrollbar'
@@ -90,11 +90,12 @@ export interface AppleImageItem extends Omit<AppleViewerImage, 'src'> {
 }
 
 export const AppleImage = defineComponent({
+  inheritAttrs: false,
   setup: () => ({ uid: useId() }),
   inject: { apple: { from: appleKey, default: null } },
   name: 'AppleImage', props: {
-    ...motionProps, src: { type: String, required: true }, alt: { type: String, required: true },
-    preview: { type: Boolean, default: true }, gallery: { type: Array as PropType<Array<string | AppleImageItem>>, default: () => [] },
+    ...motionProps,
+    preview: { type: Boolean, default: true }, gallery: { type: [Object, Array] as PropType<AppleImageItem | Array<string | AppleImageItem>>, default: () => [] },
     carousel: Boolean, disabled: Boolean, label: { type: String, default: '图片轮播' },
     galleryLayout: { type: String as PropType<'compact' | 'tiled' | 'tiled-wrap'>, default: 'compact' },
     galleryShape: { type: String as PropType<'natural' | 'square'>, default: 'natural' },
@@ -103,7 +104,7 @@ export const AppleImage = defineComponent({
   },
   emits: ['update:index', 'change'],
   data() { return {
-    open: false, previewing: false, failed: false, loaded: false, previewIndex: this.index, mobile: isTouchImageDevice(),
+    open: false, previewing: false, failed: false, loaded: false, previewIndex: Number.isFinite(this.index) ? Math.trunc(this.index) : 0, mobile: isTouchImageDevice(),
     viewportQuery: null as MediaQueryList | null, thumbnails: markRaw(new Map<number, HTMLImageElement>()),
     galleryLoaded: {} as Record<number, boolean>, galleryFailed: {} as Record<number, boolean>,
     gallerySizes: {} as Record<string, PhotoSize>, gallerySnap: null as string | null,
@@ -116,22 +117,27 @@ export const AppleImage = defineComponent({
       const ctx = this.apple as AppleContext | null
       return resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced)
     },
-    images(): AppleViewerImage[] {
-      return this.gallery.length ? this.gallery.map((image, index) => typeof image === 'string'
-        ? { src: image, alt: image === this.src ? this.alt : `图片 ${index + 1}` }
-        : { ...image, src: image.src ?? this.src, alt: image.alt ?? (this.carousel ? image.label : undefined) })
-        : [{ src: this.src, alt: this.alt }]
+    imageItems(): AppleImageItem[] {
+      const items = Array.isArray(this.gallery) ? this.gallery : [this.gallery]
+      return items.flatMap(item => {
+        if (typeof item === 'string') return item.trim() ? [{ src: item }] : []
+        if (!item || typeof item !== 'object') return []
+        if (typeof item.src === 'string' && item.src.trim()) return [item]
+        return this.carousel && (this.$slots.item || item.label || item.description) ? [item] : []
+      })
     },
-    grouped(): boolean { return this.gallery.length > 1 || this.carousel && this.gallery.length > 0 },
+    images(): AppleViewerImage[] {
+      return this.imageItems.map((item, index) => ({ ...item, src: typeof item.src === 'string' ? item.src : '', alt: item.alt ?? item.label ?? `图片 ${index + 1}` }))
+    },
+    grouped(): boolean { return this.images.length > 1 || this.carousel && this.images.length > 0 },
     layout(): 'compact' | 'tiled' | 'tiled-wrap' { return this.carousel ? 'compact' : this.galleryLayout },
   },
   watch: {
     imageMotion(value: string) {
       if (value !== 'full' && this.galleryTarget !== null) this.origin(this.galleryTarget)
     },
-    src() { this.failed = false; this.loaded = false },
     index(value: number) {
-      const index = clamp(value, 0, this.images.length - 1)
+      const index = this.normalizeIndex(value)
       if (index === this.previewIndex) return
       this.previewIndex = index; if (!this.previewing) void nextTick(() => this.origin(index))
     },
@@ -139,11 +145,13 @@ export const AppleImage = defineComponent({
     carousel() { void nextTick(() => this.origin(this.previewIndex)) },
     galleryShape() { void nextTick(() => this.origin(this.previewIndex)) },
     gallery: { deep: true, handler() {
-      this.galleryLoaded = {}; this.galleryFailed = {}; this.previewIndex = clamp(this.previewIndex, 0, this.images.length - 1)
+      this.failed = false; this.loaded = false; this.galleryLoaded = {}; this.galleryFailed = {}; this.previewIndex = this.normalizeIndex(this.previewIndex)
+      if (!this.images.length) this.open = false
       void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery() })
     } },
   },
   mounted() {
+    this.previewIndex = this.normalizeIndex(this.previewIndex)
     this.viewportQuery = window.matchMedia?.(touchImageQuery) ?? null
     this.viewportQuery?.addEventListener('change', this.syncViewport)
     this.syncViewport()
@@ -151,6 +159,7 @@ export const AppleImage = defineComponent({
   },
   beforeUnmount() { this.cancelGalleryScroll(); this.galleryObserver?.disconnect(); this.viewportQuery?.removeEventListener('change', this.syncViewport) },
   methods: {
+    normalizeIndex(value: number): number { return clamp(Number.isFinite(value) ? Math.trunc(value) : 0, 0, Math.max(0, this.images.length - 1)) },
     observeGallery() {
       this.galleryObserver?.disconnect()
       const box = this.$refs.gallery as HTMLElement | undefined
@@ -209,7 +218,7 @@ export const AppleImage = defineComponent({
     },
     showImage(index: number) {
       if (this.previewing || this.disabled) return
-      index = clamp(index, 0, this.images.length - 1)
+      index = this.normalizeIndex(index)
       if (index === this.galleryTarget) return
       const box = this.$refs.gallery as HTMLElement | undefined
       const trigger = box?.children[index] as HTMLElement | undefined
@@ -268,16 +277,16 @@ export const AppleImage = defineComponent({
     galleryKeydown(event: KeyboardEvent) {
       if (this.disabled || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
       event.preventDefault()
-      const index = clamp(event.key === 'Home' ? 0 : event.key === 'End' ? this.images.length - 1 : this.previewIndex + (event.key === 'ArrowRight' ? 1 : -1), 0, this.images.length - 1)
+      const index = this.normalizeIndex(event.key === 'Home' ? 0 : event.key === 'End' ? this.images.length - 1 : this.previewIndex + (event.key === 'ArrowRight' ? 1 : -1))
       this.showImage(index)
       const trigger = (this.$refs.gallery as HTMLElement | undefined)?.children[index] as HTMLElement | undefined
       trigger?.focus({ preventScroll: true })
     },
     previewImage(index: number) {
-      if (this.disabled || this.previewing || performance.now() < this.galleryClickUntil || !this.preview || (this.grouped ? this.galleryFailed[index] : this.failed)) return
+      if (!this.images[index]?.src || this.disabled || this.previewing || performance.now() < this.galleryClickUntil || !this.preview || (this.grouped ? this.galleryFailed[index] : this.failed)) return
       this.cancelGalleryScroll()
       this.syncViewport()
-      this.previewIndex = this.grouped ? index : this.index; this.previewing = true; this.open = true
+      this.previewIndex = this.normalizeIndex(index); this.previewing = true; this.open = true
       const box = this.$refs.gallery as HTMLElement | undefined
       if (box) { this.gallerySnap = box.style.scrollSnapType; box.style.scrollSnapType = 'none' }
     },
@@ -299,24 +308,24 @@ export const AppleImage = defineComponent({
       return size.width && size.height ? size.width / size.height : 1
     },
     slideLabel(index: number): string {
-      const item = this.gallery[index]
+      const item = this.imageItems[index]
       return (typeof item === 'object' ? item.label : undefined) ?? this.images[index]?.title ?? this.images[index]?.alt ?? `图片 ${index + 1}`
     },
     thumbnail(image: AppleViewerImage, index: number) {
       const failed = this.grouped ? this.galleryFailed[index] : this.failed
-      const item = this.gallery[index] ?? image
+      const item = this.imageItems[index] ?? image
       const metadata = typeof item === 'string' ? image as AppleImageItem : item
-      const active = index === clamp(this.previewIndex, 0, this.images.length - 1)
+      const active = index === this.normalizeIndex(this.previewIndex)
       const content = this.carousel ? this.$slots.item?.({ item: metadata, index, active }) : undefined
-      const picture = failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : [h('img', {
+      const picture = failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : image.src ? [h('img', {
         ref: (element: unknown) => { if (element) this.thumbnails.set(index, element as HTMLImageElement); else this.thumbnails.delete(index) },
         src: image.src, alt: image.alt ?? '', loading: this.grouped ? 'eager' : 'lazy', draggable: false,
         width: image.width, height: image.height,
         style: { objectFit: this.squared || this.galleryShape === 'square' ? 'cover' : this.fit },
         onError: () => { if (this.grouped) this.galleryFailed[index] = true; else this.failed = true },
         onLoad: (event: Event) => this.loadedThumbnail(image.src, index, event.target as HTMLImageElement),
-      })]
-      const canPreview = this.preview && !this.disabled && !failed
+      })] : []
+      const canPreview = !!image.src && this.preview && !this.disabled && !failed
       const trigger = h(canPreview ? 'button' : 'div', {
         key: `${index}:${image.src}`, class: this.carousel ? 'apple-image__slide-picture' : 'apple-image__trigger', type: canPreview ? 'button' : undefined,
         'aria-label': canPreview ? `放大图片：${image.alt ?? `图片 ${index + 1}`}` : undefined,
@@ -327,21 +336,23 @@ export const AppleImage = defineComponent({
       return h('div', {
         key: metadata.value ?? `${index}:${image.src}`, class: 'apple-image__trigger apple-image__slide',
         role: 'group', 'aria-roledescription': '幻灯片', 'aria-label': `${index + 1} / ${this.images.length}：${this.slideLabel(index)}`,
-        inert: !active || undefined,
+        inert: !active || undefined, 'aria-hidden': !active || undefined,
       }, content ?? [trigger, metadata.label || metadata.description ? h('div', { class: 'apple-image__slide-caption' }, [metadata.label ? h('strong', metadata.label) : null, metadata.description ? h('p', metadata.description) : null]) : null])
     },
   },
   render() {
-    const index = clamp(this.previewIndex, 0, this.images.length - 1)
+    const index = this.normalizeIndex(this.previewIndex)
+    const { src: _legacySrc, alt: _legacyAlt, ...attrs } = this.$attrs
     const ctx = this.apple as AppleContext | null
     const mode = resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced)
     const ratio = this.squared || this.galleryShape === 'square' ? '1' : String(this.aspectRatio)
     return h('figure', {
-      class: ['apple-image', { 'apple-image--loaded': this.loaded && !this.failed && !this.open, 'apple-image--group': this.grouped, 'apple-image--mobile': this.mobile }],
+      ...attrs,
+      class: ['apple-image', attrs.class, { 'apple-image--loaded': this.loaded && !this.failed && !this.open, 'apple-image--group': this.grouped, 'apple-image--mobile': this.mobile }],
       'data-apple-motion': mode, 'data-gallery-layout': this.grouped ? this.layout : undefined, 'data-carousel': this.carousel || undefined,
       role: this.carousel ? 'region' : undefined, 'aria-roledescription': this.carousel ? '轮播图' : undefined, 'aria-label': this.carousel ? this.label : undefined,
       'data-gallery-shape': this.grouped ? this.squared ? 'square' : this.galleryShape : undefined, 'data-index': index,
-      style: this.grouped ? undefined : { aspectRatio: ratio },
+      style: [attrs.style as CSSProperties, this.grouped ? {} : { aspectRatio: ratio }],
     }, [
       h('div', { class: 'apple-image__surface', style: this.grouped && this.layout === 'compact' ? { aspectRatio: ratio } : undefined, onWheel: this.grouped ? this.galleryWheel : undefined }, [
         this.grouped ? h('div', {
@@ -350,8 +361,8 @@ export const AppleImage = defineComponent({
           style: this.disabled ? { overflowX: 'hidden' } : undefined,
           onScroll: this.scrolled, onKeydown: this.galleryKeydown, onPointerdown: this.galleryPointerDown, onPointermove: this.galleryPointerMove,
           onPointerup: this.galleryPointerUp, onPointercancel: this.galleryPointerUp, onLostpointercapture: this.galleryPointerUp,
-        }, this.images.map((image, i) => this.thumbnail(image, i))) : this.thumbnail({ src: this.src, alt: this.alt }, 0),
-        this.grouped && this.layout === 'compact' ? h('div', { class: 'apple-image__arrows', role: 'group', 'aria-label': '图片翻页' }, [
+        }, this.images.map((image, i) => this.thumbnail(image, i))) : this.images[0] ? this.thumbnail(this.images[0], 0) : h('div', { class: 'apple-image__trigger apple-image__trigger--empty', role: 'img', 'aria-label': '暂无图片' }, [h(ImageOff, { size: 28, 'aria-hidden': true }), h('span', '暂无图片')]),
+        this.images.length > 1 && this.layout === 'compact' ? h('div', { class: 'apple-image__arrows', role: 'group', 'aria-label': '图片翻页' }, [
           h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--prev', 'aria-label': '上一张图片', disabled: this.disabled || index === 0, onClick: () => this.showImage(index - 1) }, h(ChevronLeft, { size: 22, 'aria-hidden': true })),
           h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || index === this.images.length - 1, onClick: () => this.showImage(index + 1) }, h(ChevronRight, { size: 22, 'aria-hidden': true })),
         ]) : null,
@@ -367,7 +378,7 @@ export const AppleImage = defineComponent({
         }, h('span', { 'aria-hidden': true })))),
         h('span', { class: 'apple-image__count', 'aria-live': 'polite', 'aria-atomic': 'true' }, `${index + 1} / ${this.images.length}`),
       ]) : null,
-      h(AppleImageViewer, {
+      h(InternalImageViewer, {
         modelValue: this.open, 'onUpdate:modelValue': (value: boolean) => { this.open = value },
         images: this.images,
         index, motion: this.motion, origin: this.origin,

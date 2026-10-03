@@ -1,4 +1,5 @@
-import { choosePopupSide, applyPopupSide } from '../core/popup-placement'
+import { createPopupPositioner, type PopupPositioner } from '../core/popup-placement'
+import { animatePopup, freezePopup, preparePopup, resetPopup } from '../core/popup-motion'
 import { isTouchDevice } from '../core/device'
 import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import {
@@ -432,19 +433,27 @@ export const ApplePopover = defineComponent({
   },
   emits: ['update:modelValue', 'open', 'close', 'after-close'],
   data: () => ({
-    internalOpen: false, left: 0, top: 0, depth: 0, isTop: false,
+    internalOpen: false, depth: 0, isTop: false,
     disposeLayer: null as (() => void) | null,
     disposePosition: null as (() => void) | null,
     hoverTimer: null as ReturnType<typeof setTimeout> | null,
     positioned: false,
+    positioner: null as PopupPositioner | null,
+    positionPanel: null as HTMLElement | null,
+    interruptedPopup: undefined as number | undefined,
   }),
   computed: {
     opened(): boolean { return !this.disabled && (this.modelValue ?? this.internalOpen) },
   },
-  watch: { opened() { void this.syncLayer() } },
+  watch: {
+    opened() { this.position(); void this.syncLayer() },
+    placement() { this.position() }, align() { this.position() },
+  },
   mounted() { void this.syncLayer() },
   beforeUnmount() {
     this.disposeLayer?.(); this.disposePosition?.()
+    this.positioner?.destroy()
+    if (this.positionPanel) freezePopup(this.positionPanel)
     if (this.hoverTimer) clearTimeout(this.hoverTimer)
   },
   methods: {
@@ -460,55 +469,40 @@ export const ApplePopover = defineComponent({
       if (open) this.setOpen(true)
       else this.hoverTimer = setTimeout(() => { if (!isTouchDevice.value) this.setOpen(false) }, 100)
     },
-    position() {
+    preparePosition(panel: HTMLElement) {
       const anchor = this.$refs.anchor as HTMLElement | undefined
-      const panel = this.$refs.panel as HTMLElement | undefined
-      if (!anchor || !panel) return
-      const rect = anchor.getBoundingClientRect()
-      const popup = panel.getBoundingClientRect()
-      const win = anchor.ownerDocument.defaultView!
-      const gap = 8
-      const side = choosePopupSide(this.placement, rect, { width: panel.offsetWidth, height: panel.offsetHeight }, { width: win.innerWidth, height: win.innerHeight }, gap)
-      applyPopupSide(panel, side, 10)
-      let left = this.align === 'end' ? rect.right - popup.width : this.align === 'center' ? rect.left + (rect.width - popup.width) / 2 : rect.left
-      let top = rect.bottom + gap
-      if (side === 'top') top = rect.top - popup.height - gap
-      if (side === 'left' || side === 'right') {
-        left = side === 'left' ? rect.left - popup.width - gap : rect.right + gap
-        top = rect.top + (rect.height - popup.height) / 2
+      if (!anchor) return
+      if (this.positionPanel !== panel) {
+        this.disposeLayer?.(); this.disposeLayer = null
+        this.disposePosition?.(); this.disposePosition = null
+        this.positioner?.destroy()
+        this.positionPanel = panel
+        this.positioner = createPopupPositioner(panel, { anchor, fixed: true, placement: () => this.placement, align: () => this.align })
       }
-      this.left = Math.max(8, Math.min(left, win.innerWidth - popup.width - 8))
-      this.top = Math.max(8, Math.min(top, win.innerHeight - popup.height - 8))
+      this.position()
+      panel.style.visibility = 'visible'
       this.positioned = true
     },
+    position() { this.positioner?.update() },
     async syncLayer() {
       if (!this.opened) return
       await nextTick()
       const panel = this.$refs.panel as HTMLElement | undefined
       const anchor = this.$refs.anchor as HTMLElement | undefined
       if (!this.opened || !panel || !anchor || this.disposeLayer) return
-      this.position()
+      this.preparePosition(panel)
       this.disposeLayer = registerLayer({
         element: panel, restore: panel.ownerDocument.activeElement as HTMLElement | null,
         close: () => this.setOpen(false), persistent: () => !this.opened, modal: false, trap: this.trapFocus,
         top: (top, depth) => { this.isTop = top; this.depth = depth },
       })
       const doc = panel.ownerDocument
-      const win = doc.defaultView!
       const outside = (event: Event) => {
         if (this.opened && this.isTop && !panel.contains(event.target as Node) && !anchor.contains(event.target as Node)) this.setOpen(false)
       }
-      const position = () => this.position()
-      win.addEventListener('resize', position)
-      doc.addEventListener('scroll', position, true)
       doc.addEventListener('pointerdown', outside, true)
-      const resize = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(position) : undefined
-      resize?.observe(panel); resize?.observe(anchor)
       this.disposePosition = () => {
-        win.removeEventListener('resize', position)
-        doc.removeEventListener('scroll', position, true)
         doc.removeEventListener('pointerdown', outside, true)
-        resize?.disconnect()
       }
       this.$emit('open')
     },
@@ -516,6 +510,7 @@ export const ApplePopover = defineComponent({
       if (this.opened) return
       this.disposeLayer?.(); this.disposeLayer = null
       this.disposePosition?.(); this.disposePosition = null
+      this.positioner?.destroy(); this.positioner = null; this.positionPanel = null
       this.positioned = false
       this.$emit('close')
       this.$emit('after-close')
@@ -537,14 +532,39 @@ export const ApplePopover = defineComponent({
       'data-apple-motion': motion,
       class: ['apple-popover', this.panelClass],
       style: {
-        left: `${this.left}px`, top: `${this.top}px`, zIndex: overlayZIndex(this.depth),
+        zIndex: overlayZIndex(this.depth),
         width: typeof this.width === 'number' ? `${this.width}px` : this.width,
         '--apple-overlay-duration': `${durationOf(motion)}ms`,
         visibility: this.positioned ? 'visible' : 'hidden',
       },
       onMouseenter: () => this.hover(true), onMouseleave: () => this.hover(false),
     }), [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: () => this.setOpen(false) }) })]) : null
-    const popup = portal(this, presence('apple-popover-presence', motion, panel, this.afterClose))
+    const clearMotion = (element: Element) => {
+      element.classList.remove('apple-popover-presence-enter-active', 'apple-popover-presence-leave-active')
+      resetPopup(element)
+    }
+    const popup = portal(this, h(Transition, {
+      css: false, appear: true,
+      onBeforeEnter: (element: Element) => { preparePopup(element, false, this.interruptedPopup); this.interruptedPopup = undefined },
+      onEnter: (element: Element, done: () => void) => {
+        this.preparePosition(element as HTMLElement)
+        element.classList.add('apple-popover-presence-enter-active')
+        animatePopup(element, true, done, false)
+      },
+      onBeforeLeave: () => this.position(),
+      onLeave: (element: Element, done: () => void) => {
+        element.classList.add('apple-popover-presence-leave-active')
+        animatePopup(element, false, done, false)
+      },
+      onAfterEnter: clearMotion,
+      onAfterLeave: (element: Element) => {
+        const value = freezePopup(element)
+        this.interruptedPopup = this.opened ? value : undefined
+        clearMotion(element); this.afterClose()
+      },
+      onEnterCancelled: (element: Element) => { freezePopup(element); clearMotion(element) },
+      onLeaveCancelled: (element: Element) => { freezePopup(element); clearMotion(element) },
+    }, { default: () => panel }))
     return h('span', {
       ref: 'anchor', class: 'apple-popover-anchor',
       onMouseenter: () => this.hover(true), onMouseleave: () => this.hover(false),
@@ -675,7 +695,7 @@ export const AppleActionSheet = defineComponent({
 
 export interface AppleViewerImage { src: string; alt?: string; title?: string; width?: number; height?: number }
 const AppleMobileImageViewer = createMobileImageViewer(registerLayer)
-export const AppleImageViewer = defineComponent({
+export const InternalImageViewer = defineComponent({
   name: 'AppleImageViewer',
   inheritAttrs: false,
   inject: { apple: { from: appleKey, default: undefined } },
@@ -956,5 +976,5 @@ export const AppleImageViewer = defineComponent({
 
 export const overlayComponents = {
   AppleDialog, AppleDrawer, AppleSheet, AppleSnackbar, AppleOverlayHost,
-  ApplePopover, AppleTooltip, AppleMenu, AppleActionSheet, AppleImageViewer,
+  ApplePopover, AppleTooltip, AppleMenu, AppleActionSheet,
 }

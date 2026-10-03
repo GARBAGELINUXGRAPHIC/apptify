@@ -19,11 +19,15 @@ export { isTouchDevice } from './core/device'
 export * from './components/foundation'
 export * from './components/forms'
 export * from './components/content'
-export * from './components/overlays'
+// The image viewer is an implementation detail of AppleImage. Keep the public
+// overlay surface explicit so internal components cannot become package APIs.
+export { AppleDialog, AppleDrawer, AppleSheet, AppleSnackbar, AppleOverlayHost, ApplePopover, AppleTooltip, AppleMenu, AppleActionSheet } from './components/overlays'
+export type { AppleMenuItem, AppleViewerImage } from './components/overlays'
 export * from './components/motion'
 export * from './components/navibar'
 export * from './core/motion'
 
+export { overlayComponents }
 export const components = { ...foundationComponents, ...formComponents, ...contentComponents, ...overlayComponents, ...motionComponents, ...navigationComponents }
 
 export function createAppleUI(options: AppleOptions = {}): AppleContext & { install(app: App): void } {

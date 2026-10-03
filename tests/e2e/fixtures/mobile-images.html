@@ -5,7 +5,9 @@
 <body><div id="app"></div>
 <script type="module">
 import { createApp, h } from 'vue'
-import { createAppleUI, AppleProvider, AppleImage, AppleImageViewer, AppleDialog } from '/src/index.ts'
+import { createAppleUI, AppleProvider, AppleImage, AppleDialog } from '/src/index.ts'
+// White-box fixture for AppleImage's retained internal preview engine.
+import { InternalImageViewer } from '/src/components/overlays.ts'
 const photo = (width, height, color, alt) => ({ src: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="${color}"/><circle cx="${width/2}" cy="${height/2}" r="${Math.min(width,height)/4}" fill="white"/><path d="M0 0L${width} ${height}M${width} 0L0 ${height}" stroke="black" stroke-width="8"/></svg>`), alt })
 const images = [photo(1200,800,'#328baa','横图'),photo(600,1200,'#ae573a','竖图'),photo(900,900,'#63549b','方图'),photo(1600,400,'#427c49','全景'),photo(400,1600,'#b29738','长图')]
 const options = new URLSearchParams(location.search)
@@ -13,10 +15,10 @@ const viewerImages = options.get('count') === '2' ? images.slice(0, 2) : images
 createApp({
   data: () => ({ open: false, index: Number(options.get('index') || 0), dialog: false, visible: true, motion: 'full' }),
   render() { return h(AppleProvider, { motion: this.motion }, () => h('main', [
-    this.visible ? h(AppleImage, { id: 'compact', src: images[0].src, alt: images[0].alt, gallery: images, galleryLayout: 'compact' }) : null,
-    h(AppleImage, { id: 'tiled', src: images[0].src, alt: images[0].alt, gallery: images, galleryLayout: options.get('layout') || 'tiled', galleryShape: options.get('shape') || 'natural', fit: 'contain', aspectRatio: '3/2' }),
+    this.visible ? h(AppleImage, { id: 'compact', gallery: images, galleryLayout: 'compact' }) : null,
+    h(AppleImage, { id: 'tiled', gallery: images, galleryLayout: options.get('layout') || 'tiled', galleryShape: options.get('shape') || 'natural', fit: 'contain', aspectRatio: '3/2' }),
     h('button', { id: 'standalone', onClick: () => { this.open = true } }, '独立预览'),
-    h(AppleImageViewer, { modelValue: this.open, 'onUpdate:modelValue': value => { this.open = value }, index: this.index, 'onUpdate:index': value => { this.index = value }, images: viewerImages, loop: options.has('loop') }),
+    h(InternalImageViewer, { modelValue: this.open, 'onUpdate:modelValue': value => { this.open = value }, index: this.index, 'onUpdate:index': value => { this.index = value }, images: viewerImages, loop: options.has('loop') }),
     h('button', { id: 'remove', onClick: () => { this.visible = false } }, '卸载图片组'),
     h('button', { id: 'none', onClick: () => { this.motion = 'none' } }, '关闭动效'),
     h('button', { id: 'stack', onClick: () => { this.dialog = true } }, '打开上层对话框'),

@@ -13,13 +13,14 @@ describe('live popup placement', () => {
     const anchor = document.createElement('div'), menu = document.createElement('div'); anchor.append(menu); document.body.append(anchor)
     let top = 50
     vi.spyOn(anchor, 'getBoundingClientRect').mockImplementation(() => ({ top, bottom: top + 40, left: 0, right: 200, height: 40, width: 200, x: 0, y: top, toJSON() {} }))
-    Object.defineProperty(menu, 'scrollHeight', { value: 180 }); Object.defineProperty(menu, 'offsetWidth', { value: 200 })
+    Object.defineProperty(menu, 'scrollHeight', { value: 180 }); Object.defineProperty(menu, 'offsetWidth', { value: 200 }); Object.defineProperty(menu, 'offsetHeight', { value: 180 })
     mountFieldPopup(menu)
     expect(menu.dataset.placement).toBe('bottom')
     top = window.innerHeight - 60; document.dispatchEvent(new Event('scroll'))
-    expect(menu.dataset.placement).toBe('top'); expect(menu.style.bottom).toBe('calc(100% + 8px)'); expect(menu.style.getPropertyValue('--apple-popup-y')).toBe('8px')
+    expect(menu.dataset.placement).toBe('top'); expect(parseFloat(menu.style.top)).toBe(top - 180 - 8); expect(menu.style.getPropertyValue('--apple-popup-y')).toBe('8px')
     updateFieldPopup(menu) // same operation used immediately before leave
     expect(menu.dataset.placement).toBe('top')
+    menu.remove()
     ;(FieldPopupPlacement as any).unmounted(menu)
     top = 50; document.dispatchEvent(new Event('scroll'))
     expect(menu.dataset.placement).toBe('top')

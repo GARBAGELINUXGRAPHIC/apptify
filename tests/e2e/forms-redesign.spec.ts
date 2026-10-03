@@ -147,8 +147,14 @@ test('date segments clamp without focus advance, show the time tab, and exclude 
   expect(await selected.evaluate(element => element.getAnimations().some(animation => (animation.effect as KeyframeEffect).getKeyframes().some(frame => 'backgroundColor' in frame)))).toBe(false)
   await date.locator('.apple-calendar__heading').click()
   await date.locator('.apple-calendar__heading').click()
+  // These pointer checks target settled pages. Rapid in-flight reversals are
+  // sampled separately in date-depth.spec.ts without scrolling incoming cells.
+  const waitForPage = () => expect.poll(() => date.locator('.apple-calendar__viewport').evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0)
+  await waitForPage()
   await date.getByRole('button', { name: '2027', exact: true }).click()
+  await waitForPage()
   await date.getByRole('button', { name: '9月', exact: true }).click()
+  await waitForPage()
   const otherYear = date.locator('[data-date="2027-09-26"]')
   await expect(otherYear).not.toHaveClass(/is-selected/)
   await otherYear.hover()

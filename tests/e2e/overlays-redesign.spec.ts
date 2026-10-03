@@ -5,8 +5,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 test('image wheel zoom responds to tiny deltas and preserves its focal point across event batches', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await openComponent(page, 'apple-image-viewer')
-  await page.getByRole('button', { name: '浏览照片', exact: true }).click()
+  await openComponent(page, 'apple-image')
+  await activeCard(page).locator('.apple-image__trigger').first().click()
   const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
   const image = viewer.locator('.apple-viewer-image')
   const canvas = viewer.locator('.apple-viewer-canvas')
@@ -116,10 +116,10 @@ for (const width of [1440, 390]) {
     })
   }
 
-  test(`image viewer uses wheel zoom and fades out without releasing its lock early at ${width}px`, async ({ page }) => {
+  test(`image preview uses wheel zoom and returns to its thumbnail while retaining its lock at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
-    await openComponent(page, 'apple-image-viewer')
-    const trigger = page.getByRole('button', { name: '浏览照片', exact: true })
+    await openComponent(page, 'apple-image')
+    const trigger = activeCard(page).locator('.apple-image__trigger').first()
     await trigger.click()
     const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
     await expect(viewer).toBeVisible()
@@ -147,12 +147,16 @@ for (const width of [1440, 390]) {
     await page.keyboard.press('Escape')
     await expect(page.locator('.apple-viewer-presence-leave-active')).toHaveCount(1)
     expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden')
-    const fading = await viewer.evaluate(async element => {
-      await new Promise(resolve => setTimeout(resolve, 80))
-      return Number(getComputedStyle(element).opacity)
+    // AppleImage supplies an origin: its loaded photo flies back to the
+    // thumbnail, while the panel itself stays opaque until the flight ends.
+    await expect(viewer.locator('.apple-viewer-return-photo')).toHaveCount(1)
+    const returning = await viewer.locator('.apple-viewer-return-photo').evaluate(element => {
+      const animation = element.getAnimations()[0]!
+      const frames = (animation.effect as KeyframeEffect).getKeyframes()
+      return { duration: animation.effect!.getTiming().duration, from: frames[0]!.transform, to: frames.at(-1)!.transform }
     })
-    expect(fading).toBeGreaterThan(0)
-    expect(fading).toBeLessThan(1)
+    expect(returning.duration).toBe(300)
+    expect(returning.from).not.toBe(returning.to)
     await expect(viewer).toHaveCount(0)
     expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden')
     await expect(trigger).toBeFocused()
