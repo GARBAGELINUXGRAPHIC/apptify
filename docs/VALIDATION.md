@@ -10,7 +10,7 @@
 - WebKit 390px、触屏/移动视口模拟验证了输入、叠层弹窗、滚动锁、图片加载与翻页以及系统减少动态效果。
 - `npm run test:package`：TypeScript 检查、展示站构建、ESM 库构建、声明生成，以及通过包名 `apptify` 和 `apptify/style.css` 导入的独立消费示例均通过。消费者使用纯 JavaScript Options API，不要求 TypeScript。
 - `npm audit`：本次锁文件检查为 0 项已知漏洞。此结果仅代表当时的软件漏洞数据库。
-- 未发布到 npm；旧 tgz 是整改前版本，当前源码需重新 `npm pack`。演示图片不进入组件库安装包。
+- 此节为 2026-09-26 的历史记录。当前包已发布；模板与示例图片随包分发，最新源码需重新 `npm pack`。
 
 ## 回归修复
 

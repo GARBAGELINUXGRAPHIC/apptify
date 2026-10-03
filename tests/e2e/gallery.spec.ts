@@ -81,8 +81,6 @@ test('manual motion levels and operating-system reduced motion stop continuous a
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-motion', 'reduced')
   await expect.poll(() => page.locator('.apple-spinner svg').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
-  await openComponent(page, 'apple-marquee')
-  await expect.poll(() => page.locator('.apple-marquee__track').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
 })
 
 for (const width of [1440, 320]) {

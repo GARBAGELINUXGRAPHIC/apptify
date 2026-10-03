@@ -15,6 +15,18 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 - 内容选项类型为 `AppleItem = { label; value; disabled?; description?; href?; content? }`；`value` 为唯一的 `string | number`。
 - 组件并非 Vuetify 同名组件的透传包装。只依赖这里声明的接口，不假设任意 `v-*` prop、slot 或事件都可直接使用。
 
+## Glass 通用样式
+
+导入 `apptify/style.css` 后，在 `<apple-provider>` 内给自定义元素添加 `.apple-glass`，即可应用跟随主题和全局 glass 设置的背景、文字颜色与背景模糊：
+
+```vue
+<apple-provider>
+  <div class="apple-glass">自定义玻璃面板</div>
+</apple-provider>
+```
+
+该类只提供材质与文字颜色，间距、圆角、边框和阴影由使用方设置。Provider 外使用默认浅色材质；Provider 内跟随 `glass.opacity` 与 `glass.blur` 配置。
+
 ## 动效组件 · 2
 
 | 组件 | Props | 说明 |
@@ -33,7 +45,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleProvider` | `theme?: string`、`motion?: auto/full/reduced/none` | default slot；应用主题并自动挂载弹层宿主。无显式属性时复用插件上下文。 |
 | `AppleButton` | M；`variant=primary`（primary/secondary/outline/ghost/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot。纯图标按钮须提供 label。只有允许完整动效时启用 Ripple。 |
 | `AppleLink` | `href`、`external`、`disabled` | default slot；external 使用新窗口并设置 `noopener noreferrer`。 |
-| `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=small`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
+| `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=none`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
 | `AppleImage` | M；`gallery: AppleImageItem | (string/AppleImageItem)[]`（唯一来源，默认空数组，单图可传对象）；`preview=true`、`carousel=false`、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、常显控件且保留自由滚动；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，桌面触控板支持自由连续横滑、一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 不缩放，多图显示左右翻页按钮（单图小窗与全屏均无翻页箭头），跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
 | `AppleContainer` | `width=1200`（number/string） | default slot；数字宽度按 px，宽度不会超过可用空间。 |
@@ -111,7 +123,6 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `AppleInfiniteScroll` | `loading`、`error: boolean/string`、`finished`、`disabled`、`distance=120`、`finishedText` | `load(done)`、`retry(done)`；default slot；IntersectionObserver 及手动加载按钮；完成后调用 done，或令 loading 从 true 回到 false。 |
 | `AppleBackTop` | `target: CSS selector=''`、`threshold=300`、`label`、`disabled` | `click(event)`；default slot；空 target 使用 window，达到滚动阈值才显示。 |
 | `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区。 |
-| `AppleMarquee` | `text`、`duration=24`、`paused`、`label` | default slot；duration 单位为秒；带暂停按钮；减少动态效果时停止连续滚动。 |
 | `AppleStatistic` | 必填 `label`；`value: string/number`、`prefix`、`suffix`、`precision=0`、`locale=zh-CN`、`description` | default slot；数值本地化格式，不会自动请求统计数据。 |
 
 `AppleColumn = { key: string; label: string; sortable?: boolean; align?: 'left'|'center'|'right'; width?: number|string; minWidth?: number; maxWidth?: number; resizable?: boolean }`。表格 rows 应提供稳定唯一的 `rowKey`。
@@ -199,7 +210,7 @@ Modal slots：`title`、default `{close}`、footer `{close,confirm,cancel}`。�
 
 `OverlayOptions` 实际字段为 `kind?`、`title?`、`message?`、`component?`、`props?`、`onMessage?`、`persistent?`、`confirmText?`、`cancelText?`、`tone?`、`duration?`。不要把声明式组件的 width、loading、action 等属性假定成当前服务参数；需要这些控制时使用声明式组件或自定义内容。
 
-返回的 `OverlayHandle<T>` 为 `{ id, close(value?), update(patch), result: Promise<T | undefined> }`。`props` 传给动态内容组件；宿主额外注入 `close` 和 `sendMessage`。`onMessage(channel,payload)` 可返回普通值或 Promise，实现双向请求与响应，示例见 [README](../README.md#dialog-与反向通道)。
+返回的 `OverlayHandle<T>` 为 `{ id, close(value?), update(patch), result: Promise<T | undefined> }`。`props` 传给动态内容组件；宿主额外注入 `close` 和 `sendMessage`。`onMessage(channel,payload)` 可返回普通值或 Promise，实现双向请求与响应。
 
 ## 验证边界
 

@@ -1,4 +1,4 @@
-import { defineComponent, h, markRaw, nextTick, ref, useId, type PropType, type Component, type CSSProperties } from 'vue'
+import { defineComponent, h, markRaw, nextTick, ref, useId, type PropType, type CSSProperties } from 'vue'
 import { ArrowUpRight, ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, InternalImageViewer, type AppleViewerImage } from './overlays'
@@ -6,6 +6,8 @@ import { clamp, isTouchImageDevice, touchImageQuery, type PhotoSize } from '../c
 import { scrollGallery, stopGalleryScroll } from '../core/image-gallery-motion'
 import { GalleryScrollbar } from './gallery-scrollbar'
 import { AppleButton } from './button'
+import AppleCard from './AppleCard.vue'
+export { AppleCard }
 export { AppleButton } from './button'
 
 const providerKey: symbol = Symbol('apple-provider-scope')
@@ -57,30 +59,6 @@ export const AppleLink = defineComponent({
   render() { return h('a', { class: 'apple-link', href: this.disabled ? undefined : this.href, target: this.external ? '_blank' : undefined, rel: this.external ? 'noopener noreferrer' : undefined, 'aria-disabled': this.disabled || undefined }, [this.$slots.default?.(), this.external ? h(ArrowUpRight, { size: 14, 'aria-hidden': true }) : null]) },
 })
 
-export const AppleCard = defineComponent({
-  name: 'AppleCard', inject: { apple: { from: appleKey, default: null } },
-  props: {
-    ...motionProps, title: String, subtitle: String, text: String, eyebrow: String,
-    icon: [Object, Function, String] as PropType<Component | string>, iconColor: String,
-    image: String, imageAlt: { type: String, default: '' }, href: String,
-    zoom: { type: String as PropType<'big' | 'small' | 'none'>, default: 'small' },
-    shadow: { type: String as PropType<'normal' | 'static' | 'focused' | 'none'>, default: 'normal' },
-  },
-  render() {
-    const ctx = this.apple as AppleContext | null
-    const mode = resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced)
-    return h('article', { class: ['apple-card', `apple-card--shadow-${this.shadow}`, `apple-card--zoom-${this.zoom}`], 'data-apple-motion': mode }, [
-      this.$slots.media?.() ?? (this.image ? h('img', { class: 'apple-card__image', src: this.image, alt: this.imageAlt, loading: 'lazy' }) : null),
-      h('div', { class: 'apple-card__body' }, [
-        this.eyebrow ? h('p', { class: 'apple-card__eyebrow' }, this.eyebrow) : null,
-        h('div', { class: 'apple-card__heading' }, [this.$slots.icon?.() ?? (this.icon ? (typeof this.icon === 'string' ? h('img', { src: this.icon, alt: '', width: 32, height: 32 }) : h(this.icon, { size: 32, color: this.iconColor, 'aria-hidden': true })) : null), this.$slots.title?.() ?? (this.title ? h('h3', this.href ? h('a', { href: this.href }, this.title) : this.title) : null)]),
-        this.subtitle ? h('p', { class: 'apple-card__subtitle' }, this.subtitle) : null,
-        this.text ? h('p', { class: 'apple-card__text' }, this.text) : null,
-        this.$slots.default?.(), this.$slots.actions ? h('div', { class: 'apple-card__actions' }, this.$slots.actions()) : null,
-      ]),
-    ])
-  },
-})
 
 export interface AppleImageItem extends Omit<AppleViewerImage, 'src'> {
   src?: string

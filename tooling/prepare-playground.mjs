@@ -3,6 +3,8 @@ import { basename, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
 
+import { prepareInputSource } from './prepare-input-source.mjs'
+await prepareInputSource()
 const root = fileURLToPath(new URL('../', import.meta.url))
 const output = join(root, 'templates/playground')
 const library = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
@@ -12,6 +14,9 @@ const copyOptions = { recursive: true, filter: source => basename(source) !== '.
 await cp(join(root, 'playground'), join(output, 'playground'), copyOptions)
 await cp(join(root, 'public'), join(output, 'public'), copyOptions)
 await cp(join(root, 'index.html'), join(output, 'index.html'))
+await mkdir(join(output, 'tooling'), { recursive: true })
+await cp(join(root, 'tooling/prepare-input-source.mjs'), join(output, 'tooling/prepare-input-source.mjs'))
+await cp(join(root, 'tooling/playground-editor.mjs'), join(output, 'tooling/playground-editor.mjs'))
 
 const snapshot = { createdAt: new Date().toISOString(), libraryVersion: library.version, files: {} }
 async function record(directory) {
@@ -32,6 +37,7 @@ async function adapt(directory) {
       let source = await readFile(path, 'utf8')
       source = source.replace(/(['"])(?:\.\.\/)+src(?:\/(?:index|core\/motion|core\/context|components\/content))?\1/g, "'apptify'")
       if (/(['"])(?:\.\.\/)+src(?:\/[^'"]*)?\1/.test(source)) throw new Error('Unmapped private library import: ' + path)
+      if (path === join(output, 'playground/editor/runtime.ts')) source = "import 'apptify/style.css'\n" + source
       if (entry.name === 'main.ts') source = "import 'apptify/style.css'\n" + source
       if (path === join(output, 'playground/App.vue')) {
         const navigationEnd = ']\n\nfunction navigate'
@@ -57,7 +63,7 @@ const manifest = {
     'vue-router': library.devDependencies['vue-router'], vuetify: library.peerDependencies.vuetify,
     'lucide-vue-next': library.dependencies['lucide-vue-next'],
   },
-  devDependencies: Object.fromEntries(['@vitejs/plugin-vue', 'typescript', 'vite', 'vite-plugin-pages', 'vue-tsc'].map(name => [name, library.devDependencies[name]])),
+  devDependencies: Object.fromEntries(['@vitejs/plugin-vue', 'typescript', 'vite', 'vite-plugin-pages', 'vue-tsc', '@vue/repl', 'es-module-shims', 'esbuild', 'postcss'].map(name => [name, library.devDependencies[name]])),
 }
 await writeFile(join(output, 'package.json'), JSON.stringify(manifest, null, 2) + '\n')
 const tsconfig = JSON.parse(await readFile(join(root, 'tsconfig.json'), 'utf8'))
@@ -67,9 +73,11 @@ await writeFile(join(output, 'vite.config.ts'), [
   "import { defineConfig } from 'vite'",
   "import vue from '@vitejs/plugin-vue'",
   "import apptifyRoutes from 'apptify/vite'",
+  "import playgroundEditor from './tooling/playground-editor.mjs'",
   '',
   'export default defineConfig({',
-  "  plugins: [apptifyRoutes({ dirs: [{ dir: 'playground/views', baseRoute: '' }] }), vue()],",
+  "  optimizeDeps: { exclude: ['@vue/repl'] },",
+  "  plugins: [playgroundEditor(), apptifyRoutes({ dirs: [{ dir: 'playground/views', baseRoute: '' }] }), vue()],",
   "  server: { host: '127.0.0.1' },",
   "  build: { outDir: 'dist' },",
   '})', '',
@@ -77,14 +85,27 @@ await writeFile(join(output, 'vite.config.ts'), [
 // npm excludes .gitignore from tarballs; the copy command restores its dot.
 await writeFile(join(output, 'gitignore'), 'node_modules/\ndist/\n.env.local\n')
 await writeFile(join(output, 'README.md'), [
-  '# Apptify 可编辑应用模板', '',
-  '完整源码位于 playground/，静态图片与来源说明位于 public/images/。导航、账号/登录、设置、404 和页面动效均可直接编辑复用。', '',
-  '通过 apptify-playground 复制命令创建时，vendor/ 包含本地组件库 tgz，package.json 使用相对 file: 依赖；移动整个项目后仍可独立安装。', '',
-  '运行 npm install、npm run typecheck、npm run build；开发使用 npm run dev。请使用 Node.js 22 或 24 LTS。', '',
-  '开始业务开发可直接删除 playground/views/index.vue 和 playground/views/components.vue，再添加自己的页面；文件路由自动生成，导航自动隐藏已删除页面，品牌链接回到第一个保留的导航页面。删除页面后重启开发服务。', '',
-  '导航项在 playground/App.vue 的 navigation 数组；页面文件在 playground/views/；布局和账号入口在 App.vue 与 playground/components/UserMenu.vue。', '',
-  '设置保留主题、动效与玻璃偏好。404 在 playground/views/[...all].vue；首页和组件总览没有被其他页面硬导入。ComponentDemo.vue、catalog.ts 和 ComponentIndex.vue 可以保留，也可在删除总览页后按需删除。', '',
-  '登录、注册、忘记密码、邮箱验证码仍为 UI 演示入口，需要接入自己的后端。部署采用 history 路由，服务器应把未知页面路径回退到 index.html。', '',
-  '若手工复制包内 templates/playground，先将 package.json 的 apptify 依赖替换为实际本地 tgz 路径，或安装自己的正式发布版本；当前项目尚未发布 npm。', '',
+  "# Apptify 应用模板",
+  "",
+  "可编辑的 Vue 应用，包含导航、账号表单、外观设置、404 与组件示例。建议 Node.js 22 或 24 LTS。",
+  "",
+  "```sh",
+  "npm install",
+  "npm run dev",
+  "```",
+  "",
+  "检查：`npm run typecheck`、`npm run build`。",
+  "",
+  "- 页面：`playground/views/`，文件路由自动生成。",
+  "- 布局与导航：`playground/App.vue` 的 `navigation` 数组。",
+  "- 账号表单：`playground/components/UserMenu.vue`，需要接入自己的后端。",
+  "- 样式：`playground/style.css`；图片与来源：`public/images/`。",
+  "",
+  "可删除 `views/index.vue` 和 `views/components.vue`，再添加业务页面；删除后重启开发服务。删除组件总览后，可一并删除 `ComponentDemo.vue`、`catalog.ts` 和 `components/ComponentIndex.vue`。",
+  "",
+  "复制命令在 `vendor/` 保存库归档，移动整个项目后仍可独立安装。使用 npm 更新库：`npm install apptify@latest`。手工复制模板时，将 `gitignore` 重命名为 `.gitignore`。",
+  "",
+  "部署时将页面请求回退到 `index.html`，保留 API 与静态资源路由。",
+  "",
 ].join('\n'))
 console.log('Prepared editable playground template: ' + output)

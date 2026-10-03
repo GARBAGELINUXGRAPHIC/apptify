@@ -1,5 +1,5 @@
 import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, useId, withDirectives, type PropType, type VNodeChild } from 'vue'
-import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, Pause, Play, X } from 'lucide-vue-next'
+import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, X } from 'lucide-vue-next'
 import { Virtualizer, elementScroll, observeElementOffset, observeElementRect, type VirtualizerOptions } from '@tanstack/virtual-core'
 import { ripple } from '../core/motion'
 import { AppleTabs, AppleTabBar } from './tabs'
@@ -546,15 +546,9 @@ export const AppleFloatingGroup = defineComponent({
   },
 })
 
-export const AppleMarquee = defineComponent({
-  name: 'AppleMarquee', props: { ...motionProps, text: { type: String, default: '' }, duration: { type: Number, default: 24 }, paused: Boolean, label: { type: String, default: '公告' } },
-  data: () => ({ userPaused: false }),
-  render() { const paused = this.paused || this.userPaused; return h('div', { class: ['apple-marquee', { 'is-paused': paused }], style: { '--apple-marquee-duration': `${Math.max(1, this.duration)}s` }, 'data-motion': this.motion }, [h('div', { class: 'apple-marquee__viewport', 'aria-label': this.label }, h('div', { class: 'apple-marquee__track' }, [h('span', this.$slots.default?.() ?? this.text), h('span', { 'aria-hidden': 'true', inert: true }, this.$slots.default?.() ?? this.text)])), h('button', { type: 'button', class: 'apple-content-icon-button', 'aria-label': paused ? '开始滚动' : '暂停滚动', 'aria-pressed': !paused, disabled: this.paused, onClick: () => { this.userPaused = !this.userPaused } }, icon(paused ? Play : Pause, 16))]) },
-})
-
 export const AppleStatistic = defineComponent({
   name: 'AppleStatistic', props: { ...motionProps, value: { type: [String, Number], default: 0 }, label: { type: String, required: true }, prefix: String, suffix: String, precision: { type: Number, default: 0 }, locale: { type: String, default: 'zh-CN' }, description: String },
   render() { const value = typeof this.value === 'number' ? this.value.toLocaleString(this.locale, { minimumFractionDigits: Math.max(0, Math.min(20, this.precision)), maximumFractionDigits: Math.max(0, Math.min(20, this.precision)) }) : this.value; return h('div', { class: 'apple-statistic', 'data-motion': this.motion }, [h('div', { class: 'apple-statistic__label' }, this.label), h('div', { class: 'apple-statistic__value' }, [this.prefix ? h('span', this.prefix) : null, h('strong', value), this.suffix ? h('span', this.suffix) : null]), this.description ? h('p', this.description) : null, this.$slots.default?.()]) },
 })
 
-export const contentComponents = { AppleTabs, AppleTabBar, AppleBreadcrumbs, ApplePagination, AppleAccordion, AppleTable, AppleTree, AppleList, AppleAvatar, AppleAvatarGroup, AppleBadge, AppleTag, AppleAlert, AppleProgress, AppleSpinner, AppleSkeleton, AppleEmpty, AppleDivider, AppleSteps, AppleTimeline, ApplePullRefresh, AppleInfiniteScroll, AppleBackTop, AppleFloatingGroup, AppleMarquee, AppleStatistic }
+export const contentComponents = { AppleTabs, AppleTabBar, AppleBreadcrumbs, ApplePagination, AppleAccordion, AppleTable, AppleTree, AppleList, AppleAvatar, AppleAvatarGroup, AppleBadge, AppleTag, AppleAlert, AppleProgress, AppleSpinner, AppleSkeleton, AppleEmpty, AppleDivider, AppleSteps, AppleTimeline, ApplePullRefresh, AppleInfiniteScroll, AppleBackTop, AppleFloatingGroup, AppleStatistic }

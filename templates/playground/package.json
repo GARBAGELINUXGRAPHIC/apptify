@@ -10,7 +10,7 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
-    "apptify": "^0.5.0",
+    "apptify": "^0.5.1",
     "vue": "^3.5.0",
     "vue-router": "^4.6.4",
     "vuetify": "^3.9.0",
@@ -21,6 +21,10 @@
     "typescript": "^5.8.2",
     "vite": "^6.3.4",
     "vite-plugin-pages": "^0.32.5",
-    "vue-tsc": "^2.2.8"
+    "vue-tsc": "^2.2.8",
+    "@vue/repl": "4.7.2",
+    "es-module-shims": "^2.8.4",
+    "esbuild": "^0.25.12",
+    "postcss": "^8.5.28"
   }
 }

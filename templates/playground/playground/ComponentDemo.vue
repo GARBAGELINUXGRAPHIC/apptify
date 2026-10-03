@@ -43,7 +43,7 @@
     <apple-stack v-else-if="name === 'AppleGrid'">
       <apple-slider v-model="gridMin" label="最小列宽" :min="120" :max="320" :step="40" />
       <apple-grid :min="gridMin" :gap="16">
-        <div v-for="(section, index) in layoutItems" :key="section" class="demo-layout-tile"><span>0{{ index + 1 }}</span><strong>{{ section }}</strong></div>
+        <apple-card v-for="(section, index) in layoutItems" :key="section" class="demo-layout-tile"><span>0{{ index + 1 }}</span><strong>{{ section }}</strong></apple-card>
       </apple-grid>
     </apple-stack>
     <apple-card v-else-if="name === 'AppleCard'" class="demo-product" title="AirPods Max" subtitle="每个音符，都更动听。" eyebrow="声音，出类拔萃。">
@@ -125,7 +125,7 @@
     <apple-pull-refresh v-else-if="name === 'ApplePullRefresh'" @refresh="refresh"><apple-list :items="[{label:'最新内容',value:'latest',description:refreshText},{label:'最近更新',value:'recent',description:'所有内容已同步'}]" /></apple-pull-refresh>
     <apple-infinite-scroll v-else-if="name === 'AppleInfiniteScroll'" :finished="itemsCount >= 12" @load="loadMore"><apple-list :items="Array.from({length:itemsCount}, (_, i) => ({label:`灵感收藏 ${i+1}`, value:i, description:'刚刚更新'}))" /></apple-infinite-scroll>
     <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.ArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" :fixed="false" /></template>
-    <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-provider class="demo-floating-preview"><apple-floating-group :threshold="0"><apple-button icon-only :icon="icons.Plus" label="添加收藏" @click="notify('已加入收藏')" /><apple-button variant="secondary" icon-only :icon="icons.Bell" label="查看通知" @click="notify('暂无新通知')" /></apple-floating-group></apple-provider></template>
+    <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-provider><apple-card class="demo-floating-preview"><apple-floating-group :threshold="0"><apple-button icon-only :icon="icons.Plus" label="添加收藏" @click="notify('已加入收藏')" /><apple-button variant="secondary" icon-only :icon="icons.Bell" label="查看通知" @click="notify('暂无新通知')" /></apple-floating-group></apple-card></apple-provider></template>
     <apple-stack v-else-if="name === 'AppleAutoSize'"><apple-switch v-model="checked" label="显示详情" /><apple-auto-size><apple-list :items="checked ? settings : settings.slice(0,1)" selectable /></apple-auto-size></apple-stack>
     <apple-stack v-else-if="name === 'AppleTransition'">
       <apple-segmented-control v-model="period" :items="periods" label="统计周期" />
@@ -135,7 +135,6 @@
         </apple-transition>
       </div>
     </apple-stack>
-    <apple-marquee v-else-if="name === 'AppleMarquee'" text="你的新设备已准备就绪，今天就开始探索更多可能。" />
   </div>
 </template>
 

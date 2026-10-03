@@ -5,7 +5,7 @@ async function geometry(panel: Locator) {
   return panel.evaluate(element => {
     const el = element as HTMLElement, rect = el.getBoundingClientRect(), css = getComputedStyle(el)
     const matrix = new DOMMatrix(css.transform)
-    return { side: el.dataset.placement, x: rect.left - matrix.m41, y: rect.top - matrix.m42, right: rect.right - matrix.m41, bottom: rect.bottom - matrix.m42, width: rect.width, height: rect.height, dx: matrix.m41, dy: matrix.m42, clip: css.clipPath }
+    return { side: el.dataset.placement, x: rect.left - matrix.m41, y: rect.top - matrix.m42, right: rect.right - matrix.m41, bottom: rect.bottom - matrix.m42, width: rect.width, height: rect.height, dx: matrix.m41, dy: matrix.m42, clip: css.clipPath, opacity: Number(css.opacity) }
   })
 }
 async function closeFrames(page: Page, anchorSelector: string, scrollDuringLeave = false) {
@@ -21,7 +21,7 @@ async function closeFrames(page: Page, anchorSelector: string, scrollDuringLeave
       await new Promise(requestAnimationFrame)
       if (!el.isConnected || getComputedStyle(el).display === 'none') break
       const css = getComputedStyle(el), m = new DOMMatrix(css.transform), p = el.getBoundingClientRect(), a = anchor.getBoundingClientRect()
-      frames.push({ side: el.dataset.placement, dx: m.m41, dy: m.m42, top: p.top - m.m42, bottom: p.bottom - m.m42, anchorTop: a.top, anchorBottom: a.bottom, clip: css.clipPath })
+      frames.push({ side: el.dataset.placement, dx: m.m41, dy: m.m42, top: p.top - m.m42, bottom: p.bottom - m.m42, anchorTop: a.top, anchorBottom: a.bottom, clip: css.clipPath, opacity: Number(css.opacity) })
     }
     return frames
   }, { panelSelector, anchorSelector, scrollDuringLeave })
@@ -182,7 +182,7 @@ for (const width of [390,1280]) test(`real Time picker switches format, flips an
   await trigger.evaluate(el => window.scrollBy({top:el.getBoundingClientRect().top-800,behavior:'instant'})); await page.waitForTimeout(80)
   expect((await geometry(panel)).bottom).toBeLessThan((await trigger.boundingBox())!.y)
   const frames = await closeFrames(page,'#apple-date-picker .apple-field__icon')
-  expect(frames.some(f=>f.dy>0 && f.clip.startsWith('inset('))).toBe(true)
+  expect(frames.some(f=>f.dy>0 && f.clip==='none' && f.opacity<1)).toBe(true)
 })
 
 test('real inline Navibar flips above the bar, closes from that edge and resets on resize', async ({ page }) => {
@@ -194,8 +194,10 @@ test('real inline Navibar flips above the bar, closes from that edge and resets 
   const p=await geometry(panel), b=(await bar.boundingBox())!
   expect(p.side).toBe('top');expect(Math.abs(p.bottom-b.y)).toBeLessThan(1)
   await trigger.evaluate(el=>(el as HTMLElement).click());await page.waitForTimeout(50)
-  const clip=(await geometry(panel)).clip
-  expect(parseFloat(clip.slice(6))).toBeGreaterThan(0)
+  const closing=await geometry(panel)
+  expect(closing.clip).toBe('none')
+  expect(closing.opacity).toBeGreaterThan(0)
+  expect(closing.opacity).toBeLessThan(1)
   await expect(panel).toBeHidden()
   await trigger.evaluate(el=>(el as HTMLElement).click()); await page.waitForTimeout(50)
   await page.setViewportSize({width:1440,height:900});await page.waitForTimeout(350)
@@ -230,7 +232,7 @@ for (const kind of ['select','autocomplete','date','color','popover']) test(`${k
     const selector=kind==='popover'?'.apple-popover-anchor button':kind==='date'?'.apple-date-input .apple-field__icon':kind==='color'?'.apple-color-picker':'[role=combobox]'
     const trigger=document.querySelector<HTMLElement>(selector)!
     const panel=()=>document.querySelector<HTMLElement>('.apple-popover, .apple-date-menu, .apple-field-menu')!
-    const fraction=()=>{const css=getComputedStyle(panel());if(kind==='popover')return Number(css.opacity);if(css.clipPath==='none')return 1;const parts=css.clipPath.slice(6,-1).split(/\s+/).map(parseFloat);return 1-(parts[0]!+(parts[2]??parts[0]!))/100}
+    const fraction=()=>Number(getComputedStyle(panel()).opacity)
     trigger.focus({preventScroll:true});trigger.click();await new Promise(resolve=>setTimeout(resolve,350))
     trigger.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await new Promise(resolve=>setTimeout(resolve,65))
     const before=fraction()

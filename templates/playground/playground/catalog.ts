@@ -8,7 +8,7 @@ export const catalog: CatalogItem[] = [
   item('AppleContainer', '内容容器', '基础', '在不同屏幕上保留合适的内容宽度。', 'width(number|string) | slot: default', '<apple-container :width="960">\n  <apple-stack>内容</apple-stack>\n</apple-container>'),
   item('AppleStack', '弹性布局', '基础', '有序排列，自然换行。', 'direction(row|column) · gap · align · wrap | slot: default', '<apple-stack direction="row" :gap="16" align="center">\n  <apple-button>继续</apple-button>\n  <apple-button variant="secondary">取消</apple-button>\n</apple-stack>'),
   item('AppleGrid', '网格布局', '基础', '让列数随内容空间变化。', 'min(number) · gap(number) | slot: default', '<apple-grid :min="240" :gap="20">\n  <div v-for="item in items" :key="item.id">{{ item.label }}</div>\n</apple-grid>'),
-  item('AppleCard', '卡片', '基础', '来自 Apple Store 的产品表达。', 'title · subtitle · text · image · zoom · shadow · motion | slots: media, title, icon, actions', '<apple-card title="AirPods Max" subtitle="声音，出类拔萃。" motion="auto" zoom="small">\n  <template #actions><apple-button>进一步了解</apple-button></template>\n</apple-card>'),
+  item('AppleCard', '卡片', '基础', '来自 Apple Store 的产品表达。', 'title · subtitle · text · image · zoom · shadow · motion | slots: media, title, icon, actions', '<apple-card title="AirPods Max" subtitle="声音，出类拔萃。" motion="auto">\n  <template #actions><apple-button>进一步了解</apple-button></template>\n</apple-card>'),
   item('AppleImage', '图片与预览', '基础', '让值得细看的内容更近一步。', 'gallery(object|array) · index · preview · carousel · disabled · label · galleryLayout(compact|tiled|tiled-wrap) · v-model:index | item({item,index,active}) · squared · aspectRatio · fit', '<apple-image :gallery="images" gallery-layout="compact" :index="0" />'),
   item('AppleAvatar', '头像', '基础', '为每一位用户保留位置。', 'src · name · size', '<apple-avatar name="林初" :size="48" />'),
   item('AppleAvatarGroup', '头像组', '基础', '一起参与的人，一眼可见。', 'items[{name,src,value}] · max · size · label | slot: default', '<apple-avatar-group :items="members" :max="4" :size="40" label="项目成员" />'),
@@ -65,7 +65,6 @@ export const catalog: CatalogItem[] = [
   item('AppleFloatingGroup', '悬浮操作组', '移动交互', '常用操作，触手可及。', 'backTop · threshold · target · label · motion | default', '<apple-floating-group :threshold="300">\n  <apple-button icon-only :icon="Plus" label="添加" />\n</apple-floating-group>'),
   item('AppleAutoSize', '自适应尺寸', '基础', '内容变化，布局随行。', 'axis(height|both) · motion | default', '<apple-auto-size><div v-if="expanded">详情内容</div></apple-auto-size>'),
   item('AppleTransition', '动效容器', '基础', '为页面保留连续感。', 'name(page|slide-x|slide-y|fade) · mode · appear · motion | default', '<apple-transition name="page"><router-view /></apple-transition>'),
-  item('AppleMarquee', '通知栏', '移动交互', '简短消息，保持可见。', 'text · duration(seconds) · paused · label · motion', '<apple-marquee text="新的内容已经准备好。" :duration="24" />'),
 ]
 export const groups = ['全部组件', '基础', '表单', '导航', '数据展示', '反馈', '移动交互']
 

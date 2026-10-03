@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
 
 for (const width of [390, 1440]) {
-  test(`color picker reveals and clips a fixed-size panel smoothly at ${width}px`, async ({ page }, info) => {
+  test(`color picker fades a fixed-size panel with its shadow intact at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/tests/e2e/fixtures/color-motion.html')
     const frames = await page.evaluate(async () => {
       const button = document.querySelector<HTMLButtonElement>('.apple-color-picker')!
-      const result: Record<string, { time: number; height: number; layoutHeight: number; plane: number }[]> = {}
+      const result: Record<string, { time: number; opacity: number; clip: string; shadow: string; layoutHeight: number; plane: number }[]> = {}
       for (const action of ['open', 'close']) {
         button.click()
         await Promise.resolve()
@@ -16,9 +16,8 @@ for (const width of [390, 1440]) {
           const menu = document.querySelector<HTMLElement>('.apple-color-menu')
           if (menu && getComputedStyle(menu).display !== 'none') {
             const layoutHeight = menu.getBoundingClientRect().height
-            const clip = getComputedStyle(menu).clipPath
-            const bottom = clip === 'none' ? 0 : parseFloat(clip.slice(6, -1).split(/\s+/)[2] || '0')
-            result[action]!.push({ time: performance.now() - start, height: layoutHeight * (1 - bottom / 100), layoutHeight, plane: menu.querySelector('.apple-color-plane')!.getBoundingClientRect().height })
+            const css = getComputedStyle(menu)
+            result[action]!.push({ time: performance.now() - start, opacity: Number(css.opacity), clip: css.clipPath, shadow: css.boxShadow, layoutHeight, plane: menu.querySelector('.apple-color-plane')!.getBoundingClientRect().height })
           }
           await new Promise(requestAnimationFrame)
         } while (performance.now() - start < 500)
@@ -27,13 +26,18 @@ for (const width of [390, 1440]) {
     })
     await info.attach('every-rendered-frame', { body: JSON.stringify(frames, null, 2), contentType: 'application/json' })
     const open = frames.open!, close = frames.close!
-    expect(open[0]!.height).toBeLessThanOrEqual(2)
-    expect(close.at(-1)!.height).toBeLessThanOrEqual(2.1)
-    expect(open.at(-1)!.height).toBeGreaterThan(300)
+    expect(open[0]!.opacity).toBeLessThanOrEqual(.01)
+    expect(close.at(-1)!.opacity).toBeLessThanOrEqual(.01)
+    expect(open.at(-1)!.opacity).toBe(1)
+    for (const frame of [...open, ...close]) {
+      expect(frame.clip).toBe('none')
+      expect(frame.shadow).not.toBe('none')
+      expect(frame.shadow).toBe(open.at(-1)!.shadow)
+    }
     for (const [direction, values] of [[1, open], [-1, close]] as const) {
       expect(values.length).toBeGreaterThan(3)
       for (let i = 1; i < values.length; i++) {
-        expect(direction * (values[i]!.height - values[i - 1]!.height)).toBeGreaterThanOrEqual(-.1)
+        expect(direction * (values[i]!.opacity - values[i - 1]!.opacity)).toBeGreaterThanOrEqual(-.001)
         expect(values[i]!.plane).toBeCloseTo(170, 2)
         expect(values[i]!.layoutHeight).toBeCloseTo(open.at(-1)!.layoutHeight, 2)
       }
@@ -42,7 +46,7 @@ for (const width of [390, 1440]) {
   })
 }
 
-test('reopening a closing color picker preserves its current reveal', async ({ page }) => {
+test('reopening a closing color picker preserves its current opacity', async ({ page }) => {
   await page.goto('/tests/e2e/fixtures/color-motion.html')
   await page.locator('.apple-color-picker').click()
   await expect.poll(() => page.locator('.apple-color-menu').evaluate(el => el.getAnimations().length)).toBe(0)
@@ -51,41 +55,35 @@ test('reopening a closing color picker preserves its current reveal', async ({ p
     button.click()
     await Promise.resolve()
     const menu = document.querySelector<HTMLElement>('.apple-color-menu')!
-    const visibleHeight = () => {
-      const clip = getComputedStyle(menu).clipPath
-      return menu.getBoundingClientRect().height * (1 - (clip === 'none' ? 0 : parseFloat(clip.slice(6, -1).split(/\s+/)[2] || '0')) / 100)
-    }
-    while (visibleHeight() > 250) await new Promise(requestAnimationFrame)
-    const before = visibleHeight()
+    const opacity = () => Number(getComputedStyle(menu).opacity)
+    while (opacity() > .75) await new Promise(requestAnimationFrame)
+    const before = opacity()
     button.click()
     await Promise.resolve()
-    return { before, after: visibleHeight() }
+    return { before, after: opacity() }
   })
-  expect(reversal.before).toBeGreaterThan(2)
-  expect(reversal.after).toBeCloseTo(reversal.before, 1)
+  expect(reversal.before).toBeGreaterThan(.01)
+  expect(reversal.after).toBeCloseTo(reversal.before, 3)
   await expect.poll(() => page.locator('.apple-color-menu').evaluate(el => el.getAnimations().length)).toBe(0)
   await expect(page.locator('.apple-color-menu')).toHaveCSS('height', '336px')
 })
 
-test('closing during expansion preserves its current reveal', async ({ page }) => {
+test('closing during expansion preserves its current opacity', async ({ page }) => {
   await page.goto('/tests/e2e/fixtures/color-motion.html')
   const reversal = await page.evaluate(async () => {
     const button = document.querySelector<HTMLButtonElement>('.apple-color-picker')!
     button.click()
     await Promise.resolve()
     const menu = document.querySelector<HTMLElement>('.apple-color-menu')!
-    const visibleHeight = () => {
-      const clip = getComputedStyle(menu).clipPath
-      return menu.getBoundingClientRect().height * (1 - (clip === 'none' ? 0 : parseFloat(clip.slice(6, -1).split(/\s+/)[2] || '0')) / 100)
-    }
-    while (visibleHeight() < 100) await new Promise(requestAnimationFrame)
-    const before = visibleHeight()
+    const opacity = () => Number(getComputedStyle(menu).opacity)
+    while (opacity() < .3) await new Promise(requestAnimationFrame)
+    const before = opacity()
     button.click()
     await Promise.resolve()
-    return { before, after: visibleHeight() }
+    return { before, after: opacity() }
   })
-  expect(reversal.before).toBeLessThan(336)
-  expect(reversal.after).toBeCloseTo(reversal.before, 1)
+  expect(reversal.before).toBeLessThan(1)
+  expect(reversal.after).toBeCloseTo(reversal.before, 3)
   await expect(page.locator('.apple-color-menu')).toBeHidden()
 })
 

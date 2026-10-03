@@ -42,6 +42,24 @@ describe('Apple form controls', () => {
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 
+  it('hides input actions while disabled or loading and restores them without changing the value', async () => {
+    const wrapper = mount(AppleInput, { props: { type: 'password', clearable: true, modelValue: 'private' } })
+    expect(wrapper.findAll('button')).toHaveLength(2)
+    await wrapper.setProps({ disabled: true })
+    expect(wrapper.findAll('button')).toHaveLength(0)
+    expect(wrapper.find('.apple-control__spinner').exists()).toBe(false)
+    await wrapper.setProps({ loading: true })
+    expect(wrapper.findAll('button')).toHaveLength(0)
+    expect(wrapper.find('.apple-control__spinner').exists()).toBe(true)
+    await wrapper.setProps({ disabled: false })
+    expect(wrapper.findAll('button')).toHaveLength(0)
+    await wrapper.setProps({ loading: false })
+    expect(wrapper.findAll('button')).toHaveLength(2)
+    expect(wrapper.find('.apple-control__spinner').exists()).toBe(false)
+    expect((wrapper.get('input').element as HTMLInputElement).value).toBe('private')
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
+
   it('provides textarea native limits and a counter', async () => {
     const wrapper = mount(AppleTextarea, { props: { label: '说明', modelValue: 'hello', maxlength: 20, counter: true } })
     expect(wrapper.get('textarea').attributes('maxlength')).toBe('20')

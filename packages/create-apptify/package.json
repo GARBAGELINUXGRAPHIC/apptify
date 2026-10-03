@@ -1,0 +1,26 @@
+{
+  "name": "create-apptify",
+  "version": "0.1.1",
+  "description": "Create an editable Apptify Vue app.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GARBAGELINUXGRAPHIC/apptify.git",
+    "directory": "packages/create-apptify"
+  },
+  "homepage": "https://github.com/GARBAGELINUXGRAPHIC/apptify/tree/main/packages/create-apptify#readme",
+  "bugs": {
+    "url": "https://github.com/GARBAGELINUXGRAPHIC/apptify/issues"
+  },
+  "files": ["bin"],
+  "bin": {
+    "create-apptify": "./bin/create-apptify.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "apptify": "^0.5.1"
+  }
+}

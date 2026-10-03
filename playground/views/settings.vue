@@ -1,7 +1,7 @@
 <template>
   <main class="main-content settings-page">
     <header class="page-heading"><div style="padding: 0 16px"><h1>设置</h1></div></header>
-    <section class="settings-section" aria-labelledby="theme-heading">
+    <apple-card class="settings-section" aria-labelledby="theme-heading">
       <div class="settings-section-heading"><Palette :size="21" aria-hidden="true" /><div><h2 id="theme-heading">主题</h2><p>应用于所有页面，并保存在这台设备上。</p></div></div>
       <div class="theme-picker" role="group" aria-label="选择主题">
         <apple-button v-for="theme in themes" variant="ghost" class="theme-choice" :key="theme.value" type="button" :aria-pressed="apple.theme.value.name === theme.value" :class="{ selected: apple.theme.value.name === theme.value }" @click="apple.theme.value.set(theme.value)">
@@ -9,8 +9,8 @@
           <span class="theme-label">{{ theme.label }}<Check v-if="apple.theme.value.name === theme.value" :size="15" aria-hidden="true" /></span>
         </apple-button>
       </div>
-    </section>
-    <section class="settings-section" aria-labelledby="glass-heading">
+    </apple-card>
+    <apple-card class="settings-section" aria-labelledby="glass-heading">
       <div class="settings-section-heading"><Layers :size="21" aria-hidden="true" /><div><h2 id="glass-heading">玻璃效果</h2><p>调整下拉浮层的底色与模糊程度，并保存在这台设备上。</p></div></div>
       <div class="glass-controls">
         <apple-slider :model-value="apple.glass.value.opacity" label="玻璃不透明度" :min="0" :max="100" :step="0.1" :format-value="formatOpacity" hint="0% 完全透明，100% 完全不透明。" @update:model-value="setGlassOpacity" />
@@ -18,20 +18,20 @@
       </div>
       <div class="glass-preview" aria-label="玻璃效果实时预览">
         <div class="glass-preview-backdrop" :style="{ backgroundImage: glassPreviewPattern }" aria-hidden="true" />
-        <apple-list class="glass-preview-panel" :items="glassPreviewItems" label="玻璃预览内容" />
+        <apple-card class="glass-preview-panel"><apple-list :items="glassPreviewItems" label="玻璃预览内容" /></apple-card>
       </div>
       <p class="glass-preview-note">细碎图案便于观察模糊程度，预览随滑块实时变化。账号菜单和登录对话框保持实底。</p>
       <div class="glass-preview-select"><apple-select v-model="glassPreviewChoice" label="打开下拉查看实际效果" :items="glassPreviewItems" /></div>
-    </section>
-    <section class="settings-section" aria-labelledby="motion-heading">
+    </apple-card>
+    <apple-card class="settings-section" aria-labelledby="motion-heading">
       <div class="settings-section-heading"><Waves :size="21" aria-hidden="true" /><div><h2 id="motion-heading">动效</h2><p>为页面切换和组件交互选择动效强度。</p></div></div>
       <apple-segmented-control :model-value="apple.motion.value.mode" :items="motionOptions" label="全局动效" @update:model-value="setMotion" />
       <p class="settings-note">{{ motionDescriptions[apple.motion.value.mode] }}<template v-if="apple.motion.value.reduced"> 系统已开启减少动态效果。</template></p>
-      <div class="motion-preview">
+      <apple-card class="motion-preview">
         <div class="motion-preview-heading"><span>试试当前效果</span><apple-button variant="ghost" size="small" @click="expanded = !expanded">{{ expanded ? '收起预览' : '展开预览' }}</apple-button></div>
         <apple-auto-size><div class="motion-preview-content"><apple-button @click="apple.notify('这就是当前的交互效果', { tone: 'success' })">轻点一下</apple-button><p v-if="expanded">舒适的颜色，自然的变化。每一个细节，都跟随你的偏好。</p></div></apple-auto-size>
-      </div>
-    </section>
+      </apple-card>
+    </apple-card>
     <PageFooter />
   </main>
 </template>
@@ -89,10 +89,11 @@ function reset() {
 .glass-controls :deep(.apple-slider__value) { min-width: 58px; }
 .glass-preview { position: relative; isolation: isolate; display: grid; place-items: center; min-height: 274px; padding: 24px; border-radius: 8px; background: var(--apple-surface-alt); }
 .glass-preview-backdrop { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background-color: var(--apple-surface-alt); background-size: 176px 144px; }
-.glass-preview-panel { width: 100%; max-width: 340px; padding: 12px; border: 1px solid var(--apple-border); border-radius: 10px; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, 0.31372549)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); box-shadow: var(--apple-shadow); }
+.glass-preview-panel { width: 100%; max-width: 340px; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, 0.31372549)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); }
 .glass-preview-note { font-size: 12px; line-height: 1.8; color: var(--apple-secondary); margin: 14px 0 20px; }
 .glass-preview-select { max-width: 440px; }
 @media (max-width: 600px) {
   .theme-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+.glass-preview-panel :deep(> .apple-card__body) { padding: 0; }
 </style>

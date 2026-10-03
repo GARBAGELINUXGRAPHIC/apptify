@@ -1,74 +1,51 @@
-# 完整 playground 应用模板
+# 应用模板
 
-apptify 包既提供组件库，也携带完整的可编辑应用模板。模板源码在包内 templates/playground/，包括导航与页面布局、账号菜单与登录/注册表单、主题/动效/玻璃设置、404 纸片故事、全部示例页面及图片资源。
+npm 包包含完整可编辑的 Vue 应用：导航、账号表单、主题/动效/玻璃设置、404、组件示例与图片资源。
 
-这些应用文件不增加组件库的公开 exports。复制出的项目通过 apptify 和 apptify/vite 使用已打包组件库，不能导入原仓库的 src。
+## 创建与运行
 
-## 从本地包创建应用
-
-当前尚未发布 npm。使用 Node.js 22 或 24 LTS，先在库仓库生成包：
-
-~~~sh
-npm ci
-npm pack --pack-destination /tmp
-~~~
-
-npm pack 会先执行构建与模板准备。将输出的实际 tgz 路径代入以下命令；在一个用于安装组件库的空目录执行：
-
-~~~sh
-npm init -y
-npm install /tmp/apptify-0.4.0.tgz
-npx --no-install apptify-playground ../my-app
-cd ../my-app
+```sh
+npm create apptify@latest ./my-app
+cd my-app
 npm install
-npm run typecheck
-npm run build
 npm run dev
-~~~
+```
 
-复制命令要求目标目录不存在或为空，拒绝覆盖已有项目。复制过程不会自动安装项目依赖。
+也可运行 `npx --package=apptify apptify-playground ./my-app`。
 
-my-app/vendor/ 会携带组件库 tgz，应用依赖使用相对 file: 依赖。可以把整个 my-app 移动到另一目录或发给其他使用者；后续安装无需原仓库或用于调用命令的安装目录。运行与构建所需依赖全部声明在应用的 package.json。更新库时可把新 tgz 放入 vendor/ 并调整该相对依赖。
+使用 Node.js 22 或 24 LTS。目标目录必须不存在或为空；复制命令不会安装依赖。
 
-也可手工复制包内 templates/playground/，把 gitignore 重命名为 .gitignore，再将模板 package.json 中的 apptify 版本依赖改为本地 tgz；复制命令会自动完成这些步骤。仓库内 templates/playground 是打包时生成的目录，开发者应编辑 playground 源文件；使用者复制出的项目可以直接编辑。
+项目的 `vendor/` 保存组件库 tgz，`package.json` 使用相对 `file:` 依赖，移动整个项目后仍可独立安装。改用 npm 更新库时，在新项目执行 `npm install apptify@latest`。
 
-## 开始业务开发
+## 开始开发
 
-可以只删除以下两页，然后编写自己的页面：
-
-~~~text
-playground/views/index.vue
-playground/views/components.vue
-~~~
-
-文件路由从 playground/views/ 自动生成，不存在对这两页的硬导入。删除后重启开发服务即可；模板导航自动隐藏不存在的页面，品牌链接回到第一个保留的导航项，404 的“返回首页”在没有首页时回到设置。
-
-新页面例如 playground/views/orders.vue 会得到 /orders 路由。将入口加入 playground/App.vue 的 navigation 数组即可出现在顶部导航。自己的 index.vue 仍对应首页。生产服务器需把 history 路由请求回退到 index.html。
-
-删除组件总览后，ComponentDemo.vue、catalog.ts 和 components/ComponentIndex.vue 可以留着，也可按需删除；设置、账号、404 与布局不依赖它们。不需要清理库组件依赖或维护手写路由列表。
-
-| 可编辑位置 | 用途 |
+| 位置 | 用途 |
 | --- | --- |
-| playground/App.vue | 公共导航、品牌、账号入口和页面进入动效 |
-| playground/router/index.ts | 滚动恢复、hash 定位和页面标题 |
-| playground/components/UserMenu.vue | 账号菜单、登录/注册、邮箱验证码和忘记密码入口 |
-| playground/views/settings.vue | 外观、动效和玻璃偏好 |
-| playground/views/[...all].vue 与 components/not-found-paper-* | 404 页面与故事 |
-| playground/style.css | 应用布局与页面样式 |
-| public/images/ | 示例图片与来源说明 |
+| `playground/App.vue` | 布局、导航项与账号入口 |
+| `playground/views/` | 页面与自动生成的路由 |
+| `playground/router/index.ts` | 滚动恢复、hash 定位与页面标题 |
+| `playground/components/UserMenu.vue` | 账号菜单与登录/注册表单 |
+| `playground/views/settings.vue` | 主题、动效与玻璃设置 |
+| `playground/views/[...all].vue` | 404 页面 |
+| `playground/style.css` | 应用样式 |
+| `public/images/` | 示例图片与来源说明 |
 
-账户操作仍是 UI 演示，需要接入使用者自己的后端。图片来源说明随模板保留在 public/images/SOURCES.md。
+可删除 `views/index.vue` 和 `views/components.vue`，再创建业务页面。删除后重启开发服务；导航会隐藏不存在的页面。删除组件总览后，可一并删除 `ComponentDemo.vue`、`catalog.ts` 和 `components/ComponentIndex.vue`。
 
-## 本地交付验证
+例如 `playground/views/orders.vue` 自动对应 `/orders`；在 `App.vue` 的 `navigation` 数组添加入口即可显示导航。`index.vue` 对应首页。
 
-在库仓库执行：
+组件通过 `apptify` 导入，样式通过 `apptify/style.css` 导入；`apptify/vite` 提供文件路由插件。已有项目接入时需安装 `vue-router` 和 `vite-plugin-pages`，模板已配置这些依赖。
 
-~~~sh
-npm run test:package
-~~~
+账号表单需要接入自己的后端。部署使用 history 路由，服务器需将页面请求回退到 `index.html`，保留 API 与静态资源路由。图片来源说明位于 `public/images/SOURCES.md`。
 
-此检查会构建原库消费者、生成真实 npm tarball、检查每份 playground 源码和静态资源都在包内，并在临时空目录安装包后调用复制命令。随后删除最初的安装目录，独立安装、类型检查、构建和启动复制项目，实测导航、图片、设置、登录及 404；再删除首页、组件总览及其可选演示文件，重复类型检查、构建和浏览器验证。原库消费测试仍单独执行。
+## 检查与本地打包
 
-source-snapshot.json 记录本次复制前各源码与资源的 SHA-256。构建前后与验收末尾都会比对库、模板、资源及配置；若用户在打包中途编辑，检查要求重新取最新快照，不会回写或恢复旧源码。命令打印临时目录与验收 JSON 路径，失败时也保留该目录用于检查。
+复制出的应用使用 `npm run typecheck` 和 `npm run build` 检查。
 
-已生成的具体 tgz 也可直接复验：运行 node tooling/test-playground-package.mjs /absolute/path/apptify-0.4.0.tgz。验收结果记录该文件 SHA-256，避免并行构建替换了被验证对象。
+库开发者编辑原仓库的 `playground/`，模板目录在打包时生成。`npm pack` 自动构建组件库并准备模板；本地安装生成的 tgz 后，也可运行 `npx --no-install apptify-playground ../my-app`。
+
+`npm run test:package` 验证包内容、独立安装、模板复制、类型检查、构建与浏览器交互，并检查删除示例页面后的行为。命令输出临时目录与验收结果路径。验证指定归档：
+
+```sh
+node tooling/test-playground-package.mjs /absolute/path/apptify-<version>.tgz
+```

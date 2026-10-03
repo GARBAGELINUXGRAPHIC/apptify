@@ -1,8 +1,8 @@
 .apple-content-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-.apple-tabs, .apple-accordion, .apple-table, .apple-tree, .apple-list, .apple-pull-refresh, .apple-infinite-scroll, .apple-marquee { min-width: 0; max-width: 100%; color: var(--apple-text); }
-.apple-tabs button, .apple-pagination button, .apple-accordion button, .apple-table button, .apple-tree button, .apple-list button, .apple-tag button, .apple-alert button, .apple-steps button, .apple-pull-refresh button, .apple-infinite-scroll button, .apple-back-top, .apple-marquee button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.apple-tabs button:disabled, .apple-pagination button:disabled, .apple-accordion button:disabled, .apple-table button:disabled, .apple-tree button:disabled, .apple-list button:disabled, .apple-tag button:disabled, .apple-steps button:disabled, .apple-pull-refresh button:disabled, .apple-infinite-scroll button:disabled, .apple-back-top:disabled, .apple-marquee button:disabled { cursor: not-allowed; opacity: .42; }
-.apple-tabs :focus-visible, .apple-pagination :focus-visible, .apple-breadcrumbs :focus-visible, .apple-accordion :focus-visible, .apple-table :focus-visible, .apple-tree :focus-visible, .apple-list :focus-visible, .apple-tag :focus-visible, .apple-alert :focus-visible, .apple-steps :focus-visible, .apple-pull-refresh :focus-visible, .apple-infinite-scroll :focus-visible, .apple-back-top:focus-visible, .apple-marquee :focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 3px; }
+.apple-tabs, .apple-accordion, .apple-table, .apple-tree, .apple-list, .apple-pull-refresh, .apple-infinite-scroll { min-width: 0; max-width: 100%; color: var(--apple-text); }
+.apple-tabs button, .apple-pagination button, .apple-accordion button, .apple-table button, .apple-tree button, .apple-list button, .apple-tag button, .apple-alert button, .apple-steps button, .apple-pull-refresh button, .apple-infinite-scroll button, .apple-back-top { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.apple-tabs button:disabled, .apple-pagination button:disabled, .apple-accordion button:disabled, .apple-table button:disabled, .apple-tree button:disabled, .apple-list button:disabled, .apple-tag button:disabled, .apple-steps button:disabled, .apple-pull-refresh button:disabled, .apple-infinite-scroll button:disabled, .apple-back-top:disabled { cursor: not-allowed; opacity: .42; }
+.apple-tabs :focus-visible, .apple-pagination :focus-visible, .apple-breadcrumbs :focus-visible, .apple-accordion :focus-visible, .apple-table :focus-visible, .apple-tree :focus-visible, .apple-list :focus-visible, .apple-tag :focus-visible, .apple-alert :focus-visible, .apple-steps :focus-visible, .apple-pull-refresh :focus-visible, .apple-infinite-scroll :focus-visible, .apple-back-top:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 3px; }
 .apple-content-icon-button, .apple-tag button, .apple-pull-refresh__button, .apple-infinite-scroll__status button { transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
 .apple-content-icon-button:active:not(:disabled), .apple-tag button:active:not(:disabled), .apple-pull-refresh__button:active:not(:disabled), .apple-infinite-scroll__status button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-content-icon-button { display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; color: inherit; background: transparent; border: 0; border-radius: 50%; }
@@ -254,11 +254,6 @@ button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__i
 .apple-back-top:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-floating-action-enter-active, .apple-floating-action-leave-active { transition: transform var(--apple-duration) var(--apple-ease), opacity var(--apple-fast); }
 .apple-floating-action-enter-from, .apple-floating-action-leave-to { transform: translateY(24px); opacity: 0; }
-.apple-marquee { display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; min-height: 44px; background: var(--apple-surface-alt); border-radius: 6px; font-size: 12px; }
-.apple-marquee__viewport { flex: 1; min-width: 0; overflow: hidden; }
-.apple-marquee__track { display: flex; width: max-content; animation: apple-marquee var(--apple-marquee-duration) linear infinite; }
-.apple-marquee__track > span { padding-right: 70px; white-space: nowrap; }
-.apple-marquee.is-paused .apple-marquee__track, .apple-marquee:hover:where(:not([data-apple-touch] *)) .apple-marquee__track, .apple-marquee__viewport:focus-within .apple-marquee__track { animation-play-state: paused; }
 .apple-statistic { min-width: 0; max-width: 100%; }
 .apple-statistic__label { color: var(--apple-secondary); font-size: 13px; }
 .apple-statistic__value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; margin-top: 8px; color: var(--apple-text); font-variant-numeric: tabular-nums; }
@@ -269,12 +264,8 @@ button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__i
 @keyframes apple-spin { to { transform: rotate(360deg); } }
 @keyframes apple-progress { from { transform: translateX(-110%); } to { transform: translateX(390%); } }
 @keyframes apple-skeleton { 50% { opacity: .45; } }
-@keyframes apple-marquee { to { transform: translateX(-50%); } }
-.apple-spinner[data-motion="none"] > svg, .apple-progress[data-motion="none"] .apple-progress__fill, .apple-skeleton[data-motion="none"] span, .apple-marquee[data-motion="none"] .apple-marquee__track, .apple-pull-refresh[data-motion="none"] .apple-pull-refresh__indicator svg, .apple-spinner[data-motion="reduced"] > svg, .apple-progress[data-motion="reduced"] .apple-progress__fill, .apple-skeleton[data-motion="reduced"] span, .apple-marquee[data-motion="reduced"] .apple-marquee__track, .apple-pull-refresh[data-motion="reduced"] .apple-pull-refresh__indicator svg { animation: none; }
-:is([data-apple-motion="reduced"], [data-apple-motion="none"]) :is(.apple-spinner > svg, .apple-progress__fill, .apple-skeleton span, .apple-marquee__track, .apple-pull-refresh__indicator svg) { animation: none !important; }
-:is([data-apple-motion="reduced"], [data-apple-motion="none"]) .apple-marquee__track, .apple-marquee:is([data-motion="reduced"], [data-motion="none"]) .apple-marquee__track { width: auto; }
-:is([data-apple-motion="reduced"], [data-apple-motion="none"]) .apple-marquee__track > span, .apple-marquee:is([data-motion="reduced"], [data-motion="none"]) .apple-marquee__track > span { padding: 10px 0; white-space: normal; overflow-wrap: anywhere; }
-:is([data-apple-motion="reduced"], [data-apple-motion="none"]) :is(.apple-marquee__track > span[aria-hidden], .apple-marquee > button), .apple-marquee:is([data-motion="reduced"], [data-motion="none"]) :is(.apple-marquee__track > span[aria-hidden], button) { display: none; }
+.apple-spinner[data-motion="none"] > svg, .apple-progress[data-motion="none"] .apple-progress__fill, .apple-skeleton[data-motion="none"] span, .apple-pull-refresh[data-motion="none"] .apple-pull-refresh__indicator svg, .apple-spinner[data-motion="reduced"] > svg, .apple-progress[data-motion="reduced"] .apple-progress__fill, .apple-skeleton[data-motion="reduced"] span, .apple-pull-refresh[data-motion="reduced"] .apple-pull-refresh__indicator svg { animation: none; }
+:is([data-apple-motion="reduced"], [data-apple-motion="none"]) :is(.apple-spinner > svg, .apple-progress__fill, .apple-skeleton span, .apple-pull-refresh__indicator svg) { animation: none !important; }
 @media (max-width: 480px) {
   .apple-tabs__list { gap: 22px; }
   .apple-pagination { gap: 2px; }
@@ -283,8 +274,5 @@ button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__i
   .apple-table__footer > span { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .apple-spinner > svg, .apple-progress.is-indeterminate .apple-progress__fill, .apple-skeleton.is-animated span, .apple-marquee__track, .apple-pull-refresh[aria-busy="true"] .apple-pull-refresh__indicator svg { animation: none; }
-  .apple-marquee__track { width: auto; }
-  .apple-marquee__track > span { padding: 10px 0; white-space: normal; overflow-wrap: anywhere; }
-  .apple-marquee__track > span[aria-hidden], .apple-marquee > button { display: none; }
+  .apple-spinner > svg, .apple-progress.is-indeterminate .apple-progress__fill, .apple-skeleton.is-animated span, .apple-pull-refresh[aria-busy="true"] .apple-pull-refresh__indicator svg { animation: none; }
 }

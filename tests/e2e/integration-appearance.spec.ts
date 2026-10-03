@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { catalog } from '../../playground/catalog'
 
 for (const [width, columns] of [[320,1],[768,1],[1440,2],[1920,3],[2240,4],[2560,5]]) {
   test(`component cards use ${columns} columns in ${width}px available layout`, async ({page}) => {
@@ -7,7 +8,7 @@ for (const [width, columns] of [[320,1],[768,1],[1440,2],[1920,3],[2240,4],[2560
     await expect.poll(()=>page.locator('main').evaluate(el=>el.getAnimations().length)).toBe(0)
     const actual=await page.locator('.feed-group').first().evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(/\s+/).length)
     expect(actual).toBe(columns)
-    await expect(page.locator('.component-demo')).toHaveCount(68)
+    await expect(page.locator('.component-demo')).toHaveCount(catalog.length)
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width!)
   })
 }

@@ -10,13 +10,13 @@
 .apple-control:focus { border-color: var(--apple-accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-accent) 20%, transparent); }
 .apple-field.has-error .apple-control, .apple-field.has-error .apple-input-wrap { border-color: var(--apple-danger); }
 .apple-control:disabled, .apple-choice:has(input:disabled), .apple-switch-row:has(input:disabled), .apple-field .is-disabled { opacity: .5; cursor: not-allowed; }
-.apple-control:disabled { background: var(--apple-surface-alt); }
+.apple-field .apple-control:disabled { background: var(--apple-surface-alt); border-color: var(--apple-surface-alt); }
 .apple-input-wrap { display: flex; align-items: center; min-width: 0; border: 1px solid var(--apple-border); border-radius: 8px; background: var(--apple-surface); transition: border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease, background-color var(--apple-duration-fast, 120ms) ease; }
 .apple-input-wrap:hover:where(:not([data-apple-touch] *)):not(:has(input:disabled)) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
 .apple-input-wrap:focus-within { border-color: var(--apple-accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-accent) 20%, transparent); }
 .apple-input-wrap > .apple-control, .apple-input-wrap > .apple-control:focus, .apple-input-wrap > .apple-control:focus-visible { border: 0; background: transparent; box-shadow: none; outline: none; }
 .apple-input-wrap > .apple-control:disabled { background: transparent; }
-.apple-input-wrap:has(input:disabled) { background: var(--apple-surface-alt); }
+.apple-field .apple-input-wrap:has(input:disabled) { background: var(--apple-surface-alt); border-color: var(--apple-surface-alt); }
 .apple-input__affix { display: inline-flex; align-items: center; flex-shrink: 0; max-width: 35%; padding-inline: 12px; color: var(--apple-secondary); overflow-wrap: anywhere; }
 .apple-input-wrap > .apple-input__affix:has(button) { align-self: stretch; align-items: stretch; gap: 0; max-width: none; padding: 0; }
 .apple-input-wrap > .apple-input__affix button { align-self: stretch; box-sizing: border-box; min-height: 44px; padding: 7px 12px; border-width: 1px; border-style: solid; border-radius: 0; line-height: 1.4; }

@@ -545,16 +545,16 @@ export const ApplePopover = defineComponent({
     }
     const popup = portal(this, h(Transition, {
       css: false, appear: true,
-      onBeforeEnter: (element: Element) => { preparePopup(element, false, this.interruptedPopup); this.interruptedPopup = undefined },
+      onBeforeEnter: (element: Element) => { preparePopup(element, true, this.interruptedPopup); this.interruptedPopup = undefined },
       onEnter: (element: Element, done: () => void) => {
         this.preparePosition(element as HTMLElement)
         element.classList.add('apple-popover-presence-enter-active')
-        animatePopup(element, true, done, false)
+        animatePopup(element, true, done)
       },
       onBeforeLeave: () => this.position(),
       onLeave: (element: Element, done: () => void) => {
         element.classList.add('apple-popover-presence-leave-active')
-        animatePopup(element, false, done, false)
+        animatePopup(element, false, done)
       },
       onAfterEnter: clearMotion,
       onAfterLeave: (element: Element) => {

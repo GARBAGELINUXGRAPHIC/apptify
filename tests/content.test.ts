@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h, nextTick } from 'vue'
-import { AppleAccordion, AppleAvatar, AppleBackTop, AppleBadge, AppleBreadcrumbs, AppleFloatingGroup, AppleInfiniteScroll, AppleList, AppleMarquee, ApplePagination, AppleProgress, ApplePullRefresh, AppleSkeleton, AppleTable, AppleTabBar, AppleTabs, AppleTimeline, AppleTree } from '../src/components/content'
+import { AppleAccordion, AppleAvatar, AppleBackTop, AppleBadge, AppleBreadcrumbs, AppleFloatingGroup, AppleInfiniteScroll, AppleList, ApplePagination, AppleProgress, ApplePullRefresh, AppleSkeleton, AppleTable, AppleTabBar, AppleTabs, AppleTimeline, AppleTree } from '../src/components/content'
 
 const items = [
   { label: '概览', value: 'overview', content: '概览内容' },
@@ -334,14 +334,6 @@ describe('Status and utility components', () => {
     const progress = keep(mount(AppleProgress, { props: { modelValue: 150, max: 100 } }))
     expect(progress.get('[role="progressbar"]').attributes('aria-valuenow')).toBe('100')
     expect(progress.get('.apple-progress__fill').attributes('style')).toContain('width: 100%')
-  })
-
-  it('pauses the marquee and hides duplicate content from assistive technology', async () => {
-    const wrapper = keep(mount(AppleMarquee, { props: { text: '本周新品' } }))
-    expect(wrapper.get('[aria-hidden="true"][inert]').text()).toBe('本周新品')
-    await wrapper.get('button').trigger('click')
-    expect(wrapper.classes()).toContain('is-paused')
-    expect(wrapper.get('button').attributes('aria-label')).toBe('开始滚动')
   })
 
   it('listens to a custom scroll target and scrolls it to top', async () => {

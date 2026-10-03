@@ -1,0 +1,7 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AppleCard motion</title><style>body{margin:0}main{padding:60px;max-width:500px}</style></head><body><div id="app"></div><script type="module">
+import {createApp,h} from 'vue'
+import {createAppleUI,AppleProvider,AppleCard,AppleButton} from '/src/index.ts'
+const params=new URLSearchParams(location.search)
+const props=Object.fromEntries(['zoom','shadow','motion'].filter(key=>params.has(key)).map(key=>[key,params.get(key)]))
+createApp({render:()=>h(AppleProvider,{},()=>h('main',h(AppleCard,{...props,title:'原版卡片'},()=>h(AppleButton,{},()=>'内部按钮'))))}).use(createAppleUI()).mount('#app')
+</script></body></html>
