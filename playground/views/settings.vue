@@ -32,7 +32,6 @@
         <apple-auto-size><div class="motion-preview-content"><apple-button @click="apple.notify('这就是当前的交互效果', { tone: 'success' })">轻点一下</apple-button><p v-if="expanded">舒适的颜色，自然的变化。每一个细节，都跟随你的偏好。</p></div></apple-auto-size>
       </apple-card>
     </apple-card>
-    <PageFooter />
   </main>
 </template>
 
@@ -40,7 +39,6 @@
 import { ref } from 'vue'
 import { Check, Layers, Palette, Waves } from 'lucide-vue-next'
 import { builtInThemes, useApple, type Motion } from '../../src'
-import PageFooter from '../components/PageFooter.vue'
 
 const apple = useApple()
 const expanded = ref(false)

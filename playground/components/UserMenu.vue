@@ -38,8 +38,8 @@
       </div>
       <p class="user-auth-note">这是表单交互示例，尚未接入账户服务。填写内容不会提交到服务器。</p>
       <div class="user-auth-actions">
-        <apple-button class="user-auth-submit" type="submit" size="large">{{ authMode === 'login' ? '体验登录' : '体验注册' }}</apple-button>
-        <apple-button class="user-auth-email" variant="outline" size="large" @click="showAuthEntry('email')">邮箱验证码登录</apple-button>
+        <apple-button class="user-auth-submit" type="submit">{{ authMode === 'login' ? '体验登录' : '体验注册' }}</apple-button>
+        <apple-button class="user-auth-email" variant="outline" @click="showAuthEntry('email')">邮箱验证码登录</apple-button>
       </div>
     </apple-form>
     <div class="user-auth-alternatives">

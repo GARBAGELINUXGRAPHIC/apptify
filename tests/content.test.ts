@@ -170,18 +170,41 @@ describe('AppleTable', () => {
 })
 
 describe('AppleTree', () => {
-  it('expands and selects through the entire row rather than requiring the chevron', async () => {
+  it('parent rows only toggle children and leaf rows select', async () => {
     const wrapper = keep(mount(AppleTree, { props: { items: [{ label: '项目', value: 'root', children: [{ label: '组件', value: 'child' }] }, { label: '不可用', value: 'off', disabled: true }] } }))
     await wrapper.get('.apple-tree__row').trigger('click')
     expect(wrapper.emitted('update:expanded')?.at(-1)).toEqual([['root']])
-    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['root'])
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    expect(wrapper.emitted('select')).toBeUndefined()
     expect(wrapper.findAll('[role="treeitem"]')).toHaveLength(3)
-    expect(wrapper.get('.apple-tree__row').attributes('data-apple-selected')).toBe('true')
+    expect(wrapper.get('.apple-tree__row').attributes('data-apple-selected')).toBe('false')
+    await wrapper.get('[aria-label="组件"] > .apple-tree__row').trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toEqual([['child']])
     expect(wrapper.find('.apple-selection-indicator').exists()).toBe(false)
     await wrapper.get('.apple-tree__row').trigger('click')
     expect(wrapper.emitted('update:expanded')?.at(-1)).toEqual([[]])
     await wrapper.get('.is-disabled').trigger('click')
-    expect(wrapper.emitted('update:modelValue')).toHaveLength(2)
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
+    expect(wrapper.get('[aria-label="项目"]').attributes('aria-selected')).toBe('true')
+  })
+
+  it('highlights the first visible ancestor of a hidden selection without expanding or changing its value', async () => {
+    const wrapper = keep(mount(AppleTree, { props: {
+      modelValue: 'leaf', expanded: [], items: [{ label: '根', value: 'root', children: [
+        { label: '分组', value: 'group', children: [{ label: '接口', value: 'leaf' }] },
+      ] }],
+    } }))
+    expect(wrapper.get('[aria-label="根"]').attributes('aria-selected')).toBe('true')
+    await wrapper.setProps({ expanded: ['root'] })
+    expect(wrapper.get('[aria-label="分组"]').attributes('aria-selected')).toBe('true')
+    await wrapper.setProps({ expanded: ['root', 'group'] })
+    expect(wrapper.get('[aria-label="接口"]').attributes('aria-selected')).toBe('true')
+    await wrapper.setProps({ expanded: ['root'] })
+    expect(wrapper.get('[aria-label="分组"]').attributes('aria-selected')).toBe('true')
+    await wrapper.get('[aria-label="分组"]').trigger('keydown', { key: 'Enter' })
+    expect(wrapper.emitted('update:expanded')?.at(-1)).toEqual([['root', 'group']])
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    expect(wrapper.emitted('select')).toBeUndefined()
   })
 
   it('expands with arrow keys, roves focus, selects a child, and returns to its parent', async () => {

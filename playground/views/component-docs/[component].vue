@@ -4,8 +4,8 @@
       <apple-breadcrumbs :items="breadcrumbs" label="组件文档路径" @click="navigateBreadcrumb" />
       <header class="documentation-heading"><div><span class="page-kicker">{{ registration.group }} / COMPONENT API</span><h1>{{ registration.label }}<span>{{ registration.name }}</span></h1><p>{{ registration.description }}</p></div></header>
       <div class="documentation-layout">
-        <aside class="documentation-index" aria-label="API 导航"><span>本页接口</span><apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" /></aside>
-        <div class="documentation-content">
+        <aside ref="documentationIndex" class="documentation-index" aria-label="API 导航"><span>本页接口</span><apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" /></aside>
+        <div ref="documentationContent" class="documentation-content">
           <apple-card title="组件演示" subtitle="在下面的 API 中展开示例，调整代码并立即查看效果。" class="component-overview"><component :is="registration.preview" v-if="registration.preview" /></apple-card>
           <ComponentWorkshop v-if="doc" :doc="doc" />
           <apple-alert v-else-if="failed" tone="danger" title="文档加载失败"><apple-button variant="secondary" @click="loadDocument">重试</apple-button></apple-alert>
@@ -14,18 +14,16 @@
       </div>
     </template>
     <apple-empty v-else title="组件文档尚未开放" description="当前阶段仅开放 AppleInput 样板。"><router-link to="/components" custom v-slot="{ href, navigate }"><apple-link :href="href" @click="navigate">返回组件目录</apple-link></router-link></apple-empty>
-    <PageFooter />
   </main>
 </template>
 <script setup lang="ts">
-import { computed, shallowRef, ref, watch, onBeforeUnmount, nextTick } from 'vue'
+import { computed, shallowRef, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { AppleItem, AppleTreeItem, AppleValue } from '../../../src'
 import { componentDocuments } from '../../editor/documents'
 import type { ComponentDocument } from '../../editor/contract'
 import { documentSections } from '../../editor/sections'
 import ComponentWorkshop from '../../editor/ComponentWorkshop.vue'
-import PageFooter from '../../components/PageFooter.vue'
 const route = useRoute()
 const router = useRouter()
 const breadcrumbs = computed(() => [
@@ -52,6 +50,8 @@ async function loadDocument() {
 }
 watch(registration, loadDocument, { immediate: true })
 onBeforeUnmount(() => { loadVersion++ })
+const documentationIndex = ref<HTMLElement>()
+const documentationContent = ref<HTMLElement>()
 const selectedApi = ref<AppleValue>('props')
 const expandedSections = ref<AppleValue[]>(['props', 'events', 'slots', 'methods'])
 const apiTree = computed<AppleTreeItem[]>(() => doc.value ? [
@@ -65,10 +65,76 @@ watch(() => [route.hash, doc.value] as const, () => {
   const id = route.hash.slice(1)
   const group = apiTree.value.find(item => item.children?.some(child => child.value === id))
   if (!group && !apiTree.value.some(item => item.value === id)) return
-  selectedApi.value = id
-  if (group && !expandedSections.value.includes(group.value)) expandedSections.value.push(group.value)
+  selectApi(id)
 }, { immediate: true })
+function selectApi(id: AppleValue) {
+  selectedApi.value = id
+}
+
+let scrollFrame = 0
+let contentObserver: ResizeObserver | undefined
+let indexObserver: ResizeObserver | undefined
+function syncScrollSelection() {
+  scrollFrame = 0
+  const content = documentationContent.value
+  if (!content) return
+  const targets = apiTree.value.flatMap(section => [section, ...(section.children || [])])
+    .map(item => ({ id: item.value, element: document.getElementById(String(item.value)) }))
+    .filter(target => target.element && content.contains(target.element))
+  if (!targets.length) return
+  let active = targets[0].id
+  for (const target of targets) {
+    const offset = Math.max(100, parseFloat(getComputedStyle(target.element!).scrollMarginTop) || 0)
+    if (target.element!.getBoundingClientRect().top > offset + 1) break
+    active = target.id
+  }
+  // The final section may be too short to reach the reading line above the footer.
+  if (window.scrollY > 0 && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) {
+    active = targets[targets.length - 1].id
+  }
+  selectApi(active)
+}
+function queueScrollSelection() {
+  if (!scrollFrame) scrollFrame = requestAnimationFrame(syncScrollSelection)
+}
+function revealSelection() {
+  const index = documentationIndex.value
+  const row = index?.querySelector<HTMLElement>('.apple-tree__row.is-selected')
+  if (!index || !row) return
+  const bounds = index.getBoundingClientRect(), selected = row.getBoundingClientRect()
+  if (selected.top < bounds.top) index.scrollTop += selected.top - bounds.top
+  else if (selected.bottom > bounds.bottom) index.scrollTop += selected.bottom - bounds.bottom
+}
+watch([selectedApi, expandedSections], async () => {
+  await nextTick()
+  revealSelection()
+}, { deep: true })
+watch(doc, async () => {
+  await nextTick()
+  contentObserver?.disconnect()
+  if (documentationContent.value) contentObserver?.observe(documentationContent.value)
+  queueScrollSelection()
+}, { flush: 'post' })
+onMounted(() => {
+  window.addEventListener('scroll', queueScrollSelection, { passive: true })
+  window.addEventListener('resize', queueScrollSelection)
+  contentObserver = new ResizeObserver(queueScrollSelection)
+  if (documentationContent.value) contentObserver.observe(documentationContent.value)
+  indexObserver = new ResizeObserver(revealSelection)
+  const tree = documentationIndex.value?.querySelector<HTMLElement>('.apple-tree-size')
+  if (tree) indexObserver.observe(tree)
+  queueScrollSelection()
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', queueScrollSelection)
+  window.removeEventListener('resize', queueScrollSelection)
+  contentObserver?.disconnect()
+  indexObserver?.disconnect()
+  cancelAnimationFrame(scrollFrame)
+})
+
 async function navigateApi(item: AppleTreeItem) {
+  if (item.children?.length) return
   const id = String(item.value)
   await router.replace({ hash: `#${id}` })
   await nextTick()

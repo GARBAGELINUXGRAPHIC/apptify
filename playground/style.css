@@ -5,6 +5,19 @@ button { font: inherit; }
 #app > .apple-provider { min-height: 100dvh; }
 .apple-auto-size__inner { position: relative; }
 .route-page { display: contents; }
+.site-footer { width: 100%; max-width: 1280px; margin-inline: auto; padding-inline: 48px; }
+.route-page:has(.components-page) + .site-footer { margin-left: 232px; width: calc(100% - 232px); max-width: none; }
+.route-page:has(.components-page) + .site-footer > .page-footer { max-width: 1000px; margin-inline: auto; }
+@media (max-width: 1100px) {
+  .site-footer { padding-inline: 28px; }
+  .route-page:has(.components-page) + .site-footer { margin-left: 210px; width: calc(100% - 210px); padding-inline: 32px; }
+}
+@media (max-width: 800px) {
+  .route-page:has(.components-page) + .site-footer { margin-left: 0; width: 100%; }
+}
+@media (max-width: 640px) {
+  .site-footer, .route-page:has(.components-page) + .site-footer { padding-inline: 18px; }
+}
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--apple-text); text-decoration: none; font-weight: 650; font-size: 20px; }
 .brand-symbol { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--apple-text); color: var(--apple-surface); font-weight: 600; font-size: 24px; line-height: 1; padding-bottom: 4px; font-family: Georgia,serif; }
 .user-trigger { width: 38px; height: 38px; border: 1px solid var(--apple-border); border-radius: 50%; display: grid; place-items: center; background: var(--apple-surface); color: var(--apple-text); transition: background var(--apple-fast); }

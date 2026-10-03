@@ -303,7 +303,20 @@ export const AppleTree = defineComponent({
   data: () => ({ internalExpanded: [] as AppleValue[], internalValue: undefined as AppleValue | undefined, focusValue: undefined as AppleValue | undefined }),
   computed: {
     expandedValues(): AppleValue[] { return this.expanded ?? this.internalExpanded },
-    selectedValue(): AppleValue | undefined { return this.modelValue ?? this.internalValue },
+    selectedValue(): AppleValue | undefined {
+      const value = this.modelValue ?? this.internalValue
+      const pathTo = (items: AppleTreeItem[]): AppleTreeItem[] | undefined => {
+        for (const item of items) {
+          if (item.value === value) return [item]
+          const children = item.children && pathTo(item.children)
+          if (children) return [item, ...children]
+        }
+      }
+      const path = pathTo(this.items)
+      if (!path) return value
+      // Preserve the actual selection while highlighting its nearest visible ancestor.
+      return (path.find(item => item.children?.length && !this.expandedValues.includes(item.value)) ?? path[path.length - 1]).value
+    },
     visibleItems(): { item: AppleTreeItem; parent?: AppleValue }[] {
       const result: { item: AppleTreeItem; parent?: AppleValue }[] = []
       const visit = (items: AppleTreeItem[], parent?: AppleValue) => { for (const item of items) { result.push({ item, parent }); if (this.expandedValues.includes(item.value) && item.children) visit(item.children, item.value) } }
@@ -314,7 +327,7 @@ export const AppleTree = defineComponent({
   },
   methods: {
     toggle(item: AppleTreeItem) { if (this.disabled || item.disabled || !item.children?.length) return; const next = this.expandedValues.includes(item.value) ? this.expandedValues.filter(value => value !== item.value) : [...this.expandedValues, item.value]; this.internalExpanded = next; this.$emit('update:expanded', next) },
-    select(item: AppleTreeItem) { if (this.disabled || item.disabled) return; this.internalValue = item.value; this.toggle(item); this.focus(item.value); this.$emit('update:modelValue', item.value); this.$emit('select', item) },
+    select(item: AppleTreeItem) { if (this.disabled || item.disabled) return; this.focus(item.value); if (item.children?.length) { this.toggle(item); return }; this.internalValue = item.value; this.$emit('update:modelValue', item.value); this.$emit('select', item) },
     focus(value: AppleValue | undefined) { if (value === undefined) return; this.focusValue = value; this.$nextTick(() => { const index = this.visibleItems.findIndex(entry => entry.item.value === value); (this.$el as HTMLElement).querySelectorAll<HTMLElement>('[role="treeitem"]')[index]?.focus() }) },
     keydown(event: KeyboardEvent, item: AppleTreeItem) {
       if (this.disabled || item.disabled) return

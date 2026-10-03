@@ -29,7 +29,6 @@ const definitions = {
     '常见 HTML 输入属性可以直接使用，例如 maxlength 限制长度、readonly 只读、autocomplete 自动填充。@focus、@blur、@keydown 也可以直接监听。这些沿用浏览器的行为，不是组件另设的接口。class 和 style 应用在内部输入框上。',
     '不传 id 时，组件会自动生成，保证名称和输入框正确关联。帮助、错误、加载状态也会告知屏幕阅读器；这些状态跟随 hint、error、loading、required 和 disabled。',
     '可以用 Tab 切换焦点，用键盘选中文字、复制和操作按钮。密码按钮会提示当前是显示还是隐藏；清空后光标回到输入框。如果不显示 label，请设置 aria-label 或 aria-labelledby，让屏幕阅读器知道字段名称。',
-    '示例在浏览器里运行，支持 Vue 和普通 CSS。暂不支持 Sass、Less、随意导入其他 npm 包或读取本机文件。请只运行你了解的代码；无限循环可能让页面卡住。',
   ],
 }
 

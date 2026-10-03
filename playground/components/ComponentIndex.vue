@@ -2,9 +2,12 @@
   <nav class="component-index" aria-label="组件定位">
     <AppleTree :items="treeItems" :model-value="activeId || activeGroup" :expanded="expandedGroups" label="组件目录树" @update:expanded="expanded = $event" @select="navigate">
       <template #item="{ item }">
-        <router-link :to="`/components#${item.value}`" :class="['index-link', { 'index-group': item.children, active: activeId === item.value || (item.children && activeGroup === item.value) }]" :aria-current="activeId === item.value ? 'location' : undefined" tabindex="-1" @click.prevent>
-          <component :is="icons[item.label]" v-if="item.children" :size="15" aria-hidden="true" />
-          <span>{{ item.label }}</span><small v-if="item.children">{{ item.children.length }}</small>
+        <span v-if="item.children?.length" :class="['index-link', 'index-group', { active: activeGroup === item.value }]">
+          <component :is="icons[item.label]" :size="15" aria-hidden="true" />
+          <span>{{ item.label }}</span><small>{{ item.children.length }}</small>
+        </span>
+        <router-link v-else :to="`/components#${item.value}`" :class="['index-link', { active: activeId === item.value }]" :aria-current="activeId === item.value ? 'location' : undefined" tabindex="-1" @click.prevent>
+          <span>{{ item.label }}</span>
         </router-link>
       </template>
     </AppleTree>
@@ -13,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Bell, Box, MousePointer2, Smartphone, Table2, TextCursorInput } from 'lucide-vue-next'
 import { AppleTree } from '../../src'
@@ -24,7 +27,7 @@ const props = defineProps<{ activeGroup: string; activeId: string; search?: stri
 const emit = defineEmits<{ navigate: [] }>()
 const router = useRouter()
 const route = useRoute()
-const expanded = ref<AppleValue[]>([props.activeGroup])
+const expanded = ref<AppleValue[]>([])
 const icons: Record<string, typeof Box> = { '基础': Box, '表单': TextCursorInput, '导航': MousePointer2, '数据展示': Table2, '反馈': Bell, '移动交互': Smartphone }
 const query = computed(() => props.search?.trim().toLocaleLowerCase() ?? '')
 const treeItems = computed<AppleTreeItem[]>(() => sections.flatMap(section => {
@@ -33,10 +36,8 @@ const treeItems = computed<AppleTreeItem[]>(() => sections.flatMap(section => {
   return items.length ? [{ label: section.label, value: section.id, children: items.map(item => ({ label: item.label, value: componentId(item.name) })) }] : []
 }))
 const expandedGroups = computed(() => query.value ? treeItems.value.map(item => item.value) : expanded.value)
-watch(() => props.activeGroup, group => {
-  if (!expanded.value.includes(group)) expanded.value = [...expanded.value, group]
-})
 function navigate(item: AppleTreeItem) {
+  if (item.children?.length) return
   const hash = `#${item.value}`
   if (route.hash === hash) {
     const target = document.getElementById(String(item.value))

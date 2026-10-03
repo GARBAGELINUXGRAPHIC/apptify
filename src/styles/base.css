@@ -14,9 +14,9 @@
   --apple-fast: 120ms;
   --apple-theme-duration: 260ms;
   --v-theme-overlay-multiplier: .4;
-  --apple-hover: color-mix(in srgb, var(--apple-text) 5%, var(--apple-surface));
-  --apple-pressed: color-mix(in srgb, var(--apple-text) 10%, var(--apple-surface));
-  --apple-selected: color-mix(in srgb, var(--apple-text) 8%, var(--apple-surface));
+  --apple-hover: color-mix(in srgb, var(--apple-text) 5%, transparent);
+  --apple-pressed: color-mix(in srgb, var(--apple-text) 10%, transparent);
+  --apple-selected: color-mix(in srgb, var(--apple-text) 8%, transparent);
   --apple-ease: cubic-bezier(.2,.65,.3,1);
   color: var(--apple-text);
   background: var(--apple-bg);

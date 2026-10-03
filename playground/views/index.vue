@@ -30,7 +30,6 @@
         <apple-link :href="href" class="home-link" @click="navigate">查看全部组件 <ArrowRight :size="16" aria-hidden="true" /></apple-link>
       </router-link>
     </section>
-    <PageFooter />
   </main>
 </template>
 
@@ -38,10 +37,9 @@
 import { defineComponent, markRaw } from 'vue'
 import { ArrowRight, ArrowUpRight, Download, Heart, Plus } from 'lucide-vue-next'
 import { catalog } from '../catalog'
-import PageFooter from '../components/PageFooter.vue'
 
 export default defineComponent({
-  components: { ArrowRight, ArrowUpRight, PageFooter },
+  components: { ArrowRight, ArrowUpRight },
   data() { return {
     catalog, arrowIcon: markRaw(ArrowRight), plusIcon: markRaw(Plus), heartIcon: markRaw(Heart), downloadIcon: markRaw(Download),
     period: 'month', periods: [{label:'日',value:'day'},{label:'周',value:'week'},{label:'月',value:'month'}],

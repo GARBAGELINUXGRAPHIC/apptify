@@ -11,6 +11,7 @@
         <component :is="Component" :key="route.path" />
       </div>
     </router-view>
+    <div class="site-footer"><PageFooter /></div>
   </apple-provider>
 </template>
 
@@ -20,6 +21,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useApple } from '../src'
 import { animateEntrance } from '../src/core/motion'
 import UserMenu from './components/UserMenu.vue'
+import PageFooter from './components/PageFooter.vue'
 
 const router = useRouter()
 const route = useRoute()

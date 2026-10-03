@@ -1,6 +1,6 @@
 <template>
   <apple-aside class="sidebar" aria-label="组件目录">
-    <div class="sidebar-heading"><strong>组件目录</strong><span>点击定位，直接预览</span></div>
+    <div class="sidebar-heading"><strong>组件目录</strong></div>
     <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
     <ComponentIndex :active-group="activeGroup" :active-id="activeId" :search="directorySearch" />
   </apple-aside>
@@ -29,7 +29,6 @@
         </apple-card>
       </section>
     </div>
-    <PageFooter />
   </main>
   <apple-drawer v-model="mobileIndex" title="组件目录" placement="left" width="290px">
     <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
@@ -45,7 +44,6 @@ import { useApple } from '../../src'
 import { catalog, sections, componentId } from '../catalog'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
-import PageFooter from '../components/PageFooter.vue'
 import ComponentDocumentLink from '../editor/ComponentDocumentLink.vue'
 import { componentDocuments, componentDocumentPath } from '../editor/documents'
 
