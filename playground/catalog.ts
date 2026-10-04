@@ -60,11 +60,11 @@ export const catalog: CatalogItem[] = [
   item('AppleMenu', '下拉菜单', '反馈', '按需展开的操作列表。', 'v-model · items[{label,value,disabled,danger,icon,description}] · label · selected | select(value,item)', '<apple-menu :items="actions" label="更多操作" @select="onAction" />'),
   item('AppleActionSheet', '动作面板', '移动交互', '熟悉、直接的移动操作。', 'v-model · title · message · items[{label,value,disabled,danger}] · cancelText | default slot {select(item),close(value)} | select(value,item)', '<apple-action-sheet v-model="open" title="选择操作" @select="onAction">\n  <template #default="{ select }">\n    <apple-button @click="select({ label: \'收藏\', value: \'favorite\' })">加入收藏</apple-button>\n  </template>\n</apple-action-sheet>'),
   item('ApplePullRefresh', '下拉刷新', '移动交互', '轻轻下拉，获取新内容。', 'v-model(refreshing) · threshold · label · disabled | refresh(done)', '<apple-pull-refresh @refresh="async done => { await reload(); done() }">内容</apple-pull-refresh>'),
-  item('AppleInfiniteScroll', '无限滚动', '移动交互', '浏览，不必被翻页打断。', 'loading · finished · error · disabled · distance | load(done), retry(done)', '<apple-infinite-scroll :finished="finished" @load="async done => { await loadMore(); done() }">内容</apple-infinite-scroll>'),
   item('AppleBackTop', '回到顶部', '移动交互', '回到开始，毫不费力。', 'threshold · label', '<apple-back-top :threshold="400" />'),
   item('AppleFloatingGroup', '悬浮操作组', '移动交互', '常用操作，触手可及。', 'backTop · threshold · target · label · motion | default', '<apple-floating-group :threshold="300" />'),
   item('AppleAutoSize', '自适应尺寸', '基础', '内容变化，布局随行。', 'axis(height|both) · motion | default', '<apple-auto-size><div v-if="expanded">详情内容</div></apple-auto-size>'),
   item('AppleTransition', '动效容器', '基础', '为页面保留连续感。', 'name(page|slide-x|slide-y|fade) · mode · appear · motion | default', '<apple-transition name="page"><router-view /></apple-transition>'),
+  item('AppleInfiniteScroll', '无限滚动', '移动交互', '浏览，不必被翻页打断。', 'loading · finished · error · disabled · distance | load(done), retry(done)', '<apple-infinite-scroll :finished="finished" @load="async done => { await loadMore(); done() }">内容</apple-infinite-scroll>'),
 ]
 export const groups = ['全部组件', '基础', '表单', '导航', '数据展示', '反馈', '移动交互']
 

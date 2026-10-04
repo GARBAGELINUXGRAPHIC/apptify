@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -47,7 +47,10 @@ try {
   const manifest = JSON.parse(await readFile(join(app, 'package.json'), 'utf8'))
   assert.match(manifest.dependencies.apptify, /^file:\.\/vendor\/apptify-/)
   assert.match(await readFile(join(app, '.gitignore'), 'utf8'), /node_modules/)
-  await readFile(join(app, 'playground/App.vue'))
+  await readFile(join(app, 'src/App.vue'))
+  assert(!(await readdir(app)).includes('playground'), 'Generated app must use src/')
+  assert.match(await readFile(join(app, 'index.html'), 'utf8'), /src="\/src\/main\.ts"/)
+  assert.deepEqual(JSON.parse(await readFile(join(app, 'tsconfig.json'), 'utf8')).include, ['src/**/*.ts', 'src/**/*.vue'])
   const archive = join(app, manifest.dependencies.apptify.slice('file:./'.length))
   const portableManifest = JSON.parse(execFileSync('tar', ['-xOf', archive, 'package/package.json'], { encoding: 'utf8' }))
   assert.equal(portableManifest.name, 'apptify')
@@ -66,12 +69,12 @@ try {
   await mkdir(empty)
   const copied = run([empty])
   assert.equal(copied.status, 0, copied.stderr)
-  await readFile(join(empty, 'playground/App.vue'))
+  await readFile(join(empty, 'src/App.vue'))
   const current = join(scratch, 'current-directory')
   await mkdir(current)
   const defaultTarget = run([], current)
   assert.equal(defaultTarget.status, 0, defaultTarget.stderr)
-  await readFile(join(current, 'playground/router/index.ts'))
+  await readFile(join(current, 'src/router/index.ts'))
   assert.match(JSON.parse(await readFile(join(current, 'package.json'), 'utf8')).dependencies.apptify, /^file:\.\/vendor\//)
   await rm(installer, { recursive: true, force: true })
   execFileSync('tar', ['-t', '-f', archive])

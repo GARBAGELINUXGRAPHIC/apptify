@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-The target must be empty. Omit `my-app` or use `.` to create in the current empty directory. Edit pages in `playground/views/` and navigation in `playground/App.vue`. Account forms need your own backend.
+The target must be empty. Omit `my-app` or use `.` to create in the current empty directory. Edit pages in `src/views/` and navigation in `src/App.vue`. Account forms need your own backend.
 
 Uses the generator and template shipped with `apptify`. The generated app includes a portable library archive in `vendor/`.
 

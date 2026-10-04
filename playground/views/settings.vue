@@ -38,7 +38,7 @@
         <div class="settings-section-heading"><div><h2 id="ripple-heading">点击波纹</h2><p>让每一次轻点，都有细微的回应。</p></div></div>
         <apple-switch :model-value="rippleAllowed && apple.ripple.value.enabled" :disabled="!rippleAllowed" label="点击波纹" :hint="rippleAllowed ? '减弱动效时自动关闭，可手动开启；偏好保存在这台设备上。' : '关闭动效时，无法开启点击波纹。'" @update:model-value="apple.ripple.value.set" />
         <div ref="rippleDemo" class="effect-demo ripple-sample" aria-label="波纹自动演示" @pointerenter="ripplePaused = true" @pointerleave="ripplePaused = false" @focusin="ripplePaused = true" @focusout="ripplePaused = false">
-          <apple-button @click="rippleDemoClicks++">试试点击波纹</apple-button>
+          <apple-button variant="outline" @click="rippleDemoClicks++">试试点击波纹</apple-button>
           <span class="ripple-click-count">已点击 {{ rippleDemoClicks }} 次</span>
         </div>
         <div class="settings-card-foot">{{ rippleAllowed && apple.ripple.value.enabled ? '自动点击 · 也可以手动试一试' : '点击波纹已关闭 · 静态展示' }}</div>
@@ -127,7 +127,6 @@ const glassPreviewChoice = ref('1')
 const glassPreviewItems = [
   { label: 'Item 1', value: '1', description: 'Item 1' },
   { label: 'Item 2', value: '2', description: 'Item 2' },
-  { label: 'Item 3', value: '3', description: 'Item 3' },
 ]
 function formatOpacity(value: number) { return `${Number(value.toFixed(1))}%` }
 function formatBlur(value: number) { return `${value}px` }

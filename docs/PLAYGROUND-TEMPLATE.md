@@ -21,18 +21,18 @@ npm run dev
 
 | 位置 | 用途 |
 | --- | --- |
-| `playground/App.vue` | 布局、导航项与账号入口 |
-| `playground/views/` | 页面与自动生成的路由 |
-| `playground/router/index.ts` | 滚动恢复、hash 定位与页面标题 |
-| `playground/components/UserMenu.vue` | 账号菜单与登录/注册表单 |
-| `playground/views/settings.vue` | 主题、动效与玻璃设置 |
-| `playground/views/[...all].vue` | 404 页面 |
-| `playground/style.css` | 应用样式 |
+| `src/App.vue` | 布局、导航项与账号入口 |
+| `src/views/` | 页面与自动生成的路由 |
+| `src/router/index.ts` | 滚动恢复、hash 定位与页面标题 |
+| `src/components/UserMenu.vue` | 账号菜单与登录/注册表单 |
+| `src/views/settings.vue` | 主题、动效与玻璃设置 |
+| `src/views/[...all].vue` | 404 页面 |
+| `src/style.css` | 应用样式 |
 | `public/images/` | 示例图片与来源说明 |
 
 可删除 `views/index.vue` 和 `views/components.vue`，再创建业务页面。删除后重启开发服务；导航会隐藏不存在的页面。删除组件总览后，可一并删除 `ComponentDemo.vue`、`catalog.ts` 和 `components/ComponentIndex.vue`。
 
-例如 `playground/views/orders.vue` 自动对应 `/orders`；在 `App.vue` 的 `navigation` 数组添加入口即可显示导航。`index.vue` 对应首页。
+例如 `src/views/orders.vue` 自动对应 `/orders`；在 `App.vue` 的 `navigation` 数组添加入口即可显示导航。`index.vue` 对应首页。
 
 组件通过 `apptify` 导入，样式通过 `apptify/style.css` 导入；`apptify/vite` 提供文件路由插件。已有项目接入时需安装 `vue-router` 和 `vite-plugin-pages`，模板已配置这些依赖。
 
@@ -42,7 +42,7 @@ npm run dev
 
 复制出的应用使用 `npm run typecheck` 和 `npm run build` 检查。
 
-库开发者编辑原仓库的 `playground/`，模板目录在打包时生成。`npm pack` 自动构建组件库并准备模板；本地安装生成的 tgz 后，也可运行 `npx --no-install apptify-playground ../my-app`。
+库开发者编辑原仓库的 `playground/`，打包时将其映射为模板的 `src/`。`npm pack` 自动构建组件库并准备模板；本地安装生成的 tgz 后，也可运行 `npx --no-install apptify-playground ../my-app`。
 
 `npm run test:package` 验证包内容、独立安装、模板复制、类型检查、构建与浏览器交互，并检查删除示例页面后的行为。命令输出临时目录与验收结果路径。验证指定归档：
 

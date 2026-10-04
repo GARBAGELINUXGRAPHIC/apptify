@@ -1,59 +1,23 @@
 # Apptify
 
-面向桌面与移动端的 Vue 3 组件库，采用 Apple 风格设计，统一使用 `<apple-*>` 标签。支持主题切换、减少动效、表单、图片预览与多层弹窗；支持 JavaScript、TypeScript 和 Options API。
+面向桌面与移动端的 Vue 3 组件库，基于 Vuetify Material UI 融合 Apple 风格设计，统一使用 `<apple-*>` 标签。
 
 [npm](https://www.npmjs.com/package/apptify) · [组件 API](docs/COMPONENTS.md) · [应用模板](docs/PLAYGROUND-TEMPLATE.md)
 
-## 安装
+## 快速开始
 
 ```sh
-npm install apptify vue@^3.5 vuetify@^3.9
+npm create apptify
 ```
 
-Vue 与 Vuetify 是 peer dependencies。Vuetify 仅用于 Ripple，无需安装其插件、导入完整样式或使用 `<v-app>`。
-
-## 快速接入
-
-```js
-// src/main.js
-import { createApp } from 'vue'
-import { createAppleUI } from 'apptify'
-import 'apptify/style.css'
-import App from './App.vue'
-
-createApp(App)
-  .use(createAppleUI({ theme: 'system', motion: 'auto', persist: true }))
-  .mount('#app')
-```
-
-```vue
-<!-- App.vue -->
-<template>
-  <apple-provider>
-    <apple-container>
-      <apple-card title="个人资料">
-        <apple-input v-model="name" label="姓名" />
-        <template #actions>
-          <apple-button @click="save">保存</apple-button>
-        </template>
-      </apple-card>
-    </apple-container>
-  </apple-provider>
-</template>
-
-<script>
-export default {
-  data: () => ({ name: '' }),
-  methods: {
-    save() {
-      this.$apple.notify('资料已保存', { tone: 'success' })
-    },
-  },
-}
-</script>
-```
-
-`AppleProvider` 提供主题与弹层宿主，无需额外添加 `AppleOverlayHost`。插件全局注册组件，也支持命名导入并局部注册。嵌套 Provider 内可用 `appleKey` 注入局部上下文，或在 `setup()` 中使用 `useApple()`。
+安装后会自带所有组件说明的样例站。Bundle 包含以下组件之外的内容：
+- 自动根据 src/views 生成 routes
+- lucide icons
+- 竖屏、触屏布尔状态
+- 全局广播通道 `sendMessage`
+- 错误页
+- 外观设置页
+- 各组件示例与源码等，有问题可以直接抄
 
 ## 常用 API
 
@@ -73,26 +37,6 @@ const confirmed = await dialog.result // 确认 true，取消 false，关闭 und
 
 Props、事件、插槽、自定义主题与弹层消息回传见[组件 API](docs/COMPONENTS.md)。
 
-## 创建完整应用
+## LICENSE
 
-```sh
-npm create apptify@latest ./my-app
-cd my-app
-npm install
-npm run dev
-```
-
-也可运行 `npx --package=apptify apptify-playground ./my-app`。
-
-目标目录需为空。模板含导航、设置、账号表单、404 和组件示例，可直接编辑；账号功能需接入自己的后端。复制项目携带库归档，可独立安装。页面开发与部署见[应用模板](docs/PLAYGROUND-TEMPLATE.md)。
-
-## 本地开发
-
-```sh
-npm ci
-npm run dev
-```
-
-建议 Node.js 22 或 24 LTS。检查使用 `npm run typecheck`、`npm test`、`npm run build`、`npm run test:e2e` 和 `npm run test:package`；`npm pack` 自动构建并准备模板。生成器位于 [`packages/create-apptify`](packages/create-apptify/README.md)，使用 `npm run test:create` 验证。历史验证记录见[验证文档](docs/VALIDATION.md)。
-
-MIT 许可。Apptify 不是 Apple 官方产品。
+MIT

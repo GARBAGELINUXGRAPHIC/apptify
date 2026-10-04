@@ -2,10 +2,11 @@ import assert from 'node:assert/strict'
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
+import { createServer } from 'node:net'
 import { createHash } from 'node:crypto'
 import { execFileSync, spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { chromium } from '@playwright/test'
+import { chromium, expect } from '@playwright/test'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const scratch = await mkdtemp(join(tmpdir(), 'apptify-package-'))
@@ -70,7 +71,14 @@ if (hasConsumerTypes) {
 }
 
 async function serve() {
-  const child = spawn(npm, ['run', 'dev', '--', '--host', '127.0.0.1', '--port', '0', '--strictPort'], { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' })
+  const reservation = createServer()
+  await new Promise((resolve, reject) => {
+    reservation.once('error', reject)
+    reservation.listen(0, '127.0.0.1', resolve)
+  })
+  const port = reservation.address().port
+  await new Promise((resolve, reject) => reservation.close(error => error ? reject(error) : resolve()))
+  const child = spawn(npm, ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' })
   const stop = () => {
     if (process.platform !== 'win32') { try { process.kill(-child.pid, 'SIGTERM') } catch {} }
     else child.kill('SIGTERM')
@@ -121,7 +129,13 @@ try {
     const image = page.locator('#apple-image img').first()
     await image.scrollIntoViewIfNeeded()
     assert.equal(await image.evaluate(async image => { await image.decode(); return image.naturalWidth > 0 }), true)
-    await page.locator('.component-index [aria-current]').first().waitFor()
+    await page.locator('.component-index [role=treeitem][aria-selected=true]').first().waitFor()
+  })
+  await checkPage(server.url, '/component-docs/apple-input', async page => {
+    const frame = page.frameLocator('[data-testid="input-playground"] .vue-repl iframe')
+    await expect(frame.locator('.apple-input-wrap input').first()).toBeVisible()
+    await frame.locator('.apple-input-wrap input').first().fill('Template src preview')
+    await expect(frame.locator('.apple-input-wrap input').first()).toHaveValue('Template src preview')
   })
   await checkPage(server.url, '/settings', async page => {
     await page.setViewportSize({ width: 320, height: 900 })
@@ -129,8 +143,8 @@ try {
     await page.getByRole('slider', { name: '玻璃不透明度', exact: true }).waitFor()
     await page.getByRole('button', { name: '打开用户菜单', exact: true }).click()
     await page.getByRole('button', { name: /登录 Login/ }).click()
-    await page.getByLabel('电子邮箱', { exact: true }).fill('template@example.com')
-    await page.getByLabel('密码', { exact: true }).fill('template-password')
+    await page.locator('.user-auth-form').getByRole('textbox', { name: /^电子邮箱/ }).fill('template@example.com')
+    await page.locator('.user-auth-form').getByLabel(/^密码/).fill('template-password')
     assert.equal(await page.locator('.user-auth-form input[type=password]').count(), 1)
     await settledScreenshot(page, 'settings-login-320.png')
   })
@@ -150,12 +164,12 @@ try {
   server.stop()
   server = undefined
 
-  await rm(join(app, 'playground/views/index.vue'))
-  await rm(join(app, 'playground/views/components.vue'))
+  await rm(join(app, 'src/views/index.vue'))
+  await rm(join(app, 'src/views/components.vue'))
   // These files only served the removed overview page. Deleting them must be optional.
-  await rm(join(app, 'playground/ComponentDemo.vue'))
-  await rm(join(app, 'playground/catalog.ts'))
-  await rm(join(app, 'playground/components/ComponentIndex.vue'))
+  await rm(join(app, 'src/ComponentDemo.vue'))
+  await rm(join(app, 'src/catalog.ts'))
+  await rm(join(app, 'src/components/ComponentIndex.vue'))
   run(['run', 'typecheck'], app)
   run(['run', 'build'], app)
   server = await serve()
@@ -178,7 +192,7 @@ try {
   await browser.close()
 }
 for (const [path, hash] of Object.entries(snapshot.files)) {
-  assert.equal(createHash('sha256').update(await readFile(join(root, path))).digest('hex'), hash, 'Source changed during packing; rerun for its latest snapshot: ' + path)
+  assert.equal(createHash('sha256').update(await readFile(join(root, snapshot.sourcePaths?.[path] ?? path))).digest('hex'), hash, 'Source changed during packing; rerun for its latest snapshot: ' + path)
 }
 for (const [path, hash] of Object.entries(snapshot.buildSources || {})) {
   assert.equal(createHash('sha256').update(await readFile(join(root, path))).digest('hex'), hash, 'Build source changed after this archive was created; pack the latest version: ' + path)

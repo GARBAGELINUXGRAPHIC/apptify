@@ -34,19 +34,19 @@ const vueComponents = {
 }
 
 /** Local-only resources for the official Vue REPL. No CDN or compile service. */
-export default function playgroundEditor() {
+export default function playgroundEditor({ appDir = 'playground', libraryDir = 'src' } = {}) {
   let config
   let resources
   let rebuilding = Promise.resolve()
   function rebuild() { rebuilding = rebuilding.catch(() => {}).then(prepare); return rebuilding }
   async function prepare() {
-    if (existsSync(resolve(config.root, 'src/components/forms.ts'))) {
+    if (libraryDir && existsSync(resolve(config.root, libraryDir, 'components/forms.ts'))) {
       const { prepareInputSource } = await import('./prepare-input-source.mjs')
       await prepareInputSource()
     }
     const require = createRequire(resolve(config.root, 'package.json'))
     const bundle = await build({
-      absWorkingDir: config.root, entryPoints: ['playground/editor/runtime.ts'],
+      absWorkingDir: config.root, entryPoints: [resolve(config.root, appDir, 'editor/runtime.ts')],
       bundle: true, format: 'esm', platform: 'browser', external: ['vue'],
       outfile: 'runtime.js', write: false, minify: true,
       define: { 'process.env.NODE_ENV': '"production"' },
@@ -74,8 +74,8 @@ export default function playgroundEditor() {
       return { code, map: null }
     },
     async handleHotUpdate(ctx) {
-      const source = resolve(config.root, 'src') + '/'
-      if (!ctx.file.startsWith(source) && ctx.file !== resolve(config.root, 'playground/editor/runtime.ts')) return
+      const source = libraryDir ? resolve(config.root, libraryDir) + '/' : undefined
+      if (!(source && ctx.file.startsWith(source)) && ctx.file !== resolve(config.root, appDir, 'editor/runtime.ts')) return
       // Preview resources are an in-memory bundle, separate from Vite's normal CSS HMR.
       // Rebuild it when library files change, then recreate the preview realm.
       await rebuild()

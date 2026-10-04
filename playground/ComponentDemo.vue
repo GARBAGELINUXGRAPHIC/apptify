@@ -123,7 +123,6 @@
       </apple-action-sheet>
     </template>
     <apple-pull-refresh v-else-if="name === 'ApplePullRefresh'" @refresh="refresh"><apple-list :items="[{label:'最新内容',value:'latest',description:refreshText},{label:'最近更新',value:'recent',description:'所有内容已同步'}]" /></apple-pull-refresh>
-    <apple-infinite-scroll v-else-if="name === 'AppleInfiniteScroll'" :finished="itemsCount >= 12" @load="loadMore"><apple-list :items="Array.from({length:itemsCount}, (_, i) => ({label:`灵感收藏 ${i+1}`, value:i, description:'刚刚更新'}))" /></apple-infinite-scroll>
     <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.ArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" :fixed="false" /></template>
     <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-card class="demo-floating-preview"><apple-provider><apple-floating-group :threshold="0" /></apple-provider></apple-card></template>
     <apple-stack v-else-if="name === 'AppleAutoSize'"><apple-switch v-model="checked" label="显示详情" /><apple-auto-size><apple-list :items="checked ? settings : settings.slice(0,1)" selectable /></apple-auto-size></apple-stack>
@@ -135,6 +134,7 @@
         </apple-transition>
       </div>
     </apple-stack>
+    <apple-infinite-scroll v-else-if="name === 'AppleInfiniteScroll'" :finished="itemsCount >= 12" @load="loadMore"><apple-list :items="Array.from({length:itemsCount}, (_, i) => ({label:`灵感收藏 ${i+1}`, value:i, description:'刚刚更新'}))" /></apple-infinite-scroll>
   </div>
 </template>
 

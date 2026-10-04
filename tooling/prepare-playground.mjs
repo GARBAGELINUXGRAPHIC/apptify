@@ -11,19 +11,24 @@ const library = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
 await rm(output, { recursive: true, force: true })
 await mkdir(output, { recursive: true })
 const copyOptions = { recursive: true, filter: source => basename(source) !== '.DS_Store' }
-await cp(join(root, 'playground'), join(output, 'playground'), copyOptions)
+await cp(join(root, 'playground'), join(output, 'src'), copyOptions)
 await cp(join(root, 'public'), join(output, 'public'), copyOptions)
-await cp(join(root, 'index.html'), join(output, 'index.html'))
+await writeFile(join(output, 'index.html'), (await readFile(join(root, 'index.html'), 'utf8')).replace('/playground/main.ts', '/src/main.ts'))
 await mkdir(join(output, 'tooling'), { recursive: true })
 await cp(join(root, 'tooling/prepare-input-source.mjs'), join(output, 'tooling/prepare-input-source.mjs'))
 await cp(join(root, 'tooling/playground-editor.mjs'), join(output, 'tooling/playground-editor.mjs'))
 
-const snapshot = { createdAt: new Date().toISOString(), libraryVersion: library.version, files: {} }
+const snapshot = { createdAt: new Date().toISOString(), libraryVersion: library.version, files: {}, sourcePaths: {} }
 async function record(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name)
     if (entry.isDirectory()) await record(path)
-    else snapshot.files[relative(output, path)] = createHash('sha256').update(await readFile(path)).digest('hex')
+    else {
+      const key = relative(output, path).replaceAll('\\', '/')
+      const sourcePath = key.startsWith('src/') ? 'playground/' + key.slice(4) : key
+      snapshot.sourcePaths[key] = sourcePath
+      snapshot.files[key] = createHash('sha256').update(await readFile(join(root, sourcePath))).digest('hex')
+    }
   }
 }
 await record(output)
@@ -37,15 +42,15 @@ async function adapt(directory) {
       let source = await readFile(path, 'utf8')
       source = source.replace(/(['"])(?:\.\.\/)+src(?:\/(?:index|core\/motion|core\/context|components\/content))?\1/g, "'apptify'")
       if (/(['"])(?:\.\.\/)+src(?:\/[^'"]*)?\1/.test(source)) throw new Error('Unmapped private library import: ' + path)
-      if (path === join(output, 'playground/editor/runtime.ts')) source = "import 'apptify/style.css'\n" + source
+      if (path === join(output, 'src/editor/runtime.ts')) source = "import 'apptify/style.css'\n" + source
       if (entry.name === 'main.ts') source = "import 'apptify/style.css'\n" + source
-      if (path === join(output, 'playground/App.vue')) {
+      if (path === join(output, 'src/App.vue')) {
         const navigationEnd = ']\n\nfunction navigate'
         if (!source.includes(navigationEnd)) throw new Error('App navigation layout changed; update template adaptation')
         source = source.replace('to="/" aria-label="Apptify 首页"', ':to="homePath" aria-label="Apptify 首页"')
         source = source.replace(navigationEnd, "].filter(item => router.getRoutes().some(page => page.path === item.href))\nconst homePath = navigation[0]?.href ?? '/'\n\nfunction navigate")
       }
-      if (path === join(output, 'playground/views/[...all].vue')) {
+      if (path === join(output, 'src/views/[...all].vue')) {
         source = source.replace('to="/" custom', ':to="homePath" custom')
         source = source.replace('const router = useRouter()', "const router = useRouter()\nconst homePath = router.getRoutes().some(page => page.path === '/') ? '/' : '/settings'")
         source = source.replace("else void router.push('/')", 'else void router.push(homePath)')
@@ -54,7 +59,7 @@ async function adapt(directory) {
     }
   }
 }
-await adapt(join(output, 'playground'))
+await adapt(join(output, 'src'))
 const manifest = {
   name: 'apptify-app', version: '0.0.0', private: true, type: 'module',
   scripts: { dev: 'vite', typecheck: 'vue-tsc --noEmit', build: 'vue-tsc --noEmit && vite build', preview: 'vite preview --host 127.0.0.1' },
@@ -67,7 +72,7 @@ const manifest = {
 }
 await writeFile(join(output, 'package.json'), JSON.stringify(manifest, null, 2) + '\n')
 const tsconfig = JSON.parse(await readFile(join(root, 'tsconfig.json'), 'utf8'))
-tsconfig.include = ['playground/**/*.ts', 'playground/**/*.vue']
+tsconfig.include = ['src/**/*.ts', 'src/**/*.vue']
 await writeFile(join(output, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2) + '\n')
 await writeFile(join(output, 'vite.config.ts'), [
   "import { defineConfig } from 'vite'",
@@ -77,7 +82,7 @@ await writeFile(join(output, 'vite.config.ts'), [
   '',
   'export default defineConfig({',
   "  optimizeDeps: { exclude: ['@vue/repl'] },",
-  "  plugins: [playgroundEditor(), apptifyRoutes({ dirs: [{ dir: 'playground/views', baseRoute: '' }] }), vue()],",
+  "  plugins: [playgroundEditor({ appDir: 'src', libraryDir: null }), apptifyRoutes(), vue()],",
   "  server: { host: '127.0.0.1' },",
   "  build: { outDir: 'dist' },",
   '})', '',
@@ -96,10 +101,10 @@ await writeFile(join(output, 'README.md'), [
   "",
   "检查：`npm run typecheck`、`npm run build`。",
   "",
-  "- 页面：`playground/views/`，文件路由自动生成。",
-  "- 布局与导航：`playground/App.vue` 的 `navigation` 数组。",
-  "- 账号表单：`playground/components/UserMenu.vue`，需要接入自己的后端。",
-  "- 样式：`playground/style.css`；图片与来源：`public/images/`。",
+  "- 页面：`src/views/`，文件路由自动生成。",
+  "- 布局与导航：`src/App.vue` 的 `navigation` 数组。",
+  "- 账号表单：`src/components/UserMenu.vue`，需要接入自己的后端。",
+  "- 样式：`src/style.css`；图片与来源：`public/images/`。",
   "",
   "可删除 `views/index.vue` 和 `views/components.vue`，再添加业务页面；删除后重启开发服务。删除组件总览后，可一并删除 `ComponentDemo.vue`、`catalog.ts` 和 `components/ComponentIndex.vue`。",
   "",
