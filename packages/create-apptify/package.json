@@ -17,7 +17,7 @@
     "bin"
   ],
   "bin": {
-    "create-apptify": "./bin/create-apptify.mjs"
+    "create-apptify": "bin/create-apptify.mjs"
   },
   "engines": {
     "node": ">=22"
