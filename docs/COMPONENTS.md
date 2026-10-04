@@ -4,7 +4,7 @@
 
 ## 公共约定
 
-`secondary` 与 `outline` 都是描边按钮，`ghost` 是纯文字按钮且始终不启用 Ripple。所有 API 可直接从 JavaScript 和普通 Vue `<script>` 使用，TypeScript 不是消费前提。
+`secondary` 与 `outline` 都是描边按钮，纯文字操作使用 `AppleLink`，始终不启用 Ripple。所有 API 可直接从 JavaScript 和普通 Vue `<script>` 使用，TypeScript 不是消费前提。
 
 Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ripple；保留选中指示器位移与内容切换动画。
 
@@ -36,15 +36,15 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 
 全局入场使用 `v-apple-entrance="pageKey"` 放在一个页面容器上：首次挂载及 key 改变时整体由下向上 14px，不复制旧页、不执行离场、不改变透明度。不应嵌套应用到同一页面的多层内容。
 
-另提供 `v-apple-ripple` 和 `v-apple-selection`；后者移动到后代 `[data-apple-selected="true"]`，也可传 `{selector}`。全局 none/reduced 与系统减少动态效果限制同样生效。
+另提供 `v-apple-ripple` 和 `v-apple-selection`；后者移动到后代 `[data-apple-selected="true"]`，也可传 `{selector}`。selection 遵循全局 none/reduced 与系统减少动态效果限制；ripple 在减弱动效下可手动开启，none 下始终禁用。
 
 ## 基础组件 · 9
 
 | 组件 | 主要 Props | Events / Slots / 说明 |
 | --- | --- | --- |
 | `AppleProvider` | `theme?: string`、`motion?: auto/full/reduced/none` | default slot；应用主题并自动挂载弹层宿主。无显式属性时复用插件上下文。 |
-| `AppleButton` | M；`variant=primary`（primary/secondary/outline/ghost/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot。纯图标按钮须提供 label。只有允许完整动效时启用 Ripple。 |
-| `AppleLink` | `href`、`external`、`disabled` | default slot；external 使用新窗口并设置 `noopener noreferrer`。 |
+| `AppleButton` | M；`variant=primary`（primary/secondary/outline/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot；图标位于文字右侧。纯图标按钮须提供 label。关闭动效时禁用 Ripple，其余模式遵循全局波纹开关。 |
+| `AppleLink` | `as=a`（a/button）、`href`、`external`、`disabled`、`icon`、`iconOnly`、`label` | default slot；文字操作使用 as=button；external 使用新窗口并设置 `noopener noreferrer`。 |
 | `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=none`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
 | `AppleImage` | M；`gallery: AppleImageItem | (string/AppleImageItem)[]`（唯一来源，默认空数组，单图可传对象）；`preview=true`、`carousel=false`、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、常显控件且保留自由滚动；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，桌面触控板支持自由连续横滑、一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 不缩放，多图显示左右翻页按钮（单图小窗与全屏均无翻页箭头），跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
@@ -54,15 +54,17 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 
 ## 表单组件 · 18
 
+字段名称、hint、错误提示和行内空白只用于展示，点击不会聚焦、展开或切换控件；直接操作输入框、选择器或开关本身。字段名称通过 ARIA 保留可访问性关联。
+
 | 组件 | 主要 Props | Events / Slots / 方法 |
 | --- | --- | --- |
 | `AppleInput` | F；`v-model: string/number`、`type=text`、`placeholder`、`clearable` | `change(value)`、`clear()`；prefix/suffix slots；`focus()`；输入事件实际返回字符串。password 类型带显隐按钮。 |
 | `AppleTextarea` | F；`v-model: string`、`placeholder`、`rows=4`、`maxlength`、`counter`、`resize=true` | `change(value)`；`focus()`；resize=true 允许纵向缩放。 |
 | `AppleSelect` | F；`v-model: string/number/null`、`items: AppleOption[]`、`placeholder='请选择'` | `change(value)`；自绘半透明模糊下拉，支持键盘导航和 required 校验。 |
 | `AppleAutocomplete` | F；`v-model: string/number/null`、`items`、`placeholder`、`emptyText`、`clearable=true`、`filter(query,item)` | `change(value)`、`search(query)`；`focus()`；方向键/Enter/Escape；是单选过滤，不是多选标签输入。 |
-| `AppleCheckbox` | F；`v-model: boolean`、`indeterminate` | `change(checked)`；default slot 替代 label 文本。 |
+| `AppleCheckbox` | F；`v-model: boolean`、`indeterminate` | `change(checked)`；default slot 替代 label 文本，默认文字在左、开关在右；hint 在下方。 |
 | `AppleRadioGroup` | F；`v-model: string/number/null`、`items`、`inline`、`name` | `change(value)`；原生 radio group。 |
-| `AppleSwitch` | F；`v-model: boolean` | `change(checked)`；default slot 替代 label 文本。 |
+| `AppleSwitch` | F；`v-model: boolean` | `change(checked)`；default slot 替代 label 文本。默认 width: 100%，label 和 hint 在左侧同一列，开关在右侧。 |
 | `AppleSlider` | F；`v-model: number`、`min=0`、`max=100`、`step=1`、`showValue=true`、`formatValue(value)` | `change(value)`；单值原生 range，不是双滑块范围选择。 |
 | `AppleStepper` | F；`v-model: number`、`min=-Infinity`、`max=Infinity`、`step=1` | `change(value)`；减/加按钮及可编辑数值输入；提交时约束范围。 |
 | `AppleSegmentedControl` | F；`v-model: string/number/null`、`items`、`name` | `change(value)`；基于 radio 的单选分段控件，不是 tabs 内容容器。 |
@@ -70,7 +72,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleColorPicker` | F；`v-model: string='#0071e3'`、`showValue=true` | `change(value)`；自绘色板和 HEX 输入，不打开原生颜色弹窗。 |
 | `AppleUpload` | F；`v-model: File[]`、`accept`、`multiple`、`maxSize=Infinity`、`maxFiles=Infinity`、`capture=user/environment`、`buttonText` | `change(files)`、`reject({file,reason}[])`、`remove(file)`；default slot；maxSize 单位为字节；不发送网络请求。 |
 | `AppleForm` | M；`disabled`、`loading`、`validator(FormData): boolean/string/Promise` | `submit(FormData)`、`invalid({type,message?})`、`reset()`；default slot `{loading}`；实例方法 `validate(): Promise<boolean>`、`submit()`、`reset()`。 |
-| `AppleFormField` | F；`for` | default slot `{id,disabled,required,'aria-invalid','aria-describedby'}`；用于关联自定义输入及提示。 |
+| `AppleFormField` | F；`for` | default slot `{id,disabled,required,'aria-label','aria-labelledby','aria-invalid','aria-describedby'}`；将 slot 属性绑定到自定义输入，以关联字段名称及提示。 |
 | `AppleOtpInput` | F；`label='验证码'`、`v-model: string`、`length=6`（1–12）、`numeric=true`、`name`、`mask` | `change(value)`、`complete(value)`；`focus(index=0)`；支持粘贴、退格、方向键与验证码自动填充提示。 |
 | `AppleCascader` | F；`v-model: (string/number)[]`、`items: AppleCascaderOption[]`、`placeholder`、`levelLabels: string[]`、`name` | `change(path)`、`complete(path)`；选项递归增加 `children`；不内置行政区划数据。 |
 | `AppleRate` | F；`label='评分'`、`v-model: number`、`max=5`（渲染 1–10）、`readonly`、`allowClear=true`、`name` | `change(value)`；整数星级；allowClear 时再次选择当前值返回 0；不支持半星。 |
@@ -201,6 +203,7 @@ Modal slots：`title`、default `{close}`、footer `{close,confirm,cancel}`。�
 | `overlays.entries.value` | 当前弹层列表，`Ref<OverlayEntry[]>`。 |
 | `portalTarget.value` | 弹层挂载 DOM 元素。 |
 | `motion.value.set(mode)` | 即时修改全局动效策略。 |
+| `ripple.value.enabled / set(enabled)` | 全局点击波纹开关，默认 true；也可传入 `createAppleUI({ ripple: false })`。切换到减弱动效或系统开启减少动态效果时自动关闭，可手动开启；只有关闭动效时禁止开启。开启 persist 时保存偏好，嵌套 Provider 共享此开关。 |
 | `onMessage(channel,listener)` | 注册监听器，返回取消订阅函数。 |
 | `sendMessage(channel,payload?)` | 返回该 channel 全部监听器的返回值数组。 |
 | `dialog(options)` | 打开 dialog 并返回独立句柄。 |

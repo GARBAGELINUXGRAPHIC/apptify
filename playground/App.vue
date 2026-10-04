@@ -43,12 +43,11 @@ function cancelEntrance() {
 function queueEntrance() {
   cancelEntrance()
   // Let the router restore the scroll position before animating the page.
-  // Animate the fixed sidebar itself so it shares the entrance without changing its containing block.
   entranceFrame = requestAnimationFrame(() => {
-    const targets = [routePage.value?.querySelector<HTMLElement>('main'), routePage.value?.querySelector<HTMLElement>('.sidebar')]
-    targets.forEach((element, index) => {
+    const targets = [routePage.value?.querySelector<HTMLElement>('main')]
+    targets.forEach(element => {
       if (!element) return
-      const animation = animateEntrance(element, index === 1 ? 'x' : 'y')
+      const animation = animateEntrance(element, 'y')
       if (animation) entrances.push(animation)
     })
   })

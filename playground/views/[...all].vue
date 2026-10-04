@@ -12,7 +12,7 @@
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
         </router-link>
-        <apple-button variant="ghost" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-button>
+        <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
     <NotFoundPaperScene class="paper-404-illustration" />
@@ -44,7 +44,7 @@ function goBack() {
 .paper-404-heading h1 { font-size: clamp(26px, 2.7vw, 35px); line-height: 1.35; letter-spacing: -.035em; font-weight: 600; margin: 0 0 17px; }
 .paper-404-copy { font-size: 13px; line-height: 1.95; color: var(--apple-secondary); margin: 0; text-wrap: pretty; }
 .paper-404-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 27px; }
-.paper-404-actions .apple-button--ghost { font-size: 12px; padding-inline: 8px; color: var(--apple-secondary); }
+.paper-404-actions .apple-link { font-size: 12px; padding-inline: 8px; color: var(--apple-secondary); }
 .paper-404-illustration { min-width: 0; }
 .paper-404-footnote { grid-column: 1 / -1; text-align: center; font-size: 10px; letter-spacing: .09em; color: var(--apple-secondary); margin: 48px 0 0; }
 @media (max-width: 880px) {

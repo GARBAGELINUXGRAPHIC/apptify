@@ -1,3 +1,7 @@
+<script setup lang="ts">
+</script>
 <template>
-  <footer class="page-footer"><span>Apptify</span><span>Write your own footer here</span></footer>
+  <apple-container>
+	  <footer class="page-footer"><span>Write your own footer here</span></footer>
+  </apple-container>
 </template>

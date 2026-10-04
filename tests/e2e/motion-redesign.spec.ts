@@ -71,7 +71,7 @@ test('component locator uses a static active highlight and does not filter', asy
   await expect(page.locator('.sidebar .apple-selection-indicator')).toHaveCount(0)
 })
 
-test('Ripple stays translucent and ghost buttons never create it', async ({ page }) => {
+test('Ripple stays translucent and action links never create it', async ({ page }) => {
   const button = page.getByRole('button', { name: '继续探索', exact: true })
   await button.hover(); await page.mouse.down()
   const wave = button.locator('.v-ripple__animation')
@@ -80,9 +80,9 @@ test('Ripple stays translucent and ghost buttons never create it', async ({ page
   expect(await wave.evaluate(el => Number(getComputedStyle(el).opacity))).toBeLessThanOrEqual(.11)
   await page.mouse.up()
   await openComponent(page, 'apple-button')
-  const ghost = activeCard(page).locator('.component-demo .apple-button--ghost')
-  await ghost.hover(); await page.mouse.down()
-  await expect(ghost.locator('.v-ripple__container')).toHaveCount(0)
+  const link = activeCard(page).locator('.component-demo .apple-link')
+  await link.hover(); await page.mouse.down()
+  await expect(link.locator('.v-ripple__container')).toHaveCount(0)
   await page.mouse.up()
   const secondary = activeCard(page).locator('.component-demo .apple-button--secondary')
   expect(await secondary.evaluate(el => getComputedStyle(el).borderTopStyle)).toBe('solid')

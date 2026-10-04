@@ -1,0 +1,1 @@
+- Do not write unnecessary hints/subtitles/comments all over the page. Less is more.

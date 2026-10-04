@@ -34,13 +34,15 @@ interface FieldVm {
   $attrs: Record<string, unknown>; $slots: Slots
 }
 function fieldId(vm: FieldVm): string { return String(vm.$attrs.id || vm.inputId) }
-function controlAttrs(vm: FieldVm) {
+// ARIA names associate descriptive text without native label pointer activation.
+function controlAttrs(vm: FieldVm, hasLabel = !!vm.label) {
   return {
     ...vm.$attrs,
     id: fieldId(vm),
     disabled: vm.disabled || vm.loading,
     required: vm.required,
     'aria-label': vm.$attrs['aria-label'] || vm.label || undefined,
+    'aria-labelledby': vm.$attrs['aria-labelledby'] || (!vm.$attrs['aria-label'] && hasLabel ? `${fieldId(vm)}-label` : undefined),
     'aria-invalid': vm.error ? true : undefined,
     'aria-busy': vm.loading || undefined,
     'aria-describedby': [vm.$attrs['aria-describedby'], (vm.error || vm.hint) ? `${fieldId(vm)}-message` : ''].filter(Boolean).join(' ') || undefined,
@@ -51,7 +53,7 @@ function field(vm: FieldVm, control: VNodeChild, classes = '', error = vm.error)
     class: ['apple-field', classes, { 'is-disabled': vm.disabled, 'has-error': !!error }],
     'data-apple-motion': vm.motion,
   }, [
-    vm.label ? h('label', { class: 'apple-field__label', for: fieldId(vm) }, [vm.label, vm.required ? h('span', { 'aria-hidden': true, class: 'apple-field__required' }, ' *') : null]) : null,
+    vm.label ? h('span', { class: 'apple-field__label', id: `${fieldId(vm)}-label` }, [vm.label, vm.required ? h('span', { 'aria-hidden': true, class: 'apple-field__required' }, ' *') : null]) : null,
     control,
     error || vm.hint ? h('p', { id: `${fieldId(vm)}-message`, class: ['apple-field__message', { 'is-error': !!error }], role: error ? 'alert' : undefined }, error || vm.hint) : null,
   ])
@@ -190,7 +192,7 @@ export const AppleCheckbox = defineComponent({
   data() { return { inputId: useId() } },
   render() {
     return h('div', { class: ['apple-field', { 'has-error': !!this.error, 'is-disabled': this.disabled }], 'data-apple-motion': this.motion }, [
-      h('label', { class: 'apple-choice', for: fieldId(this) }, [h('input', { ...controlAttrs(this), type: 'checkbox', class: ['apple-checkbox', this.$attrs.class], checked: this.modelValue, indeterminate: this.indeterminate, 'aria-checked': this.indeterminate ? 'mixed' : this.modelValue, onChange: (event: Event) => { const checked = (event.target as HTMLInputElement).checked; this.$emit('update:modelValue', checked); this.$emit('change', checked) } }), h('span', { class: 'apple-choice__label' }, this.$slots.default?.() || this.label), this.loading ? spinner() : null]),
+      h('div', { class: 'apple-choice' }, [h('input', { ...controlAttrs(this, !!this.label || !!this.$slots.default), type: 'checkbox', class: ['apple-checkbox', this.$attrs.class], checked: this.modelValue, indeterminate: this.indeterminate, 'aria-checked': this.indeterminate ? 'mixed' : this.modelValue, onChange: (event: Event) => { const checked = (event.target as HTMLInputElement).checked; this.$emit('update:modelValue', checked); this.$emit('change', checked) } }), h('span', { class: 'apple-choice__label', id: `${fieldId(this)}-label` }, this.$slots.default?.() || this.label), this.loading ? spinner() : null]),
       this.error || this.hint ? h('p', { id: `${fieldId(this)}-message`, class: ['apple-field__message', { 'is-error': !!this.error }], role: this.error ? 'alert' : undefined }, this.error || this.hint) : null,
     ])
   },
@@ -202,7 +204,7 @@ export const AppleRadioGroup = defineComponent({
   emits: ['update:modelValue', 'change'],
   data() { return { inputId: useId() } },
   render() {
-    return field(this, h('div', { ...controlAttrs(this), role: 'radiogroup', class: ['apple-radio-group', this.$attrs.class, { 'is-inline': this.inline }] }, this.items.map(item => h('label', { class: ['apple-choice', { 'is-disabled': item.disabled }] }, [h('input', { type: 'radio', class: 'apple-radio', name: this.name || this.inputId, value: item.value, checked: item.value === this.modelValue, disabled: this.disabled || this.loading || item.disabled, required: this.required, onChange: () => { this.$emit('update:modelValue', item.value); this.$emit('change', item.value) } }), h('span', { class: 'apple-choice__label' }, item.label)]))))
+    return field(this, h('div', { ...controlAttrs(this), role: 'radiogroup', class: ['apple-radio-group', this.$attrs.class, { 'is-inline': this.inline }] }, this.items.map((item, index) => h('div', { class: ['apple-choice', { 'is-disabled': item.disabled }] }, [h('input', { type: 'radio', class: 'apple-radio', name: this.name || this.inputId, 'aria-labelledby': `${fieldId(this)}-option-${index}-label`, value: item.value, checked: item.value === this.modelValue, disabled: this.disabled || this.loading || item.disabled, required: this.required, onChange: () => { this.$emit('update:modelValue', item.value); this.$emit('change', item.value) } }), h('span', { class: 'apple-choice__label', id: `${fieldId(this)}-option-${index}-label` }, item.label)]))))
   },
 })
 
@@ -211,9 +213,14 @@ export const AppleSwitch = defineComponent({
   props: { ...fieldProps, modelValue: Boolean }, emits: ['update:modelValue', 'change'],
   data() { return { inputId: useId() } },
   render() {
-    return h('div', { class: ['apple-field', { 'has-error': !!this.error, 'is-disabled': this.disabled }], 'data-apple-motion': this.motion }, [
-      h('label', { class: 'apple-switch-row', for: fieldId(this) }, [h('span', { class: 'apple-switch' }, [h('input', { ...controlAttrs(this), role: 'switch', type: 'checkbox', class: this.$attrs.class, checked: this.modelValue, 'aria-checked': this.modelValue, onChange: (event: Event) => { const checked = (event.target as HTMLInputElement).checked; this.$emit('update:modelValue', checked); this.$emit('change', checked) } }), h('span', { class: 'apple-switch__track', 'aria-hidden': true }, this.loading ? spinner() : undefined)]), h('span', { class: 'apple-choice__label' }, this.$slots.default?.() || this.label)]),
-      this.error || this.hint ? h('p', { id: `${fieldId(this)}-message`, class: ['apple-field__message', { 'is-error': !!this.error }], role: this.error ? 'alert' : undefined }, this.error || this.hint) : null,
+    return h('div', { class: ['apple-field', 'apple-switch-field', { 'has-error': !!this.error, 'is-disabled': this.disabled }], 'data-apple-motion': this.motion }, [
+      h('div', { class: 'apple-switch-row' }, [
+        h('span', { class: 'apple-switch__copy' }, [
+          h('span', { class: 'apple-choice__label', id: `${fieldId(this)}-label` }, this.$slots.default?.() || this.label),
+          this.error || this.hint ? h('span', { id: `${fieldId(this)}-message`, class: ['apple-field__message', { 'is-error': !!this.error }], role: this.error ? 'alert' : undefined }, this.error || this.hint) : null,
+        ]),
+        h('span', { class: 'apple-switch' }, [h('input', { ...controlAttrs(this, !!this.label || !!this.$slots.default), role: 'switch', type: 'checkbox', class: this.$attrs.class, checked: this.modelValue, 'aria-checked': this.modelValue, onChange: (event: Event) => { const checked = (event.target as HTMLInputElement).checked; this.$emit('update:modelValue', checked); this.$emit('change', checked) } }), h('span', { class: 'apple-switch__track', 'aria-hidden': true }, this.loading ? spinner() : undefined)]),
+      ]),
     ])
   },
 })
@@ -295,7 +302,7 @@ export const AppleColorPicker = defineComponent({
       colorMenuTransition(withDirectives(h('div', { ref: 'menu', id: `${this.inputId}-menu`, class: 'apple-field-menu apple-color-menu', role: 'dialog', 'aria-label': this.label || this.$attrs['aria-label'] || '选择颜色', 'aria-hidden': !this.opened || inactive ? true : undefined, inert: !this.opened || inactive }, h('div', { class: 'apple-color-menu__content' }, [
         h('div', { ref: 'plane', class: 'apple-color-plane', role: 'slider', tabindex: inactive ? -1 : 0, 'aria-disabled': inactive || undefined, 'aria-label': '饱和度与亮度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(this.hsv.s), 'aria-valuetext': `饱和度 ${Math.round(this.hsv.s)}%，亮度 ${Math.round(this.hsv.v)}%`, style: { backgroundColor: `hsl(${this.hsv.h} 100% 50%)` }, onPointerdown: this.plane, onPointermove: this.plane, onPointerup: () => this.endPlane(true), onPointercancel: () => this.endPlane(), onLostpointercapture: () => this.endPlane(), onKeydown: this.planeKey }, h('span', { class: 'apple-color-plane__thumb', style: { left: `${this.hsv.s}%`, top: `${100 - this.hsv.v}%`, backgroundColor: hsvToHex(this.hsv) } })),
         h('input', { type: 'range', min: 0, max: 360, step: 1, class: 'apple-color-hue', disabled: inactive, 'aria-label': '色相', value: this.hsv.h, onInput: (event: Event) => { this.hsv.h = numericValue(event); this.update(hsvToHex(this.hsv)) }, onChange: () => this.update(hsvToHex(this.hsv), true) }),
-        h('div', { class: 'apple-color-hex' }, [h('label', { for: `${this.inputId}-hex` }, 'HEX'), h('div', { class: ['apple-input-wrap', { 'has-error': !!this.hexError }] }, [
+        h('div', { class: 'apple-color-hex' }, [h('span', 'HEX'), h('div', { class: ['apple-input-wrap', { 'has-error': !!this.hexError }] }, [
           h('input', { ref: 'hex', id: `${this.inputId}-hex`, type: 'text', class: 'apple-control', disabled: inactive, 'aria-label': 'HEX 颜色', 'aria-invalid': this.hexError ? true : undefined, 'aria-describedby': this.hexError ? `${this.inputId}-hex-error` : undefined, maxlength: 7, spellcheck: false, autocomplete: 'off', autocapitalize: 'off', value: this.draft, onInput: this.editHex, onCompositionstart: () => { this.composing = true }, onCompositionend: (event: CompositionEvent) => { this.composing = false; this.editHex(event) }, onKeydown: (event: KeyboardEvent) => { if (event.key === 'Enter' && !event.isComposing && !this.composing && event.keyCode !== 229) { event.preventDefault(); event.stopPropagation(); this.applyHex() } } }),
           h('span', { class: 'apple-input__affix' }, h(AppleButton, { size: 'small', disabled: inactive, 'aria-label': '应用 HEX 颜色', onClick: this.applyHex }, { default: () => 'Apply' })),
         ])]),
@@ -411,7 +418,14 @@ export const AppleForm = defineComponent({
 export const AppleFormField = defineComponent({
   name: 'AppleFormField', inheritAttrs: false,
   props: { ...fieldProps, for: String }, data() { return { inputId: useId() } },
-  render() { const id = this.for || fieldId(this); return h('div', { ...this.$attrs, class: ['apple-field', this.$attrs.class, { 'has-error': !!this.error, 'is-disabled': this.disabled }], 'data-apple-motion': this.motion }, [this.label ? h('label', { for: id, class: 'apple-field__label' }, [this.label, this.required ? h('span', { class: 'apple-field__required', 'aria-hidden': true }, ' *') : null]) : null, this.$slots.default?.({ id, disabled: this.disabled || this.loading, required: this.required, 'aria-invalid': !!this.error, 'aria-describedby': this.error || this.hint ? `${id}-message` : undefined }), this.error || this.hint ? h('p', { class: ['apple-field__message', { 'is-error': !!this.error }], id: `${id}-message`, role: this.error ? 'alert' : undefined }, this.error || this.hint) : null]) },
+  render() {
+    const id = this.for || fieldId(this)
+    return h('div', { ...this.$attrs, class: ['apple-field', this.$attrs.class, { 'has-error': !!this.error, 'is-disabled': this.disabled }], 'data-apple-motion': this.motion }, [
+      this.label ? h('span', { id: `${id}-label`, class: 'apple-field__label' }, [this.label, this.required ? h('span', { class: 'apple-field__required', 'aria-hidden': true }, ' *') : null]) : null,
+      this.$slots.default?.({ id, disabled: this.disabled || this.loading, required: this.required, 'aria-label': this.$attrs['aria-label'], 'aria-labelledby': this.$attrs['aria-labelledby'] || (!this.$attrs['aria-label'] && this.label ? `${id}-label` : undefined), 'aria-invalid': !!this.error, 'aria-describedby': this.error || this.hint ? `${id}-message` : undefined }),
+      this.error || this.hint ? h('p', { class: ['apple-field__message', { 'is-error': !!this.error }], id: `${id}-message`, role: this.error ? 'alert' : undefined }, this.error || this.hint) : null,
+    ])
+  },
 })
 
 export const AppleOtpInput = defineComponent({
@@ -431,7 +445,7 @@ export const AppleOtpInput = defineComponent({
   },
   render() {
     return field(this, h('div', { class: ['apple-otp', this.$attrs.class], role: 'group', 'aria-label': this.label || this.$attrs['aria-label'], style: { '--apple-otp-length': Math.min(this.length, 6) } }, [
-      ...Array.from({ length: this.length }, (_, index) => h('input', { ...controlAttrs(this), id: index === 0 ? fieldId(this) : `${fieldId(this)}-${index}`, ref: `digit-${index}`, class: 'apple-control apple-otp__digit', type: this.mask ? 'password' : 'text', inputmode: this.numeric ? 'numeric' : 'text', pattern: this.numeric ? '[0-9]*' : undefined, name: undefined, maxlength: this.length, autocomplete: index === 0 ? 'one-time-code' : 'off', value: this.modelValue[index] || '', 'aria-label': `${this.label || this.$attrs['aria-label'] || '验证码'}，第 ${index + 1} 位，共 ${this.length} 位`, onFocus: (event: FocusEvent) => (event.target as HTMLInputElement).select(), onInput: (event: Event) => { const input = event.target as HTMLInputElement; this.enter(input.value, index); input.value = this.modelValue[index] || '' }, onPaste: (event: ClipboardEvent) => { event.preventDefault(); this.enter(event.clipboardData?.getData('text') || '', index) }, onKeydown: (event: KeyboardEvent) => this.onKeydown(event, index) })),
+      ...Array.from({ length: this.length }, (_, index) => h('input', { ...controlAttrs(this, false), id: index === 0 ? fieldId(this) : `${fieldId(this)}-${index}`, ref: `digit-${index}`, class: 'apple-control apple-otp__digit', type: this.mask ? 'password' : 'text', inputmode: this.numeric ? 'numeric' : 'text', pattern: this.numeric ? '[0-9]*' : undefined, name: undefined, maxlength: this.length, autocomplete: index === 0 ? 'one-time-code' : 'off', value: this.modelValue[index] || '', 'aria-label': `${this.label || this.$attrs['aria-label'] || '验证码'}，第 ${index + 1} 位，共 ${this.length} 位`, onFocus: (event: FocusEvent) => (event.target as HTMLInputElement).select(), onInput: (event: Event) => { const input = event.target as HTMLInputElement; this.enter(input.value, index); input.value = this.modelValue[index] || '' }, onPaste: (event: ClipboardEvent) => { event.preventDefault(); this.enter(event.clipboardData?.getData('text') || '', index) }, onKeydown: (event: KeyboardEvent) => this.onKeydown(event, index) })),
       this.name ? h('input', { type: 'hidden', name: this.name, value: this.modelValue, disabled: this.disabled || this.loading }) : null,
     ]))
   },

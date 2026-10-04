@@ -8,7 +8,7 @@
 </head>
 <body><div id="app"></div><script type="module">
 import { createApp, h } from 'vue'
-import { createAppleUI, AppleProvider, AppleInput, AppleAutocomplete, AppleButton, AppleStepper, AppleDatePicker } from '/src/index.ts'
+import { createAppleUI, AppleProvider, AppleInput, AppleAutocomplete, AppleButton, AppleLink, AppleStepper, AppleDatePicker } from '/src/index.ts'
 createApp({
   data: () => ({ name: 'QuitSense', password: 'mock-password', suffix: '13800138000', multiple: 'mock-password', disabled: false, quantity: 1, device: 'mac', clicks: 0 }),
   render() {
@@ -20,7 +20,7 @@ createApp({
       h('section', { id: 'suffix' }, [h(AppleInput, { ...value('suffix'), label: '自定义后缀按钮' }, { suffix: send })]),
       h('section', { id: 'prefix' }, [h(AppleInput, { ...value('suffix'), label: '自定义前缀按钮' }, { prefix: send })]),
       h('section', { id: 'suffix-icon' }, [h(AppleInput, { ...value('suffix'), label: '自定义后缀图标按钮' }, { suffix: () => h(AppleButton, { iconOnly: true, label: '后缀操作', disabled: this.disabled, onClick: () => this.clicks++ }, () => '↗') })]),
-      h('section', { id: 'suffix-multiple' }, [h(AppleInput, { ...value('suffix'), label: '多个自定义后缀按钮' }, { suffix: () => [h(AppleButton, { variant: 'ghost', disabled: this.disabled }, () => '检测'), send()] })]),
+      h('section', { id: 'suffix-multiple' }, [h(AppleInput, { ...value('suffix'), label: '多个自定义后缀按钮' }, { suffix: () => [h(AppleLink, { as: 'button', disabled: this.disabled }, () => '检测'), send()] })]),
       h('section', { id: 'multiple' }, [h(AppleInput, { ...value('multiple'), label: '清除、密码显示与后缀按钮', type: 'password', clearable: true }, { suffix: send })]),
       h('section', { id: 'autocomplete' }, [h(AppleAutocomplete, { ...value('device'), label: 'Autocomplete 清除', items: [{ value: 'mac', label: 'MacBook' }] })]),
       h('section', { id: 'number' }, [h(AppleStepper, { ...value('quantity'), label: 'Number 加减', min: 1, max: 3 })]),

@@ -1,19 +1,19 @@
 <template>
   <apple-popover v-model="opened" label="用户菜单" align="end" :width="280" panel-class="user-popup">
     <template #activator>
-      <apple-button class="user-trigger user-account-trigger" variant="ghost" icon-only label="打开用户菜单" title="用户菜单"><UserRound :size="20" /></apple-button>
+      <apple-link as="button" class="user-trigger user-account-trigger" icon-only label="打开用户菜单" title="用户菜单"><UserRound :size="20" /></apple-link>
     </template>
     <div class="user-summary">
       <apple-avatar name="林初" :size="48" />
       <div><strong>林初 <small>演示账户</small></strong><span>lin.chu@example.com</span></div>
     </div>
     <div class="user-menu-list">
-      <apple-button variant="ghost" @click="showProfile"><UserRound :size="17" /><span>个人资料</span><ArrowUpRight :size="14" aria-hidden="true" /></apple-button>
+      <apple-link as="button" @click="showProfile"><UserRound :size="17" /><span>个人资料</span><ArrowUpRight :size="14" aria-hidden="true" /></apple-link>
       <router-link to="/settings" @click="opened = false"><Settings2 :size="17" /><span>偏好设置</span><ArrowUpRight :size="14" aria-hidden="true" /></router-link>
     </div>
     <div class="user-menu-list user-menu-examples">
-      <apple-button variant="ghost" @click="openAuth('login')"><LogIn :size="17" /><span>登录 <small>Login</small></span><em>示例</em></apple-button>
-      <apple-button variant="ghost" @click="openAuth('register')"><UserPlus :size="17" /><span>注册 <small>Register</small></span><em>示例</em></apple-button>
+      <apple-link as="button" @click="openAuth('login')"><LogIn :size="17" /><span>登录 <small>Login</small></span><em>示例</em></apple-link>
+      <apple-link as="button" @click="openAuth('register')"><UserPlus :size="17" /><span>注册 <small>Register</small></span><em>示例</em></apple-link>
     </div>
   </apple-popover>
   <apple-dialog v-model="authOpen" class="user-auth-dialog" :width="560" :title="authMode === 'login' ? '登录示例' : '注册示例'" :show-footer="false" @after-close="password = ''">
@@ -34,7 +34,7 @@
         <apple-input v-model="password" label="密码" type="password" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" required>
           <template #prefix><LockKeyhole :size="18" aria-hidden="true" /></template>
         </apple-input>
-        <apple-button v-if="authMode === 'login'" class="user-auth-forgot" variant="ghost" size="small" @click="showAuthEntry('forgot')">忘记密码？</apple-button>
+        <apple-link as="button" v-if="authMode === 'login'" class="user-auth-forgot" @click="showAuthEntry('forgot')">忘记密码？</apple-link>
       </div>
       <p class="user-auth-note">这是表单交互示例，尚未接入账户服务。填写内容不会提交到服务器。</p>
       <div class="user-auth-actions">
@@ -99,10 +99,10 @@ function showProfile() {
 
 <style>
 .user-popup.apple-popover { border-radius: 24px; background: var(--apple-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
-.user-popup .user-menu-list > .apple-button > .apple-button__content { width: 100%; justify-content: flex-start; gap: 11px; }
-.user-popup .user-menu-list > .apple-button { min-height: 44px; font-weight: 400; line-height: inherit; }
-.user-popup .user-menu-list > .apple-button:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-hover); color: var(--apple-text); }
-.user-popup .user-menu-list > .apple-button:active:not(:disabled) { background: var(--apple-pressed); color: var(--apple-text); }
+.user-popup .user-menu-list > .apple-link > .apple-link__content { width: 100%; justify-content: flex-start; gap: 11px; }
+.user-popup .user-menu-list > .apple-link { min-height: 44px; font-weight: 400; line-height: inherit; }
+.user-popup .user-menu-list > .apple-link:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-hover); }
+.user-popup .user-menu-list > .apple-link:active:not(:disabled) { background: var(--apple-pressed); }
 .user-trigger.user-account-trigger { width: 44px; height: 44px; border: 0; background: transparent; }
 .user-trigger.user-account-trigger:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }
 .user-auth-dialog.apple-modal { border-radius: 24px; background: var(--apple-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }

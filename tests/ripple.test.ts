@@ -1,20 +1,98 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent, h, nextTick } from 'vue'
+import { defineComponent, h, nextTick, Teleport } from 'vue'
+import { appleKey, createApple, type AppleContext } from '../src/core/context'
+import { AppleProvider } from '../src/components/foundation'
 import { ripple } from '../src/core/motion'
 
 let wrapper: VueWrapper | undefined
-afterEach(() => { wrapper?.unmount(); wrapper = undefined; document.body.innerHTML = ''; vi.useRealTimers() })
-const mountProbe = () => {
+afterEach(() => { wrapper?.unmount(); wrapper = undefined; document.body.innerHTML = ''; localStorage.clear(); vi.useRealTimers(); vi.unstubAllGlobals() })
+const Probe = defineComponent({
+  props: { disabled: Boolean, enabled: { type: Boolean, default: true } },
+  render() { return ripple(h('button', { disabled: this.disabled }, 'Probe'), this.enabled) },
+})
+const mountProbe = (context?: AppleContext) => {
   const parent = document.createElement('div'); parent.dataset.appleMotion = 'full'; document.body.append(parent)
-  wrapper = mount(defineComponent({
-    props: { disabled: Boolean, enabled: { type: Boolean, default: true } },
-    render() { return ripple(h('button', { disabled: this.disabled }, 'Probe'), this.enabled) },
-  }), { attachTo: parent })
+  wrapper = mount(Probe, { attachTo: parent, global: { provide: context ? { [appleKey as symbol]: context } : {} } })
   return { parent, button: wrapper }
 }
 
 describe('global ripple lifecycle', () => {
+  it('applies the app switch without a provider and clears active waves immediately', async () => {
+    const app = createApple({ ripple: false, motion: 'full' })
+    const { button } = mountProbe(app)
+    await button.trigger('mousedown')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    app.ripple.value.set(true)
+    await button.trigger('mousedown')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(1)
+    app.ripple.value.set(false)
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    await button.trigger('keydown', { key: 'Enter' })
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    await button.trigger('keyup', { key: 'Enter' })
+    expect(createApple().ripple.value.enabled).toBe(true)
+  })
+
+  it('automatically disables reduced motion but allows manual enable except in none', async () => {
+    const app = createApple({ motion: 'full' })
+    const { button } = mountProbe(app)
+    await button.trigger('mousedown')
+    app.motion.value.set('reduced')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    expect(app.ripple.value.enabled).toBe(false)
+    app.ripple.value.set(true)
+    await button.trigger('mousedown')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(1)
+    app.motion.value.set('none')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    app.ripple.value.set(true)
+    expect(app.ripple.value.enabled).toBe(false)
+    await button.trigger('mousedown')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    app.motion.value.set('full')
+    app.ripple.value.set(true)
+    await button.trigger('mousedown')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(1)
+  })
+
+  it('shares the switch through nested providers and external teleports', async () => {
+    const app = createApple({ motion: 'full' })
+    const target = document.createElement('div'); document.body.append(target)
+    wrapper = mount(AppleProvider, {
+      attachTo: document.body,
+      global: { provide: { [appleKey as symbol]: app } },
+      slots: { default: () => h(AppleProvider, { theme: 'dark' }, () => h(Teleport, { to: target }, h(Probe))) },
+    })
+    const button = target.querySelector('button')!
+    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    expect(button.querySelectorAll('.v-ripple__container')).toHaveLength(1)
+    app.ripple.value.set(false)
+    expect(button.querySelectorAll('.v-ripple__container')).toHaveLength(0)
+    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    expect(button.querySelectorAll('.v-ripple__container')).toHaveLength(0)
+  })
+
+  it('restores and syncs the saved switch while accepting old or invalid preferences', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    const first = createApple({ persist: true })
+    first.ripple.value.set(false)
+    const second = createApple({ persist: true })
+    second.attach()
+    expect(second.ripple.value.enabled).toBe(false)
+    window.dispatchEvent(new StorageEvent('storage', { key: 'apptify:preferences', newValue: JSON.stringify({ ripple: true }) }))
+    expect(second.ripple.value.enabled).toBe(true)
+    expect(JSON.parse(localStorage.getItem('apptify:preferences')!).ripple).toBe(false)
+    second.dispose()
+    for (const ripple of [undefined, null, 'false', 0]) {
+      localStorage.setItem('apptify:preferences', JSON.stringify({ motion: 'none', ripple }))
+      const app = createApple({ persist: true })
+      app.attach()
+      expect(app.ripple.value.enabled).toBe(false)
+      app.dispose()
+    }
+  })
+
   it('clears an active wave when the ancestor policy changes without another event', async () => {
     const { parent, button } = mountProbe()
     await button.trigger('mousedown'); expect(button.findAll('.v-ripple__container')).toHaveLength(1)

@@ -6,7 +6,7 @@ export type ComponentMotion = Motion | 'inherit'
 export type ThemeTokens = Record<string, string>
 export interface AppleTheme { scheme: 'light' | 'dark'; tokens: ThemeTokens }
 export interface AppleGlassSettings { opacity: number; blur: number }
-export const defaultGlassSettings: Readonly<AppleGlassSettings> = Object.freeze({ opacity: 80 / 255 * 100, blur: 12 })
+export const defaultGlassSettings: Readonly<AppleGlassSettings> = Object.freeze({ opacity: 30, blur: 12 })
 
 function glassSettings(value: unknown, fallback: AppleGlassSettings): AppleGlassSettings {
   const settings = value && typeof value === 'object' ? value as Partial<AppleGlassSettings> : {}
@@ -107,6 +107,7 @@ export interface AppleOptions {
   theme?: string
   themes?: Record<string, AppleTheme>
   motion?: Motion
+  ripple?: boolean
   glass?: Partial<AppleGlassSettings>
   persist?: boolean
   storageKey?: string
@@ -120,7 +121,7 @@ export function createApple(options: AppleOptions = {}) {
   const storageKey = options.storageKey ?? 'apptify:preferences'
   const persist = () => {
     if (!options.persist || typeof window === 'undefined') return
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, motion: motion.value.mode, glass: { opacity: glass.value.opacity, blur: glass.value.blur } })) } catch { /* Storage may be disabled. */ }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, motion: motion.value.mode, ripple: ripple.value.enabled, glass: { opacity: glass.value.opacity, blur: glass.value.blur } })) } catch { /* Storage may be disabled. */ }
   }
   const theme = ref({
     name: options.theme ?? 'system',
@@ -140,7 +141,15 @@ export function createApple(options: AppleOptions = {}) {
   if (theme.value.name !== 'system' && !themes.value[theme.value.name]) throw new Error(`Unknown Apple theme: ${theme.value.name}`)
   const motion = ref({
     mode: options.motion ?? 'auto', reduced: false,
-    set(mode: Motion) { motion.value.mode = mode; persist() },
+    set(mode: Motion) {
+      if (mode !== motion.value.mode && (mode === 'reduced' || mode === 'none')) ripple.value.enabled = false
+      motion.value.mode = mode
+      persist()
+    },
+  })
+  const ripple = ref({
+    enabled: options.motion === 'none' ? false : (options.ripple ?? options.motion !== 'reduced'),
+    set(enabled: boolean) { ripple.value.enabled = enabled && motion.value.mode !== 'none'; persist() },
   })
   const glass = ref({
     ...glassSettings(options.glass, defaultGlassSettings),
@@ -153,7 +162,7 @@ export function createApple(options: AppleOptions = {}) {
   let attached = 0
   let detachMedia = () => {}
   const context = {
-    theme, motion, glass, messages, overlays, portalTarget, isTouchDevice,
+    theme, motion, ripple, glass, messages, overlays, portalTarget, isTouchDevice,
     dialog: <T = unknown>(settings: Omit<OverlayOptions, 'kind'>) => overlays.open<T>({ ...settings, kind: 'dialog' }),
     notify: (message: string, settings: Omit<OverlayOptions, 'kind' | 'message'> = {}) => overlays.open({ duration: 4000, ...settings, message, kind: 'snackbar' }),
     sendMessage: messages.sendMessage,
@@ -162,24 +171,37 @@ export function createApple(options: AppleOptions = {}) {
       attached++
       if (attached > 1 || typeof window === 'undefined') return
       syncTouchDevice()
+      let hasRipplePreference = typeof options.ripple === 'boolean'
       if (options.persist) {
         try {
           const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')
           if (stored.theme === 'system' || themes.value[stored.theme]) theme.value.name = stored.theme
           if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.value.mode = stored.motion
+          if (typeof stored.ripple === 'boolean') { ripple.value.enabled = stored.ripple; hasRipplePreference = true }
+          else if (stored.motion === 'reduced') ripple.value.enabled = false
+          if (motion.value.mode === 'none') ripple.value.enabled = false
           Object.assign(glass.value, glassSettings(stored.glass, glass.value))
         } catch { /* Ignore invalid preferences, not application state. */ }
       }
       if (!window.matchMedia) return
       const dark = window.matchMedia('(prefers-color-scheme: dark)')
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')
-      const sync = () => { systemDark.value = dark.matches; motion.value.reduced = reduce.matches }
+      let mediaInitialized = false
+      const sync = () => {
+        systemDark.value = dark.matches
+        if (reduce.matches && !motion.value.reduced && (mediaInitialized || !hasRipplePreference)) { ripple.value.enabled = false; persist() }
+        motion.value.reduced = reduce.matches
+        mediaInitialized = true
+      }
       const storage = (event: StorageEvent) => {
         if (!options.persist || event.key !== storageKey || !event.newValue) return
         try {
           const value = JSON.parse(event.newValue)
           if (value.theme === 'system' || themes.value[value.theme]) theme.value.name = value.theme
           if (['auto', 'full', 'reduced', 'none'].includes(value.motion)) motion.value.mode = value.motion
+          if (typeof value.ripple === 'boolean') ripple.value.enabled = value.ripple
+          else if (value.motion === 'reduced') ripple.value.enabled = false
+          if (motion.value.mode === 'none') ripple.value.enabled = false
           Object.assign(glass.value, glassSettings(value.glass, glass.value))
         } catch { /* Other tabs may contain invalid preferences. */ }
       }

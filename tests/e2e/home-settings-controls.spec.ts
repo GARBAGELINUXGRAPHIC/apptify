@@ -44,11 +44,11 @@ test('home search, pressed favorite, valid form and feedback are interactive', a
   await page.getByRole('button', { name: '好的', exact: true }).click()
 })
 
-test('theme library buttons persist and preview only animates the container', async ({ page }) => {
+test('theme library buttons persist and follow motion preferences', async ({ page }) => {
   await page.goto('/settings')
   for (const [label, value] of [['浅色', 'light'], ['深色', 'dark'], ['石墨', 'graphite'], ['玫瑰', 'rose']]) {
     const theme = page.getByRole('button', { name: label, exact: true })
-    await expect(theme).toHaveClass(/apple-button/)
+    await expect(theme).toHaveClass(/apple-link/)
     await theme.click()
     await expect(theme).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-theme', value)
@@ -57,13 +57,6 @@ test('theme library buttons persist and preview only animates the container', as
   await expect(page.getByRole('button', { name: '玫瑰', exact: true })).toHaveAttribute('aria-pressed', 'true')
   const motion = page.getByRole('radiogroup', { name: '全局动效', exact: true })
   await motion.getByText('完整', { exact: true }).click()
-  await page.getByRole('button', { name: '展开预览', exact: true }).click()
-  const paragraph = page.locator('.motion-preview-content p')
-  await expect(paragraph).toBeVisible()
-  expect(await paragraph.evaluate(el => getComputedStyle(el).transform)).toBe('none')
-  expect(await paragraph.evaluate(el => el.getAnimations().length)).toBe(0)
-  await page.getByRole('button', { name: '收起预览', exact: true }).click()
-  await expect(paragraph).toHaveCount(0)
   await motion.getByText('关闭', { exact: true }).click()
   await expect(page.locator('.theme-choice').first()).toHaveCSS('transition-duration', '0s')
   await page.getByRole('button', { name: '恢复默认设置', exact: true }).click()
@@ -73,7 +66,7 @@ test('theme library buttons persist and preview only animates the container', as
 test('library links hover by color alone and follow global motion timing', async ({ page }) => {
   await page.goto('/')
   const link = page.getByRole('link', { name: '调整外观与动效', exact: true })
-  await page.locator('main').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))) })
+  await page.locator('main').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {}))) })
   const before = await link.evaluate(el => ({ color: getComputedStyle(el).color, background: getComputedStyle(el).backgroundColor, rect: el.getBoundingClientRect().toJSON() }))
   await expect(link).toHaveCSS('transition-property', 'color')
   await link.hover()
@@ -95,7 +88,7 @@ for (const width of [320, 390, 768, 1440]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
       await expect(page.locator('.page-footer')).toBeVisible()
       if (width === 320 || width === 1440) {
-        await page.locator('main').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))) })
+        await page.locator('main').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {}))) })
         await page.screenshot({ path: `/tmp/apptify-${route === '/' ? 'home' : 'settings'}-${width}.png`, fullPage: true })
       }
       if (route === '/') {

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, withDirectives } from 'vue'
-import { AppleButton } from '../src/components/button'
+import { AppleLink } from '../src/components/link'
 import { AppleAutoSize } from '../src/components/motion'
 import { appleKey, createApple } from '../src/core/context'
 import { AppleRipple, AppleSelection, motionDuration } from '../src/core/motion'
@@ -56,8 +56,8 @@ describe('shared motion rules', () => {
     expect(motionDuration(child)).toBe(80)
   })
 
-  it('does not initialize Ripple on text-only buttons', async () => {
-    const button = mount(AppleButton, { props: { variant: 'ghost' }, slots: { default: 'Details' } })
+  it('does not initialize Ripple on action links', async () => {
+    const button = mount(AppleLink, { props: { as: 'button' }, slots: { default: 'Details' } })
     await button.trigger('mousedown')
     expect(button.find('.v-ripple__container').exists()).toBe(false)
     button.unmount()

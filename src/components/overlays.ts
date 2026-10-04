@@ -15,6 +15,7 @@ import Panzoom, { type PanzoomObject } from '@panzoom/panzoom'
 import { appleKey, resolveMotion, type AppleContext, type OverlayEntry } from '../core/context'
 import { ripple } from '../core/motion'
 import { AppleButton } from './button'
+import { AppleLink } from './link'
 import { AppleAutoSize } from './motion'
 import { isTouchImageDevice, touchImageQuery } from '../core/image-geometry'
 import { photoEasing, photoMotion, photoPageTiming } from '../core/image-motion'
@@ -381,7 +382,7 @@ export const AppleSnackbar = defineComponent({
     }), [
       h(glyph, { class: 'apple-snackbar-symbol', size: 21, 'aria-hidden': true }),
       h('div', { class: 'apple-snackbar-content' }, this.$slots.default?.() ?? [this.title ? h('strong', this.title) : null, h('span', this.message)]),
-      this.action ? h(AppleButton, { variant: 'ghost', class: 'apple-snackbar-action', onClick: () => this.$emit('action') }, { default: () => this.action }) : null,
+      this.action ? h(AppleLink, { as: 'button', class: 'apple-snackbar-action', onClick: () => this.$emit('action') }, { default: () => this.action }) : null,
       this.closable ? iconButton('关闭通知', X, () => this.close()) : null,
     ]) : null
     return presence('apple-toast', motion, notification, () => this.$emit('after-close'))

@@ -22,7 +22,7 @@ describe('Apple form controls', () => {
   it('associates input labels and messages and emits clear', async () => {
     const wrapper = mount(AppleInput, { props: { label: '姓名', hint: '公开显示', clearable: true, modelValue: '陈晨' } })
     const input = wrapper.get('input')
-    expect(wrapper.get('label').attributes('for')).toBe(input.attributes('id'))
+    expect(input.attributes('aria-labelledby')).toBe(wrapper.get('.apple-field__label').attributes('id'))
     expect(input.attributes('aria-describedby')).toBe(wrapper.get('p').attributes('id'))
     await input.setValue('李明')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['李明'])
@@ -229,6 +229,7 @@ describe('Apple form controls', () => {
   it('passes field semantics to custom controls', () => {
     const wrapper = mount(AppleFormField, { props: { label: '邮箱', error: '无效的邮箱', for: 'email' }, slots: { default: props => h('input', props) } })
     expect(wrapper.get('input').attributes('id')).toBe('email')
+    expect(wrapper.get('input').attributes('aria-labelledby')).toBe(wrapper.get('.apple-field__label').attributes('id'))
     expect(wrapper.get('input').attributes('aria-describedby')).toBe('email-message')
     expect(wrapper.get('input').attributes('aria-invalid')).toBe('true')
   })

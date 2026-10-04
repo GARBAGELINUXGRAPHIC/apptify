@@ -11,8 +11,9 @@ body { margin: 0; } main { padding: 24px; max-width: 800px; display: grid; gap: 
 #nested button { width: 90px; height: 44px; border: 0; border-radius: 999px; background: var(--apple-surface-alt); color: var(--apple-text); }
 .teleport-panel { padding: 20px; }
 </style></head><body><div id="app"></div><div id="teleport-target"></div><script type="module">
+import { ArrowRight } from 'lucide-vue-next'
 import { createApp, h, Teleport } from 'vue'
-import { createAppleUI, AppleProvider, AppleButton, AppleInput, AppleSelect, AppleStepper, AppleSteps, ApplePagination, AppleAccordion, AppleList, AppleTree, AppleTable, AppleDatePicker, AppleMenu, AppleBackTop, ripple } from '/src/index.ts'
+import { createAppleUI, AppleProvider, AppleButton, AppleLink, AppleInput, AppleSelect, AppleStepper, AppleSteps, ApplePagination, AppleAccordion, AppleList, AppleTree, AppleTable, AppleDatePicker, AppleMenu, AppleBackTop, ripple } from '/src/index.ts'
 const params = new URLSearchParams(location.search)
 createApp({
   data: () => ({ mode: params.get('motion') || 'full', shown: true, disabled: false, value: 'Typed value', quantity: 4, selection: 'one', commits: 0 }),
@@ -21,7 +22,7 @@ createApp({
     const send = () => h(AppleButton, { variant: 'secondary' }, () => '发送')
     const items = [{ value: 'one', label: '第一项', content: '展开后的内容' }, { value: 'two', label: '第二项', content: '第二项内容' }]
     return h(AppleProvider, { theme: params.get('theme') || 'light', motion: this.mode }, () => [h('main', [
-      h('div', { class: 'controls' }, [h(AppleButton, { id: 'pill' }, () => '主按钮'), h(AppleButton, { id: 'disabled', disabled: true }, () => '暂不可用'), h(AppleButton, { id: 'ghost', variant: 'ghost' }, () => '文字按钮')]),
+      h('div', { class: 'controls' }, [h(AppleButton, { id: 'pill', icon: ArrowRight }, () => '主按钮'), h(AppleButton, { id: 'disabled', disabled: true }, () => '暂不可用'), h(AppleLink, { as: 'button', id: 'text-link' }, () => '文字按钮')]),
       this.shown ? raw('layering', [h('span', { class: 'ink' }), ' Text ', h('svg', { width: 18, height: 18, viewBox: '0 0 18 18' }, h('rect', { x: 2, y: 2, width: 14, height: 14, fill: '#17cf28' })), h('span', { class: 'overflow-probe' })]) : null,
       h('section', { id: 'suffix' }, h(AppleInput, { modelValue: this.value, label: '后缀按钮' }, { suffix: send })),
       h('section', { id: 'prefix' }, h(AppleInput, { modelValue: this.value, label: '前缀按钮' }, { prefix: send })),

@@ -1,5 +1,6 @@
-import { withDirectives, type DirectiveBinding, type ObjectDirective, type VNode } from 'vue'
+import { watch, withDirectives, type DirectiveBinding, type ObjectDirective, type VNode } from 'vue'
 import { Ripple } from 'vuetify/directives/ripple'
+import { appleKey, resolveMotion, type AppleContext } from './context'
 import '../styles/ripple.css'
 
 export function motionDuration(element: HTMLElement, fallback = 300): number {
@@ -27,7 +28,7 @@ function observeRipplePolicies() {
       if (records.some(record => (record.target as Element).contains(element))) state.sync()
     }
   })
-  ripplePolicyObserver.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-apple-motion', 'data-motion', 'disabled', 'aria-disabled'] })
+  ripplePolicyObserver.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-apple-motion', 'data-motion', 'data-apple-ripple-enabled', 'disabled', 'aria-disabled'] })
   rippleMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : undefined
   rippleMedia?.addEventListener?.('change', syncRipplePolicies)
 }
@@ -35,6 +36,10 @@ export const AppleRipple: ObjectDirective<HTMLElement, boolean> = {
   mounted(element, binding) {
     const el = element as RippleElement
     let current = binding
+    // Directives run outside setup; use their rendering component's injection
+    // scope so app policy also applies without a provider DOM ancestor.
+    const scope = binding.instance?.$ as { provides: Record<symbol, AppleContext | undefined> } | undefined
+    const context = scope?.provides[appleKey as symbol]
     el.setAttribute('data-apple-ripple', '')
     // Establish the containing block without writing/restoring inline position
     // after every wave. Consumer fixed/sticky/absolute positioning stays intact.
@@ -50,7 +55,11 @@ export const AppleRipple: ObjectDirective<HTMLElement, boolean> = {
       for (const child of Array.from(el.children)) if (child.classList.contains('v-ripple__container')) child.remove()
     }
     const sync = () => {
-      const next = current.value !== false && motionDuration(el) > 80 && !el.matches(':disabled, [aria-disabled="true"]')
+      const next = current.value !== false && context?.ripple.value.enabled !== false
+        && (!context || resolveMotion('inherit', context.motion.value.mode, context.motion.value.reduced) !== 'none')
+        && !el.closest('[data-apple-ripple-enabled="false"]')
+        && !el.closest('[data-apple-motion="none"], [data-motion="none"]')
+        && (context || motionDuration(el) > 80) && !el.matches(':disabled, [aria-disabled="true"]')
       if (el._ripple) el._ripple.enabled = next
       if (!next) clear()
     }
@@ -59,7 +68,9 @@ export const AppleRipple: ObjectDirective<HTMLElement, boolean> = {
     events.forEach(event => el.addEventListener(event, sync, { capture: true, passive: true }))
     const cancellations = ['pointercancel', 'touchcancel', 'touchmove', 'dragstart']
     cancellations.forEach(event => el.addEventListener(event, clear, { passive: true }))
+    const stopPolicy = context ? watch(() => [context.ripple.value.enabled, context.motion.value.mode, context.motion.value.reduced], sync, { flush: 'sync' }) : undefined
     rippleStates.set(el, { update(next) { current = next; sync() }, sync, destroy() {
+      stopPolicy?.()
       clear()
       events.forEach(event => el.removeEventListener(event, sync, true))
       cancellations.forEach(event => el.removeEventListener(event, clear))

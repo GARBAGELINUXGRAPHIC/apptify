@@ -1,49 +1,59 @@
 <template>
-  <apple-aside class="sidebar" aria-label="组件目录">
-    <div class="sidebar-heading"><strong>组件目录</strong></div>
-    <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
-    <ComponentIndex :active-group="activeGroup" :active-id="activeId" :search="directorySearch" />
-  </apple-aside>
-  <main class="main-content components-page">
+  <main>
+  <apple-container class="main-content components-page">
     <header class="page-heading"><div><div class="page-kicker">COMPONENTS</div><h1>组件<span>。</span></h1><p>{{ catalog.length }} 个组件，完整呈现。向下浏览，直接体验。</p></div></header>
-    <div class="feed-toolbar">
-      <apple-button class="mobile-index-toggle" variant="ghost" size="small" :icon="PanelLeft" @click="mobileIndex = true">组件目录</apple-button>
-      <span class="feed-count">全部组件 <small>{{ catalog.length }}</small></span>
-      <div class="preview-controls" role="group" aria-label="预览尺寸">
-        <apple-button variant="ghost" size="small" icon-only :icon="Monitor" :class="{ active: previewMode === 'desktop' }" :aria-pressed="previewMode === 'desktop'" label="桌面预览" @click="previewMode = 'desktop'" />
-        <apple-button variant="ghost" size="small" icon-only :icon="Smartphone" :class="{ active: previewMode === 'mobile' }" :aria-pressed="previewMode === 'mobile'" label="手机预览" @click="previewMode = 'mobile'" />
+    <div class="directory-layout">
+      <aside class="directory-index sidebar" aria-label="组件目录">
+        <header class="directory-header">
+          <span>组件目录</span>
+          <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
+        </header>
+        <div class="directory-tree"><ComponentIndex v-model:expanded="expandedGroups" :active-group="activeGroup" :active-id="activeId" :search="directorySearch" /></div>
+      </aside>
+      <div class="components-content">
+        <div class="feed-toolbar">
+          <span class="feed-count">全部组件 <small>{{ catalog.length }}</small></span>
+          <div class="preview-controls" role="group" aria-label="预览尺寸">
+            <apple-link as="button" icon-only :icon="Monitor" :class="{ active: previewMode === 'desktop' }" :aria-pressed="previewMode === 'desktop'" label="桌面预览" @click="previewMode = 'desktop'" />
+            <apple-link icon-only :icon="Smartphone" :class="{ active: previewMode === 'mobile' }" :aria-pressed="previewMode === 'mobile'" label="手机预览" @click="previewMode = 'mobile'" />
+          </div>
+        </div>
+        <div ref="feed" class="component-feed">
+          <section v-for="(section, index) in sections" :id="section.id" :key="section.id" class="feed-group feed-anchor" :data-group="section.id" :aria-labelledby="`${section.id}-heading`">
+            <header class="feed-group-heading"><span>0{{ index + 1 }}</span><h2 :id="`${section.id}-heading`">{{ section.label }}</h2><small>{{ section.items.length }} 个组件</small></header>
+            <div class="feed-cards">
+            <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
+              <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
+              <section class="detail-preview" :class="{ 'mobile-preview': previewMode === 'mobile' }" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
+              <ComponentDocumentLink v-if="documentPaths[item.name]" :href="documentPaths[item.name]" label="代码与 API" />
+              <apple-accordion v-else class="component-source" :items="sourceSections">
+                <template #item>
+                  <div class="code-view"><div class="code-toolbar"><span>使用示例</span><apple-link @click="copy(item.code)">复制代码</apple-link></div><pre><code>{{ item.code }}</code></pre><h4>接口</h4><p class="api-line">{{ item.api }}</p></div>
+                </template>
+              </apple-accordion>
+            </apple-card>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
-    <div ref="feed" class="component-feed">
-      <section v-for="(section, index) in sections" :id="section.id" :key="section.id" class="feed-group feed-anchor" :data-group="section.id" :aria-labelledby="`${section.id}-heading`">
-        <header class="feed-group-heading"><span>0{{ index + 1 }}</span><h2 :id="`${section.id}-heading`">{{ section.label }}</h2><small>{{ section.items.length }} 个组件</small></header>
-        <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
-          <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
-          <section class="detail-preview" :class="{ 'mobile-preview': previewMode === 'mobile' }" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
-          <ComponentDocumentLink v-if="documentPaths[item.name]" :href="documentPaths[item.name]" label="代码与 API" />
-          <apple-accordion v-else class="component-source" :items="sourceSections">
-            <template #item>
-              <div class="code-view"><div class="code-toolbar"><span>使用示例</span><apple-button variant="ghost" size="small" @click="copy(item.code)">复制代码</apple-button></div><pre><code>{{ item.code }}</code></pre><h4>接口</h4><p class="api-line">{{ item.api }}</p></div>
-            </template>
-          </apple-accordion>
-        </apple-card>
-      </section>
-    </div>
+  </apple-container>
   </main>
-  <apple-drawer v-model="mobileIndex" title="组件目录" placement="left" width="290px">
+  <DirectoryDialog v-model="mobileIndex" title="组件目录">
     <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
-    <ComponentIndex :active-group="activeGroup" :active-id="activeId" :search="directorySearch" @navigate="mobileIndex = false" />
-  </apple-drawer>
+    <ComponentIndex v-model:expanded="expandedGroups" :active-group="activeGroup" :active-id="activeId" :search="directorySearch" @navigate="mobileIndex = false" />
+  </DirectoryDialog>
 </template>
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Hash, Monitor, PanelLeft, Smartphone } from 'lucide-vue-next'
+import { Hash, Monitor, Smartphone } from 'lucide-vue-next'
 import { useApple } from '../../src'
 import { catalog, sections, componentId } from '../catalog'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
+import DirectoryDialog from '../components/DirectoryDialog.vue'
 import ComponentDocumentLink from '../editor/ComponentDocumentLink.vue'
 import { componentDocuments, componentDocumentPath } from '../editor/documents'
 
@@ -57,6 +67,7 @@ const activeId = ref('')
 const previewMode = ref('desktop')
 const mobileIndex = ref(false)
 const directorySearch = ref('')
+const expandedGroups = ref(sections.map(section => section.id))
 const sourceSections = [{ label: '代码与 API', value: 'source' }]
 let anchors: HTMLElement[] = []
 let frame = 0
@@ -65,8 +76,9 @@ let observer: ResizeObserver | undefined
 function updatePosition() {
   frame = 0
   let current: HTMLElement | undefined
-  for (const anchor of anchors) {
-    if (anchor.getBoundingClientRect().top > 128) break
+  const positioned = anchors.map(anchor => ({ anchor, top: anchor.getBoundingClientRect().top })).sort((a, b) => a.top - b.top)
+  for (const { anchor, top } of positioned) {
+    if (top > 128) break
     if (!current || Math.abs(anchor.getBoundingClientRect().top - current.getBoundingClientRect().top) > 1) current = anchor
     else if (anchor.id === route.hash.slice(1) || (current.id !== route.hash.slice(1) && anchor.id === activeId.value)) current = anchor
   }
@@ -87,8 +99,8 @@ async function copy(value: string) {
 watch(() => route.hash, () => { mobileIndex.value = false; schedulePosition() })
 watch(activeId, async () => {
   await nextTick()
-  const sidebar = document.querySelector<HTMLElement>('.sidebar')
-  const current = sidebar?.querySelector<HTMLElement>('[aria-current="location"]')
+  const sidebar = document.querySelector<HTMLElement>('.directory-tree')
+  const current = sidebar?.querySelector<HTMLElement>('.apple-tree__row.is-selected')
   if (!sidebar || !current) return
   const item = current.getBoundingClientRect(), bounds = sidebar.getBoundingClientRect()
   if (item.top < bounds.top + 16) sidebar.scrollTop -= bounds.top + 16 - item.top
@@ -111,13 +123,18 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.directory-index { display: flex; flex-direction: column; overflow: hidden; }
+.directory-header { flex-shrink: 0; }
+.directory-header > span { color: var(--apple-secondary); font-size: 12px; display: block; margin: 0 0 12px 8px; }
+.directory-tree { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+@media (max-width: 900px) { .directory-index { display: none; } }
 .directory-search { min-width: 0; margin: 0 4px 16px; }
 .directory-search :deep(.apple-field__label) { font-size: 11px; }
 .directory-search :deep(input) { min-width: 0; font-size: 12px; }
 .components-page > * { max-width: none; }
-.feed-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 20px; align-items: start; }
-.feed-group-heading { grid-column: 1 / -1; padding-bottom: 0; }
-.component-card { margin-bottom: 0; padding: 0; }
+.feed-cards { column-width: 400px; column-gap: 20px; }
+.feed-group-heading { padding-bottom: 20px; }
+.component-card { display: inline-block; vertical-align: top; width: 100%; break-inside: avoid; margin-bottom: 20px; padding: 0; }
 .component-card :deep(> .apple-card__body) { padding: 0; border-radius: inherit; }
 .component-card :deep(> .apple-card__body > .documentation-entry),
 .component-card :deep(> .apple-card__body > .component-source) { border-radius: 0 0 18px 18px; overflow: hidden; }

@@ -9,7 +9,7 @@ afterEach(() => { localStorage.clear(); vi.unstubAllGlobals() })
 describe('glass preferences', () => {
   it('keeps precise defaults and normalizes only finite supplied values', () => {
     const app = createApple()
-    expect(app.glass.value.opacity).toBe(80 / 255 * 100)
+    expect(app.glass.value.opacity).toBe(30)
     expect(themeStyle(app)['--apple-glass-blur']).toBe('12px')
     expect(themeStyle(app)['--apple-glass-rgb']).toBe('255 255 255')
     app.theme.value.set('dark')
@@ -24,7 +24,7 @@ describe('glass preferences', () => {
     expect(app.glass.value.blur).toBe(2)
     app.glass.value.reset()
     expect(app.glass.value).toMatchObject(defaultGlassSettings)
-    expect(Number(themeStyle(app)['--apple-glass-opacity'])).toBeCloseTo(80 / 255, 12)
+    expect(Number(themeStyle(app)['--apple-glass-opacity'])).toBeCloseTo(.3, 12)
   })
 
   it('persists with theme and motion and restores through a reload', () => {
@@ -38,7 +38,7 @@ describe('glass preferences', () => {
     expect(second.motion.value.mode).toBe('none')
     expect(second.glass.value).toMatchObject({ opacity: 63.2, blur: 19 })
     second.glass.value.reset()
-    expect(JSON.parse(localStorage.getItem('apptify:preferences')!)).toEqual({ theme: 'dark', motion: 'none', glass: defaultGlassSettings })
+    expect(JSON.parse(localStorage.getItem('apptify:preferences')!)).toEqual({ theme: 'dark', motion: 'none', ripple: false, glass: defaultGlassSettings })
     second.dispose()
   })
 

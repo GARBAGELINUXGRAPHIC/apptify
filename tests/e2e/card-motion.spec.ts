@@ -44,7 +44,7 @@ test('page card shells use AppleCard', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('.specimen.apple-card')).toHaveCount(6)
   await page.goto('/settings')
-  await expect(page.locator('.settings-section.apple-card')).toHaveCount(3)
+  await expect(page.locator('.settings-section.apple-card')).toHaveCount(4)
   await page.goto('/components')
   await expect(page.locator('.component-card:not(.apple-card)')).toHaveCount(0)
   expect(await page.locator('.component-card.apple-card').count()).toBeGreaterThan(0)

@@ -29,11 +29,11 @@
   min-width: 0;
   transition: --apple-bg var(--apple-theme-duration) ease, --apple-surface var(--apple-theme-duration) ease, --apple-surface-alt var(--apple-theme-duration) ease, --apple-text var(--apple-theme-duration) ease, --apple-secondary var(--apple-theme-duration) ease, --apple-border var(--apple-theme-duration) ease, --apple-accent var(--apple-theme-duration) ease, --apple-accent-text var(--apple-theme-duration) ease, --apple-danger var(--apple-theme-duration) ease, --apple-success var(--apple-theme-duration) ease, --apple-warning var(--apple-theme-duration) ease;
 }
-.apple-glass {
-  color: var(--apple-text, #1d1d1f);
-  background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .31372549));
-  -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2);
-  backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2);
+.apple-glass { /* 其实我不太确定是否需要important */
+  color: var(--apple-text, #1d1d1f) !important;
+  background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .31372549)) !important;
+  -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2) !important;
+  backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2) !important;
 }
 .apple-provider *, .apple-provider *::before, .apple-provider *::after { box-sizing: border-box; letter-spacing: 0; }
 .apple-provider button, .apple-provider input, .apple-provider textarea, .apple-provider select { font: inherit; }
@@ -48,7 +48,6 @@
 .apple-button { position: relative; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 22px; border: 1px solid transparent; border-radius: 999px; font-weight: 500; line-height: 1.4; background: var(--apple-accent); color: var(--apple-accent-text); text-decoration: none; overflow: hidden; vertical-align: middle; transition: background var(--apple-duration), box-shadow var(--apple-duration), opacity var(--apple-duration); max-width: 100%; white-space: normal; }
 .apple-button--secondary { border-color: var(--apple-accent); background: transparent; color: var(--apple-accent); }
 .apple-button--outline { border-color: var(--apple-accent); background: transparent; color: var(--apple-accent); }
-.apple-button--ghost { background: transparent; color: var(--apple-accent); }
 .apple-button--danger { background: var(--apple-danger); }
 .apple-button--small { padding: 7px 16px; min-height: 36px; font-size: 13px; }
 .apple-button--large { min-height: 50px; padding: 12px 28px; font-size: 17px; }
@@ -60,14 +59,14 @@
 @media (hover: hover) {
   .apple-button:not(:disabled):hover:where(:not([data-apple-touch] *)) { background: color-mix(in srgb,var(--apple-accent) 90%,black); }
   .apple-button--secondary:not(:disabled):hover:where(:not([data-apple-touch] *)),.apple-button--outline:not(:disabled):hover:where(:not([data-apple-touch] *)) { background: var(--apple-accent); color: var(--apple-accent-text); }
-  .apple-button--ghost:not(:disabled):hover:where(:not([data-apple-touch] *)) { background: transparent; color: color-mix(in srgb,var(--apple-accent) 80%,black); }
   .apple-button--danger:not(:disabled):hover:where(:not([data-apple-touch] *)) { background: color-mix(in srgb,var(--apple-danger) 90%,black); }
 }
 .apple-button:not(:disabled):active { background: color-mix(in srgb,var(--apple-accent) 80%,black); }
 .apple-button--secondary:not(:disabled):active,.apple-button--outline:not(:disabled):active { background: color-mix(in srgb,var(--apple-accent) 80%,black); color: var(--apple-accent-text); }
-.apple-button--ghost:not(:disabled):active { background: transparent; color: var(--apple-text); }
 .apple-button--danger:not(:disabled):active { background: color-mix(in srgb,var(--apple-danger) 80%,black); }
-.apple-link { display: inline-flex; align-items: center; gap: 3px; color: var(--apple-accent); text-decoration: none; transition: color var(--apple-fast); }
+.apple-link { border: 0; padding: 0; background: transparent; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; color: var(--apple-accent); text-decoration: none; transition: color var(--apple-fast); }
+.apple-link__content { display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+.apple-link--icon { width: 44px; height: 44px; flex-shrink: 0; }
 .apple-link:hover:where(:not([data-apple-touch] *)):not([aria-disabled=true]) { color: color-mix(in srgb,var(--apple-accent) 80%,black); }
 .apple-link[aria-disabled=true] { color: var(--apple-secondary); }
 .apple-card__heading { display: flex; align-items: center; gap: 12px; }

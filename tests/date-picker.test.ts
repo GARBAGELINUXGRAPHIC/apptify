@@ -31,7 +31,7 @@ describe('AppleDatePicker', () => {
     await wrapper.setProps({ label: '新的标签' })
     expect(wrapper.get('[data-part=year]').attributes('placeholder')).toBe('2026')
     expect(wrapper.find('input[type=date], input[type=time], input[type=datetime-local]').exists()).toBe(false)
-    expect(wrapper.get('label').attributes('for')).toBe(wrapper.get('[data-part=year]').attributes('id'))
+    expect(wrapper.get('.apple-date-input').attributes('aria-labelledby')).toBe(wrapper.get('.apple-field__label').attributes('id'))
     wrapper.unmount()
   })
 

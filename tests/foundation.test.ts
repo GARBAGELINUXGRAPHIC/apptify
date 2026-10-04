@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import { AppleButton, AppleCard, AppleImage, AppleProvider } from '../src/components/foundation'
+import { AppleButton, AppleLink, AppleCard, AppleImage, AppleProvider } from '../src/components/foundation'
 import { appleKey, createApple, useApple } from '../src/core/context'
 
 describe('foundation integration', () => {
@@ -47,6 +47,37 @@ describe('foundation integration', () => {
     await wrapper.trigger('click')
     expect(wrapper.emitted('click')).toHaveLength(1)
     wrapper.unmount()
+  })
+  it('places button icons and loading indicators after the label', async () => {
+    const Icon = defineComponent({ render: () => h('svg', { 'data-test-icon': '' }) })
+    const wrapper = mount(AppleButton, { props: { icon: Icon }, slots: { default: () => h('span', 'Continue') } })
+    const content = wrapper.get('.apple-button__content').element
+    expect(content.firstElementChild?.textContent).toBe('Continue')
+    expect(content.lastElementChild?.tagName.toLowerCase()).toBe('svg')
+    await wrapper.setProps({ loading: true })
+    expect(content.firstElementChild?.textContent).toBe('Continue')
+    expect(content.lastElementChild?.classList.contains('apple-spin')).toBe(true)
+    wrapper.unmount()
+  })
+  it('keeps action links keyboard-operable and blocks disabled actions', async () => {
+    const wrapper = mount(AppleLink, { props: { as: 'button' }, attrs: { type: 'submit' }, slots: { default: 'Validate' } })
+    expect(wrapper.element.tagName).toBe('BUTTON')
+    expect(wrapper.attributes('type')).toBe('submit')
+    await wrapper.trigger('click')
+    expect(wrapper.emitted('click')).toHaveLength(1)
+    await wrapper.setProps({ disabled: true })
+    expect(wrapper.attributes('disabled')).toBeDefined()
+    await wrapper.trigger('click')
+    expect(wrapper.emitted('click')).toHaveLength(1)
+    wrapper.unmount()
+    const external = mount(AppleLink, { props: { href: 'https://example.com', external: true } })
+    expect(external.attributes('target')).toBe('_blank')
+    expect(external.attributes('rel')).toBe('noopener noreferrer')
+    await external.setProps({ disabled: true })
+    expect(external.attributes('href')).toBeUndefined()
+    await external.trigger('click')
+    expect(external.emitted('click')).toBeUndefined()
+    external.unmount()
   })
   it('passes image alternative text to the viewer and handles errors', async () => {
     const wrapper=mount(AppleImage, {props:{gallery:{src:'/test.jpg',alt:'A test image'}}})

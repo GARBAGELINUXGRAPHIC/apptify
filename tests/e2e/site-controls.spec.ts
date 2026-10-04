@@ -76,7 +76,7 @@ for (const width of [320, 1440]) {
     }
     for (const [label, mobile] of [['手机预览', true], ['桌面预览', false]] as const) {
       const button = page.getByRole('button', { name: label, exact: true })
-      await expect(button).toHaveClass(/apple-button/)
+      await expect(button).toHaveClass(/apple-link/)
       await button.click()
       await expect(button).toHaveAttribute('aria-pressed', 'true')
       await expect(page.locator('.detail-preview.mobile-preview')).toHaveCount(mobile ? catalog.length : 0)
@@ -89,12 +89,12 @@ for (const width of [320, 1440]) {
     await home.click()
     await expect(page).toHaveURL('/')
     const trigger = page.getByRole('button', { name: '打开用户菜单', exact: true })
-    await expect(trigger).toHaveClass(/apple-button/)
+    await expect(trigger).toHaveClass(/apple-link/)
     await trigger.click()
     const popup = page.getByRole('dialog', { name: '用户菜单', exact: true })
     await expect(popup).toHaveCSS('border-radius', '24px')
     await expect(popup).toHaveCSS('backdrop-filter', 'none')
-    await expect(popup.locator('.user-menu-list button.apple-button--ghost')).toHaveCount(3)
+    await expect(popup.locator('.user-menu-list button.apple-link')).toHaveCount(3)
     await expect(popup.locator('.user-menu-list').first().locator('.lucide-arrow-up-right-icon')).toHaveCount(2)
     await popup.getByRole('button', { name: '个人资料', exact: true }).click()
     await expect(page.getByRole('dialog', { name: '个人资料', exact: true })).toBeVisible()

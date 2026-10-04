@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field descriptions are noninteractive</title>
+  <style>
+    body { margin: 0; background: #f5f5f7; }
+    main { padding: 24px; max-width: 540px; margin: auto; }
+    section { margin: 24px 0; }
+  </style>
+</head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import {
+  createAppleUI, AppleProvider, AppleInput, AppleTextarea, AppleSelect, AppleAutocomplete,
+  AppleCheckbox, AppleSwitch, AppleRadioGroup, AppleSlider, AppleStepper, AppleDatePicker,
+  AppleColorPicker, AppleFormField, AppleOtpInput, AppleCascader, AppleRate, AppleSegmentedControl, AppleUpload,
+} from '/src/index.ts'
+
+window.fieldEvents = []
+document.addEventListener('focusin', event => {
+  if (event.target.closest('section')) window.fieldEvents.push({ type: 'focus', id: event.target.id })
+})
+const options = [{ label: '选项一', value: 'one' }, { label: '选项二', value: 'two' }]
+createApp({
+  data: () => ({ values: {
+    input: '原始内容', textarea: '原始段落', select: 'one', autocomplete: 'one', checkbox: false,
+    switch: false, radio: 'one', slider: 20, stepper: 2, date: '2026-10-04', color: '#0071e3',
+    otp: '', cascader: [], rate: 2, segmented: 'one', upload: [], 'checkbox-slot': false, 'switch-slot': false,
+  }, errors: new URLSearchParams(location.search).has('errors') }),
+  render() {
+    const model = key => ({ modelValue: this.values[key], 'onUpdate:modelValue': value => {
+      this.values[key] = value
+      window.fieldEvents.push({ type: 'update', key, value })
+    } })
+    const props = key => ({ ...model(key), label: `${key} 名称`, required: true,
+      hint: `${key} 提示`, error: this.errors ? `${key} 错误` : '' })
+    const field = (key, Component, extras = {}, slots) => h('section', { id: `case-${key}` }, [h(Component, { ...props(key), ...extras }, slots)])
+    return h(AppleProvider, { motion: 'none' }, () => h('main', [
+      h('button', { id: 'outside' }, '外部焦点'),
+      field('input', AppleInput),
+      field('textarea', AppleTextarea, { rows: 2 }),
+      field('select', AppleSelect, { items: options }),
+      field('autocomplete', AppleAutocomplete, { items: options }),
+      field('checkbox', AppleCheckbox),
+      field('switch', AppleSwitch),
+      field('radio', AppleRadioGroup, { items: options }),
+      field('slider', AppleSlider),
+      field('stepper', AppleStepper),
+      field('date', AppleDatePicker, { format: 'YYYY-MM-DD' }),
+      field('color', AppleColorPicker),
+      field('otp', AppleOtpInput, { length: 4 }),
+      field('cascader', AppleCascader, { items: [{ label: '地区一', value: 'one', children: options }] }),
+      field('rate', AppleRate),
+      field('segmented', AppleSegmentedControl, { items: options }),
+      field('upload', AppleUpload),
+      field('checkbox-slot', AppleCheckbox, { label: '' }, { default: () => h('strong', '插槽复选名称') }),
+      field('switch-slot', AppleSwitch, { label: '' }, { default: () => h('strong', '插槽开关名称') }),
+      h('section', { id: 'case-form-field' }, [h(AppleFormField, {
+        for: 'custom-field', label: 'form-field 名称', required: true,
+        hint: 'form-field 提示', error: this.errors ? 'form-field 错误' : '',
+      }, { default: attrs => h('input', { ...attrs, class: 'apple-control', value: '自定义内容' }) })]),
+      h('section', { id: 'case-override' }, [h(AppleInput, {
+        label: '可见名称', 'aria-label': '自定义名称', modelValue: '自定义 aria',
+      })]),
+      h('output', { id: 'values' }, JSON.stringify(this.values)),
+    ]))
+  },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

@@ -1,11 +1,13 @@
 import { defineComponent, h, markRaw, nextTick, ref, useId, type PropType, type CSSProperties } from 'vue'
-import { ArrowUpRight, ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, InternalImageViewer, type AppleViewerImage } from './overlays'
 import { clamp, isTouchImageDevice, touchImageQuery, type PhotoSize } from '../core/image-geometry'
 import { scrollGallery, stopGalleryScroll } from '../core/image-gallery-motion'
 import { GalleryScrollbar } from './gallery-scrollbar'
 import { AppleButton } from './button'
+import { AppleLink } from './link'
+export { AppleLink } from './link'
 import AppleCard from './AppleCard.vue'
 export { AppleCard }
 export { AppleButton } from './button'
@@ -18,9 +20,9 @@ export const AppleProvider = defineComponent({
   props: { theme: String, motion: String as PropType<Motion> },
   data() {
     const parent = this.parentApple as unknown as AppleContext | null
-    const context = this.nested || this.theme || this.motion ? createApple({ theme: this.theme ?? parent?.theme.value.name, motion: this.motion ?? parent?.motion.value.mode, themes: parent?.theme.value.themes }) : (parent ?? createApple())
-    // Material preferences belong to the app, including providers with a local theme.
-    if (parent && parent !== context) context.glass = parent.glass
+    const context = this.nested || this.theme || this.motion ? createApple({ theme: this.theme ?? parent?.theme.value.name, motion: this.motion ?? parent?.motion.value.mode, ripple: parent?.ripple.value.enabled, themes: parent?.theme.value.themes }) : (parent ?? createApple())
+    // Glass and ripple preferences belong to the app, including local themes.
+    if (parent && parent !== context) { context.glass = parent.glass; context.ripple = parent.ripple }
     return { context: ref(context) }
   },
   provide() { return { [appleKey as symbol]: this.context, [providerKey]: true } },
@@ -50,15 +52,10 @@ export const AppleProvider = defineComponent({
       class: 'apple-provider', style: { ...themeStyle(this.context), colorScheme: this.context.theme.value.current.scheme },
       'data-apple-theme': this.context.theme.value.resolved,
       'data-apple-motion': resolveMotion('inherit', this.context.motion.value.mode, this.context.motion.value.reduced),
+      'data-apple-ripple-enabled': String(this.context.ripple.value.enabled),
     }, [this.$slots.default?.(), h('div', { ref: 'portals', 'data-apple-portals': '' }), h(AppleOverlayHost)])
   },
 })
-
-export const AppleLink = defineComponent({
-  name: 'AppleLink', props: { href: String, external: Boolean, disabled: Boolean },
-  render() { return h('a', { class: 'apple-link', href: this.disabled ? undefined : this.href, target: this.external ? '_blank' : undefined, rel: this.external ? 'noopener noreferrer' : undefined, 'aria-disabled': this.disabled || undefined }, [this.$slots.default?.(), this.external ? h(ArrowUpRight, { size: 14, 'aria-hidden': true }) : null]) },
-})
-
 
 export interface AppleImageItem extends Omit<AppleViewerImage, 'src'> {
   src?: string
