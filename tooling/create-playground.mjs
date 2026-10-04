@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promise
 import { resolve, join, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { npmCommand } from './npm-command.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const destination = process.argv[2]
@@ -23,8 +24,8 @@ try {
   await rename(join(target, 'gitignore'), join(target, '.gitignore'))
   const vendor = join(target, 'vendor')
   await mkdir(vendor)
-  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-  const packed = JSON.parse(execFileSync(npm, ['pack', '--ignore-scripts', '--json', '--loglevel=error', '--pack-destination', vendor], { cwd: root, encoding: 'utf8' }))
+  const npm = npmCommand()
+  const packed = JSON.parse(execFileSync(npm.command, [...npm.args, 'pack', '--ignore-scripts', '--json', '--loglevel=error', '--pack-destination', vendor], { cwd: root, encoding: 'utf8' }))
   const manifest = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'))
   manifest.dependencies.apptify = 'file:./vendor/' + packed[0].filename
   await writeFile(join(target, 'package.json'), JSON.stringify(manifest, null, 2) + '\n')

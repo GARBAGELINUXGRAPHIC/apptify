@@ -1,6 +1,6 @@
 {
   "name": "create-apptify",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Create an editable Apptify Vue app.",
   "type": "module",
   "license": "MIT",

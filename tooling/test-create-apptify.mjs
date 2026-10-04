@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { execFileSync, spawnSync } from 'node:child_process'
+import { npmCommand } from './npm-command.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const scratch = await mkdtemp(join(tmpdir(), 'create-apptify-test-'))
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+const npm = npmCommand()
 const env = { ...process.env, npm_config_cache: join(scratch, 'cache'), npm_config_offline: 'true' }
 const installer = join(scratch, 'installer')
 const creator = join(installer, 'node_modules/create-apptify')
@@ -15,7 +16,7 @@ const library = join(installer, 'node_modules/apptify')
 const cli = join(creator, 'bin/create-apptify.mjs')
 
 async function unpack(cwd, destination) {
-  const packed = JSON.parse(execFileSync(npm, ['pack', '--ignore-scripts', '--json', '--pack-destination', scratch], { cwd, env, encoding: 'utf8' }))[0]
+  const packed = JSON.parse(execFileSync(npm.command, [...npm.args, 'pack', '--ignore-scripts', '--json', '--pack-destination', scratch], { cwd, env, encoding: 'utf8' }))[0]
   await mkdir(destination, { recursive: true })
   execFileSync('tar', ['-xzf', join(scratch, packed.filename), '--strip-components=1', '-C', destination])
   return packed
@@ -27,9 +28,15 @@ try {
   const packed = await unpack(join(root, 'packages/create-apptify'), creator)
   const files = new Set(packed.files.map(file => file.path))
   for (const path of ['package.json', 'bin/create-apptify.mjs', 'README.md', 'LICENSE']) assert(files.has(path), 'Missing creator file: ' + path)
-  await unpack(root, library)
+  const libraryPacked = await unpack(root, library)
+  assert(libraryPacked.files.some(file => file.path === 'tooling/npm-command.mjs'), 'Missing npm launcher in library tarball')
   await mkdir(join(installer, 'node_modules/.bin'))
-  await symlink('../create-apptify/bin/create-apptify.mjs', join(installer, 'node_modules/.bin/create-apptify'))
+  if (process.platform === 'win32') {
+    await writeFile(join(installer, 'node_modules/.bin/create-apptify.cmd'), '@echo off\r\n"' + process.execPath + '" "%~dp0\\..\\create-apptify\\bin\\create-apptify.mjs" %*\r\n')
+  } else {
+    await chmod(cli, 0o755)
+    await symlink('../create-apptify/bin/create-apptify.mjs', join(installer, 'node_modules/.bin/create-apptify'))
+  }
   await writeFile(join(installer, 'package.json'), JSON.stringify({ private: true, dependencies: { 'create-apptify': packed.version } }) + '\n')
 
   const run = (args, cwd = installer) => spawnSync(process.execPath, [cli, ...args], { cwd, env, encoding: 'utf8' })
@@ -41,8 +48,8 @@ try {
   assert.equal(run(['--unknown']).status, 1)
   assert.equal(run(['one', 'two']).status, 1)
 
-  const app = join(scratch, 'my app')
-  const result = spawnSync(npm, ['create', 'apptify', '--offline', '--', app], { cwd: installer, env, encoding: 'utf8', timeout: 60_000 })
+  const app = join(scratch, 'my app & (demo)')
+  const result = spawnSync(npm.command, [...npm.args, 'create', 'apptify', '--offline', '--', app], { cwd: installer, env, encoding: 'utf8', timeout: 60_000 })
   assert.equal(result.status, 0, result.stdout + result.stderr)
   const manifest = JSON.parse(await readFile(join(app, 'package.json'), 'utf8'))
   assert.match(manifest.dependencies.apptify, /^file:\.\/vendor\/apptify-/)
@@ -62,7 +69,7 @@ try {
   assert.equal(await readFile(join(app, 'package.json'), 'utf8'), before)
   assert.equal(run([join(library, 'unsafe')]).status, 1)
   const alias = join(scratch, 'library-alias')
-  await symlink(library, alias, 'dir')
+  await symlink(library, alias, process.platform === 'win32' ? 'junction' : 'dir')
   assert.equal(run([join(alias, 'unsafe')]).status, 1)
 
   const empty = join(scratch, 'existing-empty')

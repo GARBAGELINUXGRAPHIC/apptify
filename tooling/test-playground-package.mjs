@@ -7,17 +7,18 @@ import { createHash } from 'node:crypto'
 import { execFileSync, spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { chromium, expect } from '@playwright/test'
+import { npmCommand } from './npm-command.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const scratch = await mkdtemp(join(tmpdir(), 'apptify-package-'))
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-const run = (args, cwd = root) => execFileSync(npm, args, { cwd, stdio: 'inherit', timeout: 240_000 })
+const npm = npmCommand()
+const run = (args, cwd = root) => execFileSync(npm.command, [...npm.args, ...args], { cwd, stdio: 'inherit', timeout: 240_000 })
 console.log('Package acceptance workspace: ' + scratch)
 const archiveInput = process.argv[2] ? resolve(process.argv[2]) : undefined
 const archiveSha256 = archiveInput ? createHash('sha256').update(await readFile(archiveInput)).digest('hex') : undefined
 const packArgs = ['pack', '--ignore-scripts', '--json', '--loglevel=error', '--pack-destination', scratch]
 if (archiveInput) packArgs.push(archiveInput)
-const packed = JSON.parse(execFileSync(npm, packArgs, { cwd: root, encoding: 'utf8' }))[0]
+const packed = JSON.parse(execFileSync(npm.command, [...npm.args, ...packArgs], { cwd: root, encoding: 'utf8' }))[0]
 const contents = new Set(packed.files.map(file => file.path))
 const snapshot = archiveInput
   ? JSON.parse(execFileSync('tar', ['-xOf', join(scratch, packed.filename), 'package/templates/playground/source-snapshot.json'], { encoding: 'utf8' }))
@@ -78,7 +79,7 @@ async function serve() {
   })
   const port = reservation.address().port
   await new Promise((resolve, reject) => reservation.close(error => error ? reject(error) : resolve()))
-  const child = spawn(npm, ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' })
+  const child = spawn(npm.command, [...npm.args, 'run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: app, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' })
   const stop = () => {
     if (process.platform !== 'win32') { try { process.kill(-child.pid, 'SIGTERM') } catch {} }
     else child.kill('SIGTERM')
