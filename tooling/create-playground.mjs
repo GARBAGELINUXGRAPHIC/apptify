@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { cp, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, readdir, realpath, rename, writeFile } from 'node:fs/promises'
 import { resolve, join, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
@@ -13,7 +13,7 @@ if (!destination || ['--help', '-h'].includes(destination)) {
 }
 try {
   const target = resolve(destination)
-  const packageRoot = resolve(root)
+  const packageRoot = await realpath(root)
   if (target === packageRoot || target.startsWith(packageRoot + sep)) throw new Error('Destination must be outside the installed apptify package')
   const existing = await readdir(target).catch(error => { if (error.code === 'ENOENT') return []; throw error })
   if (existing.length) throw new Error('Destination must be empty: ' + target)
