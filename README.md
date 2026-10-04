@@ -37,6 +37,12 @@ const confirmed = await dialog.result // 确认 true，取消 false，关闭 und
 
 Props、事件、插槽、自定义主题与弹层消息回传见[组件 API](docs/COMPONENTS.md)。
 
+## 自动发布
+
+推送到 `main` 后，GitHub Actions 会将尚未发布的 `apptify` 和 `create-apptify` 版本发布到 npm。发布前更新对应的 `package.json` 版本；已发布版本自动跳过，预发布版本使用 `next` 标签。
+
+在两个 npm 包的 Settings → Trusted Publisher 中选择 GitHub Actions，填写用户 `GARBAGELINUXGRAPHIC`、仓库 `apptify`、工作流文件 `npm-publish.yml`，允许 `npm publish`，环境名留空。使用 OIDC，无需配置或保存 npm token。
+
 ## LICENSE
 
 MIT
