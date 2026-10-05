@@ -16,7 +16,8 @@
     "dist",
     "docs",
     "tooling",
-    "templates/playground"
+    "templates/playground",
+    "THIRD_PARTY_LICENSES.txt"
   ],
   "main": "./dist/apptify.js",
   "module": "./dist/apptify.js",
@@ -49,8 +50,7 @@
   },
   "peerDependencies": {
     "vite-plugin-pages": "^0.32.4",
-    "vue": "^3.5.0",
-    "vuetify": "^3.9.0"
+    "vue": "^3.5.0"
   },
   "dependencies": {
     "@panzoom/panzoom": "^4.6.2",
@@ -73,8 +73,7 @@
     "vitest": "^4.1.11",
     "vue": "^3.5.13",
     "vue-router": "^4.6.4",
-    "vue-tsc": "^2.2.8",
-    "vuetify": "^3.9.0"
+    "vue-tsc": "^2.2.8"
   },
   "peerDependenciesMeta": {
     "vite-plugin-pages": {

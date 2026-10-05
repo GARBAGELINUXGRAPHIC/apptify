@@ -1,3 +1,4 @@
+import { waitForPageLayout } from './component-navigation'
 import { test, expect } from '@playwright/test'
 
 for (const [path, title, treeName, itemName, hash] of [
@@ -7,6 +8,7 @@ for (const [path, title, treeName, itemName, hash] of [
   test(`${title} uses a dialog below backtop when the sidebar cannot fit`, async ({ page }) => {
     await page.setViewportSize({ width: 820, height: 720 })
     await page.goto(path)
+    await waitForPageLayout(page)
     const toggle = page.getByRole('button', { name: `展开${title}` })
     await expect(toggle).toBeVisible()
     await expect(page.locator('.directory-index')).toBeHidden()
@@ -40,6 +42,7 @@ for (const [path, title, treeName, itemName, hash] of [
     await page.setViewportSize({ width: 390, height: 720 })
     await toggle.click()
     await expect(dialog).toBeVisible()
+    await waitForPageLayout(page)
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()

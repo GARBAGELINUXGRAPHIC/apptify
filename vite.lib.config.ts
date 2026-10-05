@@ -7,6 +7,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: 'apptify', cssFileName: 'apptify' },
-    rollupOptions: { external: ['vue', 'vuetify/directives/ripple', 'lucide-vue-next'] },
+    rollupOptions: { external: ['vue', 'lucide-vue-next'] },
   },
 })

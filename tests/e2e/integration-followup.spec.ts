@@ -54,14 +54,17 @@ for (const width of [320, 1440, 1920]) {
         throw new Error('Tag or button has no visible text')
       })
     })
-    for (const item of typography) { expect(item.fontSize).toBe('11px'); expect(item.lineHeight).toBe('16.5px') }
+    for (const item of typography.slice(0, -1)) { expect(item.fontSize).toBe('11px'); expect(item.lineHeight).toBe('16.5px') }
+    expect(typography.at(-1)!.fontSize).toBe('15px')
     for (const first of typography) for (const second of typography) {
-      if (Math.abs(first.box.y + first.box.height / 2 - second.box.y - second.box.height / 2) < 1) {
+      if (first.fontSize === second.fontSize && Math.abs(first.box.y + first.box.height / 2 - second.box.y - second.box.height / 2) < 1) {
         expect(Math.abs(first.textY - second.textY)).toBeLessThan(1)
         expect(first.textHeight).toBe(second.textHeight)
       }
     }
-    expect((await add.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    await expect(add).toHaveClass(/apple-link/)
+    await expect(add).toHaveCSS('line-height', '22.5px')
+    expect((await add.boundingBox())!.height).toBe(22.5)
 
     for (const box of geometry.boxes) {
       expect(box.left).toBeGreaterThanOrEqual(geometry.parent.left - 1)
@@ -73,7 +76,7 @@ for (const width of [320, 1440, 1920]) {
       }
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
-    await card.screenshot({ path: `/Users/quitsense/Documents/Codex/2026-10-02/task/tag-demo-${width}.png` })
+    await card.screenshot({ path: test.info().outputPath(`tag-demo-${width}.png`) })
     await add.click()
     await expect(card.getByRole('button', { name: '移除设计系统', exact: true })).toBeVisible()
   })

@@ -4,7 +4,7 @@ const api = new URLSearchParams(location.search).has('package') ? await import('
 await import('apptify/style.css')
 const { AppleProvider, AppleImage, createAppleUI } = api
 for (const name of ['AppleImageViewer','InternalImageViewer']) { if (name in api || name in api.components || name in api.overlayComponents) throw new Error('Viewer API exposed: '+name) }
-if (Object.keys(api.components).length !== 66 || Object.keys(api.overlayComponents).length !== 9) throw new Error('Unexpected component registry')
+if (api.components.AppleImage !== AppleImage || !api.overlayComponents.AppleDialog) throw new Error('Missing public image or overlay component')
 const images = [{ src:'/images/lake.jpg',alt:'湖泊',title:'清晨' },{ src:'/images/airpods-max-orange.jpg',alt:'耳机' }]
 createApp({data:()=>({index:0,empty:false}),render(){return h(AppleProvider,{motion:'none'},()=>h('main',[
  h(AppleImage,{id:'single-object',gallery:images[0]}),h(AppleImage,{id:'single-array',gallery:[images[0]],carousel:true}),

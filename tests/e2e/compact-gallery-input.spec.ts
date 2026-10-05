@@ -20,9 +20,24 @@ async function trackpad(page: Page) {
   await wheelGesture(page, 1)
   await expect.poll(async () => Number(await figure.getAttribute('data-index'))).toBeGreaterThanOrEqual(2)
   await expect.poll(() => strip.evaluate(box => box.scrollLeft)).toBeGreaterThanOrEqual(stride * 2 - 1)
+  const waitForSnap = async () => {
+    let previous = -1, stableSince = Date.now()
+    await expect.poll(async () => {
+      const position = await strip.evaluate(box => box.scrollLeft)
+      if (Math.abs(position - previous) > .5) stableSince = Date.now()
+      previous = position
+      return Date.now() - stableSince >= 250 && Math.abs(position - Math.round(position / stride) * stride) <= 1
+    }).toBe(true)
+  }
+  await waitForSnap()
+  const forwardIndex = Number(await figure.getAttribute('data-index'))
+  const forwardPosition = await strip.evaluate(box => box.scrollLeft)
   await wheelGesture(page, -1)
-  await expect(figure).toHaveAttribute('data-index', '0')
-  await expect.poll(() => strip.evaluate(box => box.scrollLeft)).toBe(0)
+  await expect.poll(async () => Number(await figure.getAttribute('data-index'))).toBeLessThanOrEqual(forwardIndex - 2)
+  await expect.poll(() => strip.evaluate(box => box.scrollLeft)).toBeLessThanOrEqual(forwardPosition - stride * 2 + 1)
+  await waitForSnap()
+  const finalIndex = Number(await figure.getAttribute('data-index'))
+  expect(await strip.evaluate(box => box.scrollLeft)).toBeCloseTo(stride * finalIndex, 0)
 }
 
 async function rapidClicks(page: Page, reverse: boolean) {

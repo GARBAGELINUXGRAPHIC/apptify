@@ -1,6 +1,6 @@
 # Apptify
 
-面向桌面与移动端的 Vue 3 组件库，基于 Vuetify Material UI 融合 Apple 风格设计，统一使用 `<apple-*>` 标签。
+面向桌面与移动端的 Vue 3 组件库，采用 Apple 风格设计，统一使用 `<apple-*>` 标签。
 
 [npm](https://www.npmjs.com/package/apptify) · [组件 API](docs/COMPONENTS.md) · [应用模板](docs/PLAYGROUND-TEMPLATE.md)
 

@@ -47,7 +47,7 @@ test('page card shells use AppleCard', async ({ page }) => {
   await expect(page.locator('.settings-section.apple-card')).toHaveCount(4)
   await page.goto('/components')
   await expect(page.locator('.component-card:not(.apple-card)')).toHaveCount(0)
-  expect(await page.locator('.component-card.apple-card').count()).toBeGreaterThan(0)
+  await expect(page.locator('.component-card.apple-card').first()).toBeVisible()
 })
 
 test('touch devices suppress hover zoom', async ({ browser }) => {

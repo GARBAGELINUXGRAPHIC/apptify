@@ -24,7 +24,7 @@ for (const viewport of [
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
     await page.goto('/components')
-    if (viewport.mode === 'mobile') await page.getByRole('button', { name: '手机预览', exact: true }).click()
+    if (viewport.mode === 'mobile') await page.locator('.preview-controls [aria-label="手机预览"]').click()
     for (const item of catalog) {
       await test.step(item.name, async () => {
         await openDemo(page, item.name)

@@ -1,6 +1,6 @@
 # Apptify architecture
 
-Vue 3 + TypeScript; Options API component definitions. All public components use `Apple` names and register as `<apple-*>`. No Tailwind. Do not import Vuetify component styles; only its ripple directive and narrowly scoped ripple CSS are used.
+Vue 3 + TypeScript; Options API component definitions. All public components use `Apple` names and register as `<apple-*>`. No Tailwind. Ripple animation and styles are local; no Vuetify runtime dependency is used.
 
 ## Ownership
 

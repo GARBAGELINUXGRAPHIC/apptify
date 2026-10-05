@@ -131,6 +131,25 @@ describe('global ripple lifecycle', () => {
     expect(button.findAll('.v-ripple__container')).toHaveLength(0)
   })
 
+  it('shows a short touch tap and removes its wave after release', async () => {
+    vi.useFakeTimers()
+    const { button } = mountProbe()
+    button.element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [{ clientX: 10, clientY: 10 } as Touch] }))
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+    button.element.dispatchEvent(new TouchEvent('touchend', { bubbles: true }))
+    expect(button.findAll('.v-ripple__container')).toHaveLength(1)
+    await vi.advanceTimersByTimeAsync(600)
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+  })
+
+  it('keeps a nested control press from starting its parent ripple', async () => {
+    const parent = document.createElement('div'); parent.dataset.appleMotion = 'full'; document.body.append(parent)
+    wrapper = mount(defineComponent({ render() { return ripple(h('div', [h(Probe)])) } }), { attachTo: parent })
+    await wrapper.get('button').trigger('mousedown')
+    expect(wrapper.element.querySelectorAll(':scope > .v-ripple__container')).toHaveLength(0)
+    expect(wrapper.get('button').findAll('.v-ripple__container')).toHaveLength(1)
+  })
+
   it('owns only direct waves and releases its markers and timers on unmount', async () => {
     const { button } = mountProbe()
     const element = button.element as HTMLElement

@@ -21,10 +21,21 @@
   color: rgb(128 128 128);
 }
 [data-apple-ripple] > .v-ripple__container > .v-ripple__animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  overflow: hidden;
+  will-change: transform, opacity;
   border-radius: 50%;
   background: currentColor;
   color: inherit;
   pointer-events: none;
 }
-[data-apple-ripple] > .v-ripple__container > .v-ripple__animation--in { opacity: .1; }
-[data-apple-ripple] > .v-ripple__container > .v-ripple__animation--out { opacity: 0; }
+[data-apple-ripple] > .v-ripple__container > .v-ripple__animation--enter { transition: none; }
+[data-apple-ripple] > .v-ripple__container > .v-ripple__animation--in { transition: transform .25s cubic-bezier(0, 0, .2, 1), opacity .1s cubic-bezier(0, 0, .2, 1); opacity: .1; }
+[data-apple-ripple] > .v-ripple__container > .v-ripple__animation--out { transition: opacity .3s cubic-bezier(0, 0, .2, 1); opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-apple-ripple] > .v-ripple__container > .v-ripple__animation--in { transition-property: opacity; transition-duration: .1s; }
+}

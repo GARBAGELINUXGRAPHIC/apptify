@@ -25,8 +25,8 @@ for (const motion of ['auto', 'none']) {
       await page.goto('/settings')
       await page.getByRole('radiogroup', { name: '全局动效', exact: true }).getByText('关闭', { exact: true }).click()
     }
-    await page.goto('/components#apple-input')
-    const card = page.locator('#apple-input')
+    await page.goto('/components#apple-textarea')
+    const card = page.locator('#apple-textarea')
     const disclosure = card.locator('.component-source')
     const trigger = disclosure.getByRole('button', { name: '代码与 API', exact: true })
     const regionId = await trigger.getAttribute('aria-controls')
@@ -44,20 +44,20 @@ for (const motion of ['auto', 'none']) {
     await expect(trigger).toHaveAttribute('aria-expanded', 'true')
     await expect(region).toHaveAttribute('aria-hidden', 'false')
     await expect(region).toHaveJSProperty('inert', false)
-    const item = catalog.find(item => item.name === 'AppleInput')!
+    const item = catalog.find(item => item.name === 'AppleTextarea')!
     await expect(region.locator('pre code')).toHaveText(item.code)
     await expect(region.locator('.api-line')).toHaveText(item.api)
     await expect.poll(async () => (await region.boundingBox())!.height).toBeGreaterThan(50)
-    await region.getByRole('button', { name: '复制代码', exact: true }).click()
+    await region.locator('.code-toolbar .apple-link').filter({ hasText: '复制代码' }).click()
     await expect(page.getByText('已复制', { exact: true })).toBeVisible()
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(item.code)
-    await card.getByLabel('姓名', { exact: true }).fill('披露切换保留输入')
+    await card.getByRole('textbox', { name: '个人简介', exact: true }).fill('披露切换保留输入')
     await trigger.focus()
     await page.keyboard.press('Space')
     await expect(trigger).toHaveAttribute('aria-expanded', 'false')
     await expect(region).toHaveJSProperty('inert', true)
     await expect.poll(async () => (await region.boundingBox())!.height).toBeLessThan(1)
-    await expect(card.getByLabel('姓名', { exact: true })).toHaveValue('披露切换保留输入')
+    await expect(card.getByRole('textbox', { name: '个人简介', exact: true })).toHaveValue('披露切换保留输入')
     if (motion === 'none') await expect(region).toHaveCSS('transition-duration', '0s')
   })
 }
@@ -67,7 +67,7 @@ for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/components')
     if (width === 320) {
-      const directory = page.getByRole('button', { name: '组件目录', exact: true })
+      const directory = page.getByRole('button', { name: '展开组件目录', exact: true })
       await expect(directory).toHaveClass(/apple-button/)
       await directory.click()
       await expect(page.getByRole('dialog', { name: '组件目录', exact: true })).toBeVisible()
@@ -75,7 +75,7 @@ for (const width of [320, 1440]) {
       await expect(directory).toBeFocused()
     }
     for (const [label, mobile] of [['手机预览', true], ['桌面预览', false]] as const) {
-      const button = page.getByRole('button', { name: label, exact: true })
+      const button = page.locator('.preview-controls').getByLabel(label, { exact: true })
       await expect(button).toHaveClass(/apple-link/)
       await button.click()
       await expect(button).toHaveAttribute('aria-pressed', 'true')
@@ -84,7 +84,7 @@ for (const width of [320, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
     await page.goto('/missing-audit-page')
     const home = page.getByRole('link', { name: '返回首页', exact: true })
-    await expect(home).toHaveClass(/apple-link/)
+    await expect(home).toHaveClass(/apple-button/)
     await expect(home).toHaveAttribute('href', '/')
     await home.click()
     await expect(page).toHaveURL('/')

@@ -28,7 +28,7 @@ for (const hasTouch of [false, true]) {
 }
 
 for (const hasTouch of [false, true]) {
-  test(`image returns below navigation as navigation fades in: touch=${hasTouch}`, async ({ browser }) => {
+  test(`image returns below navigation while the sticky directory stays behind the viewer: touch=${hasTouch}`, async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, hasTouch })
     const page = await context.newPage()
     try {
@@ -39,7 +39,8 @@ for (const hasTouch of [false, true]) {
       if (hasTouch) await expect(viewer).toHaveAttribute('data-phase', 'open')
       const navZ = await page.locator('.apple-navibar__bar').first().evaluate(element => Number(getComputedStyle(element).zIndex))
       await expect(page.locator('.apple-navibar__bar').first()).toHaveCSS('opacity', '0')
-      await expect(page.locator('.sidebar')).toHaveCSS('opacity', '0')
+      await expect(page.locator('.sidebar')).toHaveCSS('opacity', '1')
+      expect(await viewer.evaluate(element => Number(getComputedStyle(element).zIndex))).toBeGreaterThan(0)
       expect(await viewer.evaluate(element => Number(getComputedStyle(element).zIndex))).toBeGreaterThan(navZ)
       const closing = await viewer.evaluate(async element => {
         element.querySelector<HTMLButtonElement>('[aria-label="关闭图片预览"]')!.click()

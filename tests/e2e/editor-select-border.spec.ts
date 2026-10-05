@@ -5,7 +5,7 @@ test('select borders survive the Vue REPL button reset in configuration controls
   const config = page.getByRole('region', { name: '输入框配置' })
   await config.getByRole('radiogroup', { name: '输入类型', exact: true }).getByText('电话', { exact: true }).click()
   const frame = page.frameLocator('[data-testid="input-playground"] .vue-repl iframe')
-  await expect(frame.getByLabel('姓名', { exact: true })).toHaveAttribute('type', 'tel')
+  await expect(frame.getByRole('textbox', { name: '姓名', exact: true })).toHaveAttribute('type', 'tel')
   await config.getByRole('button', { name: '插槽、原生属性与动效', exact: true }).click()
   const select = config.getByRole('combobox', { name: '动效', exact: true })
   await expect(select).toHaveCSS('border-top-width', '1px')

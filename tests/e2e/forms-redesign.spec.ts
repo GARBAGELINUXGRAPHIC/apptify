@@ -35,9 +35,9 @@ test('dark segmented separates the card, track and sampled B selection and follo
   await page.mouse.move(0, 0)
   await expect(group).toHaveAttribute('data-apple-scheme', 'dark')
   await expect(activeCard(page)).toHaveCSS('background-color', 'rgb(34, 34, 36)')
-  await expect(group).toHaveCSS('background-color', 'rgb(54, 54, 58)')
+  await expect(group).toHaveCSS('background-color', 'rgb(45, 45, 45)')
   await expect(group).toHaveCSS('border-width', '0px')
-  await expect(indicator).toHaveCSS('background-color', 'rgb(81, 80, 85)')
+  await expect(indicator).toHaveCSS('background-color', 'rgb(67, 67, 67)')
   await expect(group.locator('.is-selected')).toHaveCSS('color', 'rgb(245, 244, 245)')
   await expect(group.locator('.apple-segmented__item:not(.is-selected)').first()).toHaveCSS('color', 'rgb(166, 165, 169)')
   const x = (await indicator.boundingBox())!.x

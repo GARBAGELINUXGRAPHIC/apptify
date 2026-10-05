@@ -194,9 +194,9 @@ test('HEX caption does not focus the editor, while the editor and Apply remain u
 
 test('the settings preview label never outlines, focuses or opens its select', async ({ page }) => {
   await page.goto('/settings')
-  const field = page.locator('.glass-preview-select')
-  const label = field.getByText('打开下拉查看实际效果', { exact: true })
-  const combo = field.getByRole('combobox', { name: '打开下拉查看实际效果', exact: true })
+  const field = page.locator('#setting-glass .apple-field')
+  const label = field.getByText('点击查看效果', { exact: true })
+  const combo = field.getByRole('combobox', { name: '点击查看效果', exact: true })
   await label.scrollIntoViewIfNeeded()
   const box = (await label.boundingBox())!
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
@@ -206,7 +206,7 @@ test('the settings preview label never outlines, focuses or opens its select', a
   await page.mouse.up()
   await expect(combo).not.toBeFocused()
   await expect(combo).toHaveAttribute('aria-expanded', 'false')
-  await expect(combo).toContainText('个人资料')
+  await expect(combo).toContainText('Item 1')
   await combo.click()
   await expect(combo).toHaveAttribute('aria-expanded', 'true')
 })

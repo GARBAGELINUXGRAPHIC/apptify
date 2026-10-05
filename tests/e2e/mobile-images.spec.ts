@@ -391,12 +391,13 @@ test('a caught page restores its canvas and backdrop after a cancelled downward 
   const viewer = await openPhoto(page)
   await pointer(viewer, 'pointerdown', 1, 300, 422)
   await pointer(viewer, 'pointermove', 1, 200, 422)
-  await pointer(viewer, 'pointerup', 1, 200, 422)
-  await expect(viewer).toHaveAttribute('data-phase', 'settling')
-  await viewer.locator('.is-current').evaluate(slide => {
-    const animation = slide.getAnimations()[0]
+  await viewer.evaluate(async element => {
+    element.querySelector('.apple-viewer-stage')!.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, pointerType: 'touch', clientX: 200, clientY: 422, button: 0, bubbles: true }))
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+    const animation = element.querySelector('.is-current')!.getAnimations()[0]!
     animation.pause(); animation.currentTime = Number(animation.effect!.getTiming().duration) * .45
   })
+  await expect(viewer).toHaveAttribute('data-phase', 'settling')
   await pointer(viewer, 'pointerdown', 2, 195, 422)
   await pointer(viewer, 'pointermove', 2, 195, 450)
   await expect.poll(() => viewer.locator('.apple-viewer-backdrop').evaluate(element => Number(getComputedStyle(element).opacity))).toBeLessThan(1)

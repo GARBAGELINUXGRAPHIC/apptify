@@ -1,5 +1,5 @@
 import { watch, withDirectives, type DirectiveBinding, type ObjectDirective, type VNode } from 'vue'
-import { Ripple } from 'vuetify/directives/ripple'
+import { Ripple, type RippleElement } from './ripple'
 import { appleKey, resolveMotion, type AppleContext } from './context'
 import '../styles/ripple.css'
 
@@ -12,11 +12,6 @@ export function motionDuration(element: HTMLElement, fallback = 300): number {
   return duration ? parseFloat(duration) * (duration.endsWith('ms') ? 1 : 1000) : fallback
 }
 
-// Keep Vuetify's listeners stable. Its enabled/disabled update replaces the
-// keyboard callback before removing it, leaving the previous listener attached.
-// Gating the mounted state also lets keyup/blur reset a held keyboard ripple when
-// an ancestor changes its motion policy in the middle of a press.
-type RippleElement = HTMLElement & { _ripple?: { enabled: boolean; showTimer?: number; showTimerCommit?: (() => void) | null; touched?: boolean } }
 const rippleStates = new Map<HTMLElement, { update: (binding: DirectiveBinding<boolean>) => void; sync: () => void; destroy: () => void }>()
 let ripplePolicyObserver: MutationObserver | undefined
 let rippleMedia: MediaQueryList | undefined

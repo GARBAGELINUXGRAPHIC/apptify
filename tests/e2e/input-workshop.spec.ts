@@ -15,7 +15,7 @@ test('input API groups preserve anchors without duplicating the main demo', asyn
   await expect(document.getByRole('button', { name: '交互示例' })).toHaveCount(0)
   await expect(document.locator('.CodeMirror, iframe')).toHaveCount(0)
   const frame = page.frameLocator('[data-testid="input-playground"] .vue-repl iframe')
-  await expect(frame.getByLabel('姓名', { exact: true })).toHaveValue('Apptify')
+  await expect(frame.getByRole('textbox', { name: '姓名', exact: true })).toHaveValue('Apptify')
   await expect(page.locator('.vue-repl iframe')).toHaveCount(1)
   const tree = page.getByRole('tree', { name: '组件 API 树' })
   await tree.getByRole('treeitem', { name: 'clearable', exact: true }).click()

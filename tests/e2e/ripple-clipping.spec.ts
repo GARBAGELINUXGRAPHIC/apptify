@@ -1,3 +1,4 @@
+import { waitForPageLayout } from './component-navigation'
 import { createRequire } from 'node:module'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
@@ -60,7 +61,12 @@ async function checkWave(page: Page, control: Locator, label: string) {
   await expect(wave).toHaveClass(/--in/)
   // Freeze ancestor focus/background transitions too, so the PNG comparison
   // isolates only the ripple instead of a simultaneously interpolating ring.
-  await page.evaluate(() => document.getAnimations().forEach(animation => animation.pause()))
+  await page.evaluate(async () => {
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    const animations = document.getAnimations()
+    animations.forEach(animation => animation.pause())
+    await Promise.all(animations.map(animation => animation.ready))
+  })
   const shape = await shapeOf(control), clip = await frameClip(control)
   const container = control.locator(':scope > .v-ripple__container')
   await expect(container).toHaveCSS('border-radius', await control.evaluate(element => getComputedStyle(element).borderRadius))
@@ -117,12 +123,14 @@ for (const theme of ['light', 'dark']) for (const width of [390, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
   })
 
-  test(`actual rounded card footer stays inside its border on hover and press at ${theme} ${width}`, async ({ page }, testInfo) => {
+  test(`document link feedback stays clipped with card shadow isolated at ${theme} ${width}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 })
     await page.addInitScript(theme => localStorage.setItem('apptify:preferences', JSON.stringify({ theme, motion: 'full' })), theme)
     await page.goto('/components#apple-input')
-    const card = page.locator('#apple-input'), trigger = card.locator('.component-source h3 button')
-    await trigger.scrollIntoViewIfNeeded(); await page.waitForTimeout(600)
+    const card = page.locator('#apple-input'), trigger = card.getByRole('link', { name: '代码与 API', exact: true })
+    await trigger.scrollIntoViewIfNeeded()
+    await waitForPageLayout(page)
+    await card.evaluate(element => { const card = element as HTMLElement; card.style.boxShadow = 'none'; card.style.transition = 'none' })
     await page.mouse.move(0, 0)
     const shape = await shapeOf(card), clip = await frameClip(card)
     const idle = await page.screenshot({ clip })
@@ -133,8 +141,8 @@ for (const theme of ['light', 'dark']) for (const width of [390, 1440]) {
     await page.mouse.down(); await page.waitForTimeout(140)
     const pressed = await page.screenshot({ clip, path: testInfo.outputPath(`card-${theme}-${width}-midframe.png`) })
     expect(pixelDiff(idle, pressed, clip, shape).escaped).toBe(0)
-    await expect(trigger).toHaveCSS('overflow', 'visible')
-    await expect(card).toHaveCSS('overflow', 'visible')
+    await expect(card.locator('.documentation-entry')).toHaveCSS('overflow', 'hidden')
+    await expect(card).toHaveCSS('overflow', 'hidden')
     await page.mouse.move(0, 0); await page.mouse.up()
     await trigger.focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab')
     expect(await trigger.evaluate(element => getComputedStyle(element).outlineStyle)).toBe('solid')
@@ -167,8 +175,14 @@ test('nested controls, rapid presses, pointer cancellation and live motion chang
   await probe.focus(); await page.keyboard.down('Space')
   await expect(probe.locator('.v-ripple__container')).toHaveCount(1)
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await expect(probe.locator('.v-ripple__container')).toHaveCount(0)
+  await expect(page.locator('.apple-provider').first()).toHaveAttribute('data-apple-motion', 'reduced')
+  await expect(probe.locator('.v-ripple__container')).toHaveCount(1)
   await page.keyboard.up('Space')
+  await expect(probe.locator('.v-ripple__container')).toHaveCount(0)
+  await page.keyboard.down('Space')
+  await expect(probe.locator('.v-ripple__container')).toHaveCount(1)
+  await page.keyboard.up('Space')
+  await expect(probe.locator('.v-ripple__container')).toHaveCount(0)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await probe.hover(); await page.mouse.down()
   await page.locator('#unmount-probe').evaluate(element => (element as HTMLElement).click())
@@ -183,6 +197,8 @@ test('menu, select and calendar effects remain bounded in floating layers', asyn
   await expect(menu).toBeVisible()
   await checkWave(page, menu.getByRole('menuitem').first(), 'menuitem')
   await page.keyboard.press('Escape')
+  await expect(menu).toHaveCount(0)
+  await expect(page.locator('#menu-trigger')).toBeFocused()
   await page.getByRole('combobox', { name: '选择项目' }).click()
   await checkWave(page, page.getByRole('option').first(), 'select option')
   await page.getByRole('combobox', { name: '选择项目' }).focus()

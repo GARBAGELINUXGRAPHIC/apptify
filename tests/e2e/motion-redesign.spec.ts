@@ -1,4 +1,4 @@
-import { activeCard, openComponent } from './component-navigation'
+import { activeCard, openComponent, directoryItem } from './component-navigation'
 import { expect, test, type Page } from '@playwright/test'
 
 
@@ -10,8 +10,8 @@ test('anchor navigation keeps one feed and preserves every preview', async ({ pa
   const input = activeCard(page).getByRole('textbox', { name: '姓名', exact: true })
   await input.fill('保留输入')
   const count = await page.locator('.component-demo').count()
-  await page.locator('.sidebar a[href="/components#navigation"]').click()
-  await expect(page.locator('#navigation')).toBeInViewport()
+  await directoryItem(page, 'apple-tabs').click()
+  await expect(page.locator('#apple-tabs')).toBeInViewport()
   await expect(page.locator('.component-feed')).toHaveCount(1)
   await expect(page.locator('.component-demo')).toHaveCount(count)
   await expect(input).toHaveValue('保留输入')
@@ -19,8 +19,8 @@ test('anchor navigation keeps one feed and preserves every preview', async ({ pa
 })
 
 test('inline code disclosure does not replay page entrance or reset the demo', async ({ page }) => {
-  await openComponent(page, 'apple-input')
-  const input = activeCard(page).getByRole('textbox', { name: '姓名', exact: true })
+  await openComponent(page, 'apple-textarea')
+  const input = activeCard(page).getByRole('textbox', { name: '个人简介', exact: true })
   await input.fill('保留输入')
   for (let i = 0; i < 2; i++) {
     await activeCard(page).locator('.component-source').getByRole('button', { name: '代码与 API', exact: true }).click()

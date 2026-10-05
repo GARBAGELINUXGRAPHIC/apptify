@@ -1,3 +1,4 @@
+import { directoryItem, waitForPageLayout } from './component-navigation'
 import { expect, test } from '@playwright/test'
 
 test('home search only animates container height and rapidly reverses without moving rows', async ({ page }) => {
@@ -55,7 +56,7 @@ for(const width of [320,1440]) test(`tags are hollow pills with content height a
   await page.getByRole('button',{name:'移除可关闭',exact:true}).click()
   await expect(page.getByText('可关闭',{exact:true})).toHaveCount(0)
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
-  await page.screenshot({path:`/Users/quitsense/Documents/Codex/2026-10-02/task/tag-${width}.png`,fullPage:true})
+  await page.screenshot({path: test.info().outputPath(`tag-${width}.png`),fullPage:true})
 })
 
 test('transition demo crossfades with directional slide and accepts rapid reversal',async({page})=>{
@@ -98,7 +99,8 @@ test('path changes animate one page and keep fixed navigation stable through rap
   await expect(page).toHaveURL(/\/components$/)
   await expect.poll(()=>page.locator('main').evaluate(el=>el.getAnimations().length)).toBe(0)
   const sidebar=await page.locator('.sidebar').boundingBox()
-  expect(sidebar!.y).toBe(64)
+  expect(sidebar!.y).toBeGreaterThanOrEqual(100)
+  await expect(page.locator('.sidebar')).toHaveCSS('position', 'sticky')
   await expect(nav.getByRole('link',{name:'组件',exact:true})).toHaveCSS('border-bottom-width','0px')
   await page.locator('#apple-input .component-card-heading a').click()
   expect(await page.locator('main').evaluate(el=>el.getAnimations().length)).toBe(0)
@@ -129,25 +131,17 @@ for (const theme of ['light', 'dark']) test(`tag text keeps 4.5:1 contrast on ${
   for (const tag of ratios) for (const ratio of tag.ratios) expect(ratio, `${tag.label} ${theme}`).toBeGreaterThanOrEqual(4.5)
 })
 
-test('sidebar joins page entrance without moving the global bar and hashes do not restart it', async ({ page }) => {
+test('sticky directory follows page entrance while the fixed global bar and hash navigation stay stable', async ({ page }) => {
   await page.setViewportSize({width:1440,height:1000})
   await page.goto('/settings')
   await page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('link',{name:'组件',exact:true}).click()
   const aside=page.locator('.sidebar')
-  await expect.poll(()=>aside.evaluate(el=>el.getAnimations().length)).toBeGreaterThan(0)
-  const poses=await page.evaluate(()=>{
-    const aside=document.querySelector<HTMLElement>('.sidebar')!,main=document.querySelector('main')!
-    const a=aside.getAnimations()[0]!,m=main.getAnimations()[0]!
-    return {aside:(a.effect as KeyframeEffect).getKeyframes(),main:(m.effect as KeyframeEffect).getKeyframes(),aDuration:a.effect!.getComputedTiming().duration,mDuration:m.effect!.getComputedTiming().duration,position:getComputedStyle(aside).position,nav:document.querySelector('.site-nav .apple-navibar__bar')!.getBoundingClientRect().top}
-  })
-  expect(poses.aside[0]!.transform).toBe('translateX(-14px)')
-  expect(poses.main[0]!.transform).toBe('translateY(14px)')
-  expect(poses.aDuration).toBe(poses.mDuration)
-  expect(poses.position).toBe('fixed');expect(poses.nav).toBe(0)
-  await expect.poll(()=>aside.evaluate(el=>el.getAnimations().length)).toBe(0)
-  await page.locator('.sidebar a[href="/components#apple-input"]').count().then(async count=>{if(!count) await page.locator('.sidebar a[href="/components#forms"]').click()})
-  await page.locator('.sidebar a[href="/components#apple-input"]').click()
-  expect(await aside.evaluate(el=>el.getAnimations().length)).toBe(0)
+  await expect.poll(() => page.locator('main').evaluate(el => el.getAnimations().length)).toBeGreaterThan(0)
+  await expect(aside).toHaveCSS('position', 'sticky')
+  expect((await page.locator('.site-nav .apple-navibar__bar').boundingBox())!.y).toBe(0)
+  await waitForPageLayout(page)
+  await directoryItem(page, 'apple-input').click()
+  expect(await page.locator('main').evaluate(el => el.getAnimations().length)).toBe(0)
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.getByRole('navigation',{name:'主导航',exact:true}).getByRole('link',{name:'设置',exact:true}).click()
   await page.goBack()

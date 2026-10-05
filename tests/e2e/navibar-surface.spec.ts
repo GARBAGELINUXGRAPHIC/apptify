@@ -22,7 +22,7 @@ for (const [theme, label, base] of [['light', '浅色', '255, 255, 255'], ['dark
     await expect.poll(() => bar.locator('.apple-navibar__menu').evaluate(element => Math.abs(element.getBoundingClientRect().height - Number.parseFloat((element as HTMLElement).style.height)))).toBeLessThan(.5)
     await expect.poll(() => page.locator('.apple-provider').first().evaluate(element => element.getAnimations({ subtree: true }).filter(animation => Number.isFinite(Number(animation.effect?.getComputedTiming().endTime)) && animation.playState === 'running').length)).toBe(0)
     await expect(bar.getByRole('link', { name: '首页', exact: true })).toBeVisible()
-    await page.screenshot({ path: `/Users/quitsense/Documents/Codex/2026-10-02/task/mobile-nav-${theme}.png` })
+    await page.screenshot({ path: test.info().outputPath(`mobile-nav-${theme}.png`) })
     await page.keyboard.press('Escape')
     await check()
     await toggle.evaluate(async element => {

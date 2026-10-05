@@ -43,7 +43,7 @@ test('editor actions show notification feedback', async ({ page, context }) => {
   await page.goto('/component-docs/apple-input')
   const playground = page.getByTestId('input-playground')
   const frame = page.frameLocator('[data-testid="input-playground"] .vue-repl iframe')
-  await expect(frame.getByLabel('姓名', { exact: true })).toHaveValue('Apptify')
+  await expect(frame.getByRole('textbox', { name: '姓名', exact: true })).toHaveValue('Apptify')
   const toolbar = playground.getByRole('group', { name: '示例操作' })
   for (const [button, message] of [
     ['重新运行', '正在重新运行示例'],

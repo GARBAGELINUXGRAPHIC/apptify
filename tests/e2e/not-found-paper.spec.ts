@@ -21,7 +21,7 @@ test('the squirrel keeps its last acorn, stops at the tree and bows before the r
   await page.goto(route)
   await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
   await expect(page.getByRole('heading', { name: '页面不存在', exact: true })).toBeVisible()
-  await expect(page.getByRole('img', { name: /松鼠与漂走的橡果/ })).toBeVisible()
+  await expect(page.locator(paper).getByRole('img')).toBeVisible()
   await seek(page, 1000)
   expect((await pose(page, 'squirrel')).y).toBeLessThan(380)
   expect((await pose(page, 'camera')).scale).toBeGreaterThan(1.6)
@@ -111,20 +111,19 @@ test('the story really finishes once and the ambient cast stays bounded for anot
   expect(errors).toEqual([])
 })
 
-test('pause, visibility and offscreen suspension preserve the timeline; replay is explicit', async ({ page }) => {
+test('visibility and offscreen suspension preserve the timeline without exposing playback controls', async ({ page }) => {
   await page.goto(route)
-  await page.getByRole('button', { name: '暂停动画', exact: true }).click()
-  const stopped = await paperAnimations(page)
-  expect(stopped.every(animation => animation.state === 'paused')).toBe(true)
-  await page.waitForTimeout(180)
-  expect(await paperAnimations(page)).toEqual(stopped)
-  await page.getByRole('button', { name: '继续动画', exact: true }).click()
+  await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
+  await expect(page.getByRole('button', { name: /暂停动画|继续动画|重看故事/ })).toHaveCount(0)
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true })
     document.dispatchEvent(new Event('visibilitychange'))
   })
   await expect(page.locator(paper)).toHaveAttribute('data-playing', 'false')
-  expect((await paperAnimations(page)).every(animation => animation.state === 'paused')).toBe(true)
+  const stopped = await paperAnimations(page)
+  expect(stopped.every(animation => animation.state === 'paused')).toBe(true)
+  await page.waitForTimeout(180)
+  expect(await paperAnimations(page)).toEqual(stopped)
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: false })
     document.dispatchEvent(new Event('visibilitychange'))
@@ -135,10 +134,7 @@ test('pause, visibility and offscreen suspension preserve the timeline; replay i
   expect((await paperAnimations(page)).every(animation => animation.state === 'paused')).toBe(true)
   await page.evaluate(() => window.scrollTo(0, 0))
   await expect(page.locator(paper)).toHaveAttribute('data-playing', 'true')
-  await page.getByRole('button', { name: '重看故事', exact: true }).click()
-  const replayed = await paperAnimations(page)
-  expect(replayed.find(animation => animation.id === 'paper-story-clock')!.time).toBeLessThan(1000)
-  expect(replayed.filter(animation => animation.id === 'paper-story-clock')).toHaveLength(1)
+  expect((await paperAnimations(page)).filter(animation => animation.id === 'paper-story-clock')).toHaveLength(1)
 })
 
 for (const motion of ['none', 'reduced']) {
@@ -166,14 +162,18 @@ test('OS reduced motion stops an active story and restoring motion does not repl
   expect((await paperAnimations(page)).every(animation => animation.id.startsWith('paper-loop-'))).toBe(true)
 })
 
-test('rapid replay replaces the previous cast without retaining old effects', async ({ page }) => {
+test('repeated route entry disposes the previous cast and creates one bounded story', async ({ page }) => {
   await page.goto(route)
+  await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
   const nodeCount = await page.locator(`${paper} *`).count()
   const count = (await paperAnimations(page)).length
   for (let index = 0; index < 4; index++) {
     const previous = await page.locator(paper).evaluateHandle(element => element.getAnimations({ subtree: true }).filter(animation => animation.id.startsWith('paper-')))
-    await page.getByRole('button', { name: '重看故事', exact: true }).click()
+    await page.getByRole('link', { name: '返回首页', exact: true }).click()
     expect(await previous.evaluate(animations => animations.every(animation => animation.playState === 'idle'))).toBe(true)
+    await page.getByRole('navigation', { name: '主导航', exact: true }).getByRole('link', { name: '组件', exact: true }).click()
+    await page.goto(route)
+    await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
     expect((await paperAnimations(page)).length).toBe(count)
     expect(await page.locator(`${paper} *`).count()).toBe(nodeCount)
   }
@@ -183,7 +183,7 @@ test('route exit cancels detached effects and direct-entry back falls back to ho
   await page.goto(route)
   const oldAnimations = await page.locator(paper).evaluateHandle(element => element.getAnimations({ subtree: true }).filter(animation => animation.id.startsWith('paper-')))
   const home = page.getByRole('link', { name: '返回首页', exact: true })
-  await expect(home).toHaveClass(/apple-link/)
+  await expect(home).toHaveClass(/apple-button/)
   await home.click()
   await expect(page).toHaveURL(/\/$/)
   expect(await oldAnimations.evaluate(animations => animations.every(animation => animation.playState === 'idle'))).toBe(true)
@@ -201,8 +201,10 @@ for (const width of [320, 390, 768, 1440]) {
     await expect(page.locator(paper)).toHaveAttribute('data-story', 'static')
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
     await expect(page.getByRole('link', { name: '返回首页', exact: true })).toBeVisible()
-    const caption = await page.locator('.paper-caption--last').boundingBox()
-    const controls = await page.locator('.paper-scene__controls').boundingBox()
-    expect(caption!.x + caption!.width).toBeLessThanOrEqual(controls!.x)
+    const scene = await page.locator(paper).boundingBox()
+    const illustration = await page.locator('.paper-scene__window').boundingBox()
+    expect(scene!.width).toBeLessThanOrEqual(width)
+    expect(illustration!.width).toBeLessThanOrEqual(width)
+    await expect(page.getByRole('button', { name: '返回上一页', exact: true })).toBeVisible()
   })
 }

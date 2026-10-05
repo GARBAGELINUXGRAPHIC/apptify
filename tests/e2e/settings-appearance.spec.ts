@@ -21,12 +21,12 @@ test('appearance has four navigable settings with responsive columns and live de
   const panel = await page.locator('.settings-content').boundingBox()
   const sidebar = await page.locator('.settings-sidebar').boundingBox()
   expect(panel!.width).toBeGreaterThan(840)
-  expect(await page.locator('.settings-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(3)
+  expect(await page.locator('.settings-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(2)
   expect(sidebar!.x + sidebar!.width).toBeLessThan(panel!.x)
   await expect(page.locator('.settings-grid > .apple-card')).toHaveCount(4)
   const motion = page.getByRole('radiogroup', { name: '全局动效', exact: true })
   await motion.getByText('完整', { exact: true }).click()
-  const accordion = page.locator('.motion-sample').getByRole('button', { name: '展开看看', exact: true })
+  const accordion = page.locator('.motion-sample').getByRole('button', { name: '预览效果', exact: true })
   const rippleButton = page.locator('.ripple-sample').getByRole('button', { name: '试试点击波纹', exact: true })
   // Observe the library's actual ripple nodes, rather than a decorative animation.
   await rippleButton.evaluate(el => {
@@ -45,6 +45,8 @@ test('appearance has four navigable settings with responsive columns and live de
   await expect(page.locator('.ripple-click-count')).not.toHaveText('已点击 0 次')
   await expect(page.locator('.glass-sample-colors')).toHaveCSS('animation-name', /sample-glass/)
   await page.getByRole('switch', { name: '点击波纹', exact: true }).uncheck()
+  // The demonstration releases an already queued press after 160ms.
+  await page.waitForTimeout(200)
   const clicks = await page.locator('.ripple-click-count').textContent()
   await page.waitForTimeout(2800)
   await expect(page.locator('.ripple-click-count')).toHaveText(clicks!)
@@ -77,7 +79,7 @@ test('glass resets independently to fifty percent opacity and twelve pixel blur'
   await expect(opacity).toHaveValue('50')
   await expect(blur).toHaveValue('12')
   await expect(page.getByRole('button', { name: '深色', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.locator('main')).toHaveAttribute('data-preview-motion', 'none')
+  await expect(page.locator('.settings-page')).toHaveAttribute('data-preview-motion', 'none')
   await page.reload()
   await expect(opacity).toHaveValue('50')
   await expect(blur).toHaveValue('12')

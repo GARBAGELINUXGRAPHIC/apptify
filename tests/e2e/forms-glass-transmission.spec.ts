@@ -44,14 +44,14 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
-test('actual three-column Autocomplete transmits underlying code glyphs as opacity changes', async ({ page }) => {
+test('actual masonry Autocomplete transmits underlying code glyphs as opacity changes', async ({ page }) => {
   const samples: number[] = []
   const errors: string[] = []
   page.on('pageerror', error => errors.push(String(error)))
   for (const opacity of [0, 80 / 255 * 100, 60, 100]) {
     const card = await setGlass(page, opacity, 2)
-    const columns = await card.evaluate(element => getComputedStyle(element.parentElement!).gridTemplateColumns.split(' ').length)
-    expect(columns).toBe(3)
+    const columns = await card.evaluate(element => new Set(Array.from(element.parentElement!.children).map(card => (card as HTMLElement).offsetLeft)).size)
+    expect(columns).toBe(2)
     const combo = card.locator('.component-demo').getByRole('combobox')
     const footer = (await card.locator('.component-source').boundingBox())!
     const input = (await combo.boundingBox())!

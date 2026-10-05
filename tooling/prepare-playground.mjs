@@ -65,7 +65,7 @@ const manifest = {
   scripts: { dev: 'vite', typecheck: 'vue-tsc --noEmit', build: 'vue-tsc --noEmit && vite build', preview: 'vite preview --host 127.0.0.1' },
   dependencies: {
     apptify: '^' + library.version, vue: library.peerDependencies.vue,
-    'vue-router': library.devDependencies['vue-router'], vuetify: library.peerDependencies.vuetify,
+    'vue-router': library.devDependencies['vue-router'],
     'lucide-vue-next': library.dependencies['lucide-vue-next'],
   },
   devDependencies: Object.fromEntries(['@vitejs/plugin-vue', 'typescript', 'vite', 'vite-plugin-pages', 'vue-tsc', '@vue/repl', 'es-module-shims', 'esbuild', 'postcss'].map(name => [name, library.devDependencies[name]])),

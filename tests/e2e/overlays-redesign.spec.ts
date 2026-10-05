@@ -95,16 +95,24 @@ for (const width of [1440, 390]) {
       const dialog = page.getByRole('dialog', { name: example.title, exact: true })
       await expect(dialog).toBeVisible()
       await expect(page.locator('.apple-modal-presence-enter-active')).toHaveCount(0)
-      await page.keyboard.press('Escape')
-      await expect(page.locator('.apple-modal-presence-leave-active')).toHaveCount(1)
-      expect(await dialog.count()).toBe(1)
-      expect(await page.evaluate(() => document.body.style.overflow)).toBe('hidden')
       const moving = await dialog.evaluate(async (element, axis) => {
-        await new Promise(resolve => setTimeout(resolve, 80))
+        element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        await Promise.resolve()
+        await Promise.resolve()
+        const surface = element.closest('.apple-overlay-backdrop')!
+        const animation = surface.getAnimations()[0]!
+        animation.pause()
+        animation.currentTime = Number(animation.effect!.getTiming().duration) * .4
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
         const style = getComputedStyle(element)
         const matrix = new DOMMatrixReadOnly(style.transform)
-        return { offset: axis === 'x' ? matrix.m41 : matrix.m42, opacity: style.opacity }
+        const result = { offset: axis === 'x' ? matrix.m41 : matrix.m42, opacity: style.opacity, retained: element.isConnected, locked: document.body.style.overflow, leaving: surface.classList.contains('apple-modal-presence-leave-active') }
+        animation.play()
+        return result
       }, example.axis)
+      expect(moving.retained).toBe(true)
+      expect(moving.locked).toBe('hidden')
+      expect(moving.leaving).toBe(true)
       expect(moving.offset).toBeGreaterThan(0)
       if (example.tag === 'apple-dialog') {
         expect(Number(moving.opacity)).toBeGreaterThan(0)
@@ -173,7 +181,7 @@ test('service toasts slide left into position and slide right out, without an op
   expect(entering.x).toBeGreaterThan(0)
   expect(entering.opacity).toBe('1')
   await expect(page.locator('.apple-toast-enter-active')).toHaveCount(0)
-  expect(await toast.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m41)).toBe(0)
+  await expect.poll(() => toast.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m41)).toBe(0)
   await toast.getByRole('button', { name: '关闭通知' }).click()
   await expect(page.locator('.apple-toast-leave-active')).toHaveCount(1)
   const leaving = await toast.evaluate(async element => {

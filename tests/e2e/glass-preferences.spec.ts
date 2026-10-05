@@ -1,12 +1,10 @@
-import { expect, test, type Locator } from '@playwright/test'
-import { openComponent } from './component-navigation'
+import { expect, test, type Locator, type Page } from '@playwright/test'
+import { openComponent, waitForPageLayout } from './component-navigation'
 
 const alpha = async (panel: Locator) => panel.evaluate(el => {
-  const color = getComputedStyle(el).backgroundColor
-  const match = color.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/)
+  const match = getComputedStyle(el).backgroundColor.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/)
   return match ? Number(match[1]) : 1
 })
-
 async function setSlider(slider: Locator, value: number) {
   await slider.evaluate((element, nextValue) => {
     const input = element as HTMLInputElement
@@ -15,8 +13,15 @@ async function setSlider(slider: Locator, value: number) {
     input.dispatchEvent(new Event('change', { bubbles: true }))
   }, value)
 }
+async function preview(page: Page) {
+  const combo = page.getByRole('combobox', { name: '点击查看效果', exact: true })
+  if (await combo.getAttribute('aria-expanded') !== 'true') await combo.click()
+  const menu = page.locator('#setting-glass .apple-field-menu')
+  await expect(menu).toBeVisible()
+  return menu
+}
 
-test('glass defaults use fifty percent opacity and expose correctly labeled library sliders', async ({ page }) => {
+test('glass defaults reach the real dropdown and correctly labeled sliders', async ({ page }) => {
   await page.goto('/settings')
   const opacity = page.getByRole('slider', { name: '玻璃不透明度', exact: true })
   const blur = page.getByRole('slider', { name: '玻璃模糊', exact: true })
@@ -28,56 +33,57 @@ test('glass defaults use fifty percent opacity and expose correctly labeled libr
   await expect(blur).toHaveAttribute('max', '22')
   await expect(blur).toHaveAttribute('step', '1')
   await expect(blur).toHaveClass(/apple-slider/)
-  await expect(page.locator('.glass-preview-panel')).toHaveCSS('backdrop-filter', 'blur(12px) saturate(2)')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.5, 3)
+  const menu = await preview(page)
+  await expect(menu).toHaveCSS('backdrop-filter', 'blur(12px) saturate(2)')
+  expect(await alpha(menu)).toBeCloseTo(.5, 3)
+  await page.getByRole('option', { name: 'Item 2', exact: true }).click()
+  await expect(page.getByRole('combobox', { name: '点击查看效果' })).toContainText('Item 2')
 })
 
-test('glass sliders update the live preview, persist across routes and reset with all preferences', async ({ page }) => {
+test('glass sliders update the dropdown, persist across routes and reset with all preferences', async ({ page }) => {
   await page.goto('/settings')
-  await setSlider(page.getByRole('slider', { name: '玻璃不透明度', exact: true }), 72.5)
-  await setSlider(page.getByRole('slider', { name: '玻璃模糊', exact: true }), 19)
-  await expect(page.locator('.glass-preview-panel')).toHaveCSS('backdrop-filter', 'blur(19px) saturate(2)')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.725, 3)
-  await page.getByRole('combobox', { name: '打开下拉查看实际效果', exact: true }).click()
-  await expect(page.locator('.glass-preview-select .apple-field-menu')).toHaveCSS('backdrop-filter', 'blur(19px) saturate(2)')
-  expect(await alpha(page.locator('.glass-preview-select .apple-field-menu'))).toBeCloseTo(.725, 3)
+  await setSlider(page.getByRole('slider', { name: '玻璃不透明度' }), 72.5)
+  await setSlider(page.getByRole('slider', { name: '玻璃模糊' }), 19)
+  const menu = await preview(page)
+  await expect(menu).toHaveCSS('backdrop-filter', 'blur(19px) saturate(2)')
+  expect(await alpha(menu)).toBeCloseTo(.725, 3)
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: '深色', exact: true }).click()
-  await page.getByRole('radiogroup', { name: '全局动效', exact: true }).getByText('关闭', { exact: true }).click()
+  await page.getByRole('radiogroup', { name: '全局动效' }).getByText('关闭', { exact: true }).click()
   await page.goto('/')
   await page.goto('/settings')
   await page.reload()
-  await expect(page.getByRole('slider', { name: '玻璃不透明度', exact: true })).toHaveValue('72.5')
-  await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('19')
+  await expect(page.getByRole('slider', { name: '玻璃不透明度' })).toHaveValue('72.5')
+  await expect(page.getByRole('slider', { name: '玻璃模糊' })).toHaveValue('19')
   await expect(page.getByRole('button', { name: '深色', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: '恢复默认设置', exact: true }).click()
-  await expect(page.getByRole('slider', { name: '玻璃不透明度', exact: true })).toHaveAttribute('aria-valuetext', '50%')
-  await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('12')
+  await expect(page.getByRole('slider', { name: '玻璃不透明度' })).toHaveAttribute('aria-valuetext', '50%')
+  await expect(page.getByRole('slider', { name: '玻璃模糊' })).toHaveValue('12')
   await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-theme', 'light')
   await page.reload()
-  await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('12')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.5, 3)
+  expect(await alpha(await preview(page))).toBeCloseTo(.5, 3)
 })
 
 test('opacity endpoints are not inverted and blur supports keyboard bounds', async ({ page }) => {
   await page.goto('/settings')
-  const opacity = page.getByRole('slider', { name: '玻璃不透明度', exact: true })
-  const blur = page.getByRole('slider', { name: '玻璃模糊', exact: true })
+  const opacity = page.getByRole('slider', { name: '玻璃不透明度' })
+  const blur = page.getByRole('slider', { name: '玻璃模糊' })
   await opacity.focus()
-  await page.keyboard.press('Home')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBe(0)
+  await opacity.press('Home')
   await expect(opacity).toHaveAttribute('aria-valuetext', '0%')
-  await page.keyboard.press('End')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBe(1)
+  expect(await alpha(await preview(page))).toBe(0)
+  await opacity.focus()
+  await opacity.press('End')
   await expect(opacity).toHaveAttribute('aria-valuetext', '100%')
+  expect(await alpha(await preview(page))).toBe(1)
   await blur.focus()
-  await page.keyboard.press('Home')
+  await blur.press('Home')
   await expect(blur).toHaveValue('2')
-  await page.keyboard.press('ArrowRight')
+  await blur.press('ArrowRight')
   await expect(blur).toHaveValue('3')
-  await page.keyboard.press('End')
+  await blur.press('End')
   await expect(blur).toHaveValue('22')
-  await page.keyboard.press('ArrowRight')
+  await blur.press('ArrowRight')
   await expect(blur).toHaveValue('22')
 })
 
@@ -120,73 +126,60 @@ test('glass dropdown variables reach select, date and popover while navbar and a
 })
 
 for (const width of [320, 1440]) {
-  test(`glass controls and preview fit at ${width}px in light and dark themes`, async ({ page }) => {
+  test(`glass controls and dropdown fit at ${width}px in light and dark themes`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/settings')
     for (const theme of ['浅色', '深色']) {
       await page.getByRole('button', { name: theme, exact: true }).click()
-      await expect(page.locator('.glass-preview-panel')).toBeVisible()
+      const menu = await preview(page)
+      await waitForPageLayout(page)
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-      await page.locator('#app > .apple-provider').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))) })
-      await page.screenshot({ path: `/tmp/apptify-glass-${width}-${theme === '深色' ? 'dark' : 'light'}.png`, fullPage: true })
+      const bounds = (await menu.boundingBox())!
+      expect(bounds.x).toBeGreaterThanOrEqual(0)
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
+      await page.keyboard.press('Escape')
+      await page.screenshot({ path: `/tmp/apptify-glass-${width}-${theme === '深色' ? 'dark' : 'light'}.png` })
     }
   })
 }
 
 for (const width of [320, 1440]) {
-  test(`dark glass previews keep light text on black glass across opacity values at ${width}px`, async ({ page }) => {
+  test(`dark dropdown keeps light text on black glass across opacity values at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/settings')
     await page.getByRole('button', { name: '深色', exact: true }).click()
-    const provider = page.locator('#app > .apple-provider')
-    const preview = page.locator('.glass-preview-panel')
-    const region = page.getByRole('region', { name: '玻璃效果', exact: true })
-    const control = page.getByRole('combobox', { name: '打开下拉查看实际效果', exact: true })
-    const opacity = page.getByRole('slider', { name: '玻璃不透明度', exact: true })
+    const opacity = page.getByRole('slider', { name: '玻璃不透明度' })
     for (const value of [0, 31.4, 60, 100]) {
       await setSlider(opacity, value)
-      await provider.evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))) })
-      await expect(preview.locator('.apple-list__item').first()).toHaveCSS('color', 'rgb(238, 238, 239)')
-      await expect(preview.locator('.apple-list__description').first()).toHaveCSS('color', 'rgb(170, 170, 176)')
-      await expect(control).toHaveCSS('color', 'rgb(238, 238, 239)')
-      expect(await alpha(preview)).toBeCloseTo(value / 100, 3)
-      await expect(preview).toHaveCSS('background-color', value === 100 ? 'rgb(0, 0, 0)' : `rgba(0, 0, 0, ${value / 100})`)
-      await expect(page.locator('.glass-preview-backdrop')).toHaveCSS('background-image', /data:image\/svg\+xml/)
-      await region.screenshot({ path: `/tmp/apptify-glass-dark-opacity-${value}-${width}.png` })
-      if (value >= 60) {
-        await expect(preview.locator('.apple-list__item').first()).toHaveCSS('color', 'rgb(238, 238, 239)')
-        await control.click()
-        const popup = page.locator('.glass-preview-select .apple-field-menu')
-        await expect(popup).toHaveCSS('color', 'rgb(238, 238, 239)')
-        await expect(popup.getByRole('option').first()).toHaveCSS('color', 'rgb(238, 238, 239)')
-        expect(await alpha(popup)).toBeCloseTo(value / 100, 3)
-        await popup.screenshot({ path: `/tmp/apptify-glass-dark-select-${value}-${width}.png` })
-        await page.keyboard.press('Escape')
-      }
+      const menu = await preview(page)
+      await expect(menu).toHaveCSS('color', 'rgb(238, 238, 239)')
+      await expect(menu.getByRole('option').first()).toHaveCSS('color', 'rgb(238, 238, 239)')
+      expect(await alpha(menu)).toBeCloseTo(value / 100, 3)
+      await expect(menu).toHaveCSS('background-color', value === 100 ? 'rgb(0, 0, 0)' : `rgba(0, 0, 0, ${value / 100})`)
+      await page.keyboard.press('Escape')
+      await expect(menu).toHaveCount(0)
     }
     await page.getByRole('button', { name: '恢复默认设置', exact: true }).click()
     await expect(opacity).toHaveAttribute('aria-valuetext', '50%')
-    await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('12')
+    await expect(page.getByRole('slider', { name: '玻璃模糊' })).toHaveValue('12')
   })
 }
 
-test('the self-contained small-object pattern shows blur changes in both themes', async ({ page }) => {
+test('the moving color sample follows motion policy while real dropdown blur updates in both themes', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 900 })
   await page.goto('/settings')
-  const blur = page.getByRole('slider', { name: '玻璃模糊', exact: true })
-  const backdrop = page.locator('.glass-preview-backdrop')
-  const panel = page.locator('.glass-preview-panel')
-  const pattern = await backdrop.evaluate(el => getComputedStyle(el).backgroundImage)
-  expect(pattern).toContain('data:image/svg+xml,')
+  const blur = page.getByRole('slider', { name: '玻璃模糊' })
+  await expect(page.locator('.glass-sample-colors > span')).toHaveCount(3)
   for (const theme of ['浅色', '深色']) {
     await page.getByRole('button', { name: theme, exact: true }).click()
     for (const value of [2, 12, 22]) {
       await setSlider(blur, value)
-      await expect(panel).toHaveCSS('backdrop-filter', `blur(${value}px) saturate(2)`)
-      await expect(backdrop).toHaveCSS('background-image', pattern)
-      await page.locator('#app > .apple-provider').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {}))) })
-      await page.locator('.glass-preview').screenshot({ path: `/tmp/apptify-glass-pattern-${theme === '深色' ? 'dark' : 'light'}-${value}px.png` })
+      await expect(await preview(page)).toHaveCSS('backdrop-filter', `blur(${value}px) saturate(2)`)
+      await page.keyboard.press('Escape')
     }
   }
+  await page.getByRole('radiogroup', { name: '全局动效' }).getByText('完整', { exact: true }).click()
+  await expect(page.locator('.glass-sample-colors')).toHaveCSS('animation-name', /sample-glass/)
+  await page.getByRole('radiogroup', { name: '全局动效' }).getByText('关闭', { exact: true }).click()
+  await expect(page.locator('.glass-sample-colors')).toHaveCSS('animation-name', 'none')
 })
