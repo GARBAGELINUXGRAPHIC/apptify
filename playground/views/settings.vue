@@ -199,7 +199,7 @@ function reset() {
 .glass-sample-colors span { width: 95px; height: 95px; flex-shrink: 0; border-radius: 28px; background: #82b6ef; transform: rotate(-20deg); }
 .glass-sample-colors span:nth-child(2) { background: #e9aa99; width: 72px; height: 120px; transform: rotate(25deg); }
 .glass-sample-colors span:nth-child(3) { background: #ada1e2; border-radius: 50%; }
-.glass-sample-panel { position: relative; display: grid; grid-template-columns: 20px 1fr; gap: 12px; width: 168px; padding: 18px; border: 1px solid var(--apple-border); border-radius: 12px; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .3)); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); font-size: 12px; }
+.glass-sample-panel { position: relative; display: grid; grid-template-columns: 20px 1fr; gap: 12px; width: 168px; padding: 18px; border: 1px solid var(--apple-border); border-radius: 12px; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); font-size: 12px; }
 .glass-sample-panel i { grid-column: 1 / -1; height: 5px; width: 100%; border-radius: 4px; background: currentColor; opacity: .15; }
 .glass-sample-panel i:last-child { width: 65%; }
 @keyframes sample-glass { 0%, 100% { transform: translateX(-32px) rotate(-8deg); } 50% { transform: translateX(32px) rotate(8deg); } }

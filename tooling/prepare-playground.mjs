@@ -50,7 +50,7 @@ async function adapt(directory) {
         source = source.replace('to="/" aria-label="Apptify 首页"', ':to="homePath" aria-label="Apptify 首页"')
         source = source.replace(navigationEnd, "].filter(item => router.getRoutes().some(page => page.path === item.href))\nconst homePath = navigation[0]?.href ?? '/'\n\nfunction navigate")
       }
-      if (path === join(output, 'src/views/[...all].vue')) {
+      if (['[...all].vue', '403.vue'].some(view => path === join(output, 'src/views', view))) {
         source = source.replace('to="/" custom', ':to="homePath" custom')
         source = source.replace('const router = useRouter()', "const router = useRouter()\nconst homePath = router.getRoutes().some(page => page.path === '/') ? '/' : '/settings'")
         source = source.replace("else void router.push('/')", 'else void router.push(homePath)')
@@ -92,7 +92,7 @@ await writeFile(join(output, 'gitignore'), 'node_modules/\ndist/\n.env.local\n')
 await writeFile(join(output, 'README.md'), [
   "# Apptify 应用模板",
   "",
-  "可编辑的 Vue 应用，包含导航、账号表单、外观设置、404 与组件示例。建议 Node.js 22 或 24 LTS。",
+  "可编辑的 Vue 应用，包含导航、账号表单、外观设置、403、404 与组件示例。建议 Node.js 22 或 24 LTS。",
   "",
   "```sh",
   "npm install",

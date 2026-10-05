@@ -20,7 +20,7 @@
             <apple-card class="specimen"><div class="specimen-caption"><span>02 / 控制</span></div><h2>点到，即止。</h2><div class="button-specimens"><apple-button :icon="arrowIcon" @click="$apple.notify('操作已完成',{tone:'success'})">继续探索</apple-button><apple-button variant="secondary" @click="$apple.notify('已加入收藏')">加入收藏</apple-button><apple-button variant="outline" @click="$router.push('/components#apple-button')">了解更多</apple-button><div class="icon-button-row"><apple-button variant="secondary" :icon="plusIcon" icon-only label="添加" @click="$apple.notify('已添加')" /><apple-button :variant="liked?'primary':'secondary'" :icon="heartIcon" icon-only :label="liked ? '取消收藏' : '收藏'" :aria-pressed="liked" @click="liked=!liked" /><apple-button variant="secondary" :icon="downloadIcon" icon-only label="浏览组件示例" @click="$router.push('/components')" /></div></div><div class="specimen-foot"><code>apple-button</code><span>5 种样式</span></div></apple-card>
             <apple-card class="specimen"><div class="specimen-caption"><span>03 / 偏好</span></div><h2>恰好，是你的。</h2><div class="preference-demo"><apple-segmented-control v-model="period" :items="periods" label="统计周期" /><div class="setting-line"><div><strong>消息通知</strong><small>不错过重要的事</small></div><apple-switch v-model="notices" aria-label="消息通知" /></div><div class="setting-line"><div><strong>自动同步</strong><small>在所有设备上保持一致</small></div><apple-switch v-model="sync" aria-label="自动同步" /></div><apple-slider v-model="volume" label="音量" /><div class="check-row"><apple-checkbox v-model="agreed" label="记住我的偏好" /></div></div></apple-card>
             <apple-card class="specimen form-specimen"><div class="specimen-caption"><span>04 / 输入</span></div><h2>开始一段对话。</h2><apple-form @submit="$apple.notify(`你好，${name || '新朋友'}！`,{tone:'success'})"><apple-input v-model="name" label="你的名字" placeholder="怎么称呼你" autocomplete="name" clearable required /><apple-input v-model="email" label="电子邮箱" type="email" placeholder="name@example.com" autocomplete="email" required /><apple-button type="submit">加入我们<ArrowRight :size="15" /></apple-button></apple-form></apple-card>
-            <apple-card class="specimen media-specimen"><div class="specimen-caption"><span>05 / 媒体</span></div><h2>靠近一点，再一点。</h2><apple-image :gallery="[{ src: '/images/lake.jpg', alt: '山间湖泊和木屋' }, { src: '/images/airpods-max-orange.jpg', alt: '橙色耳机' }]" aspect-ratio="4/3" /><div class="specimen-foot"><code>apple-image</code><span>山间的一刻</span></div></apple-card>
+            <apple-card class="specimen media-specimen"><div class="specimen-caption"><span>05 / 媒体</span></div><h2>靠近一点，再一点。</h2><apple-image :gallery="[{ src: imageUrl('lake.jpg'), alt: '山间湖泊和木屋' }, { src: imageUrl('airpods-max-orange.jpg'), alt: '橙色耳机' }]" aspect-ratio="4/3" /><div class="specimen-foot"><code>apple-image</code><span>山间的一刻</span></div></apple-card>
             <apple-card class="specimen feedback-specimen"><div class="specimen-caption"><span>06 / 反馈</span></div><h2>每一步，都有回应。</h2><apple-alert title="所有更改已保存" tone="success" /><div class="progress-demo"><div><span>正在同步</span><span>{{progress}}%</span></div><apple-progress :model-value="progress" label="正在同步" /></div><apple-avatar-group :items="[{name:'林初'},{name:'Alex'},{name:'Taylor'},{name:'Quinn'}]" /><div class="feedback-actions"><apple-button variant="secondary" size="small" @click="openDemoDialog">打开对话框</apple-button><apple-link as="button" @click="$apple.notify('所有更改已保存',{tone:'success'});progress=Math.min(100,progress+10)">显示提示</apple-link></div></apple-card>
           </div>
     </section>
@@ -34,6 +34,7 @@
 </template>
 
 <script lang="ts">
+import { imageUrl } from '../images'
 import { defineComponent, markRaw } from 'vue'
 import { ArrowRight, ArrowUpRight, Download, Heart, Plus } from 'lucide-vue-next'
 import { catalog } from '../catalog'
@@ -57,6 +58,7 @@ export default defineComponent({
     },
   },
   methods: {
+    imageUrl,
     openDemoDialog() { this.$apple.dialog({title:'一切，就从这里开始。',message:'试试这些组件，找到适合你的交互。',confirmText:'好的',cancelText:'稍后'}) },
   },
 })

@@ -197,7 +197,7 @@ test('popover uses translucent backdrop filtering and retains its panel through 
     return { filter: style.backdropFilter, background: style.backgroundColor }
   })
   expect(glass.filter).toBe('blur(12px) saturate(2)')
-  expect(glass.background).toBe('rgba(255, 255, 255, 0.314)')
+  expect(glass.background).toBe('rgba(255, 255, 255, 0.5)')
   await expect.poll(() => popover.evaluate(el => el.getAnimations().length)).toBe(0)
   await page.keyboard.press('Escape')
   await expect(page.locator('.apple-popover-presence-leave-active')).toHaveCount(1)

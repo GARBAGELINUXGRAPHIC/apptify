@@ -7,6 +7,13 @@ const router = createRouter({
   routes,
   async scrollBehavior(to, from, savedPosition) {
     await nextTick()
+    if (to.path === '/components' && to.hash && to.path !== from.path) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+      await Promise.allSettled(document.getAnimations().filter(animation =>
+        Number.isFinite(Number(animation.effect?.getComputedTiming().endTime)),
+      ).map(animation => animation.finished))
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+    }
     if (savedPosition) return { ...savedPosition, behavior: 'instant' }
     if (to.hash && document.getElementById(to.hash.slice(1))) {
       const motion = document.querySelector('#app > .apple-provider')?.getAttribute('data-apple-motion')
@@ -18,7 +25,7 @@ const router = createRouter({
 
 router.afterEach(to => {
   const titles: Record<string, string> = { '/': '首页', '/components': '组件', '/settings': '设置' }
-  document.title = `${titles[to.path] ?? '页面不存在'} · Apptify`
+  document.title = `${to.meta.title ?? titles[to.path] ?? '页面不存在'} · Apptify`
 })
 
 export default router

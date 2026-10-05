@@ -6,7 +6,7 @@ export type ComponentMotion = Motion | 'inherit'
 export type ThemeTokens = Record<string, string>
 export interface AppleTheme { scheme: 'light' | 'dark'; tokens: ThemeTokens }
 export interface AppleGlassSettings { opacity: number; blur: number }
-export const defaultGlassSettings: Readonly<AppleGlassSettings> = Object.freeze({ opacity: 30, blur: 12 })
+export const defaultGlassSettings: Readonly<AppleGlassSettings> = Object.freeze({ opacity: 50, blur: 12 })
 
 function glassSettings(value: unknown, fallback: AppleGlassSettings): AppleGlassSettings {
   const settings = value && typeof value === 'object' ? value as Partial<AppleGlassSettings> : {}

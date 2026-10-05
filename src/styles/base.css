@@ -31,7 +31,7 @@
 }
 .apple-glass { /* 其实我不太确定是否需要important */
   color: var(--apple-text, #1d1d1f) !important;
-  background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .31372549)) !important;
+  background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)) !important;
   -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2) !important;
   backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2) !important;
 }

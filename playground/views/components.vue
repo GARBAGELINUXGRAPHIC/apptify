@@ -21,7 +21,7 @@
         <div ref="feed" class="component-feed">
           <section v-for="(section, index) in sections" :id="section.id" :key="section.id" class="feed-group feed-anchor" :data-group="section.id" :aria-labelledby="`${section.id}-heading`">
             <header class="feed-group-heading"><span>0{{ index + 1 }}</span><h2 :id="`${section.id}-heading`">{{ section.label }}</h2><small>{{ section.items.length }} 个组件</small></header>
-            <div class="feed-cards">
+            <MasonryFeed class="feed-cards" @layout="schedulePosition">
             <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
               <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
               <section class="detail-preview" :class="{ 'mobile-preview': previewMode === 'mobile' }" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
@@ -32,7 +32,7 @@
                 </template>
               </apple-accordion>
             </apple-card>
-            </div>
+            </MasonryFeed>
           </section>
         </div>
       </div>
@@ -54,6 +54,7 @@ import { catalog, sections, componentId } from '../catalog'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
 import DirectoryDialog from '../components/DirectoryDialog.vue'
+import MasonryFeed from '../components/MasonryFeed.vue'
 import ComponentDocumentLink from '../editor/ComponentDocumentLink.vue'
 import { componentDocuments, componentDocumentPath } from '../editor/documents'
 
@@ -132,9 +133,9 @@ onBeforeUnmount(() => {
 .directory-search :deep(.apple-field__label) { font-size: 11px; }
 .directory-search :deep(input) { min-width: 0; font-size: 12px; }
 .components-page > * { max-width: none; }
-.feed-cards { column-width: 400px; column-gap: 20px; }
+.feed-anchor { scroll-margin-top: 96px; }
 .feed-group-heading { padding-bottom: 20px; }
-.component-card { display: inline-block; vertical-align: top; width: 100%; break-inside: avoid; margin-bottom: 20px; padding: 0; }
+.component-card { width: 100%; padding: 0; }
 .component-card :deep(> .apple-card__body) { padding: 0; border-radius: inherit; }
 .component-card :deep(> .apple-card__body > .documentation-entry),
 .component-card :deep(> .apple-card__body > .component-source) { border-radius: 0 0 18px 18px; overflow: hidden; }

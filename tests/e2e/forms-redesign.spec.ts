@@ -66,7 +66,7 @@ for (const width of [1440, 320]) {
     await expect(menu).toBeVisible()
     const styles = await menu.evaluate(element => ({ blur: getComputedStyle(element).backdropFilter, background: getComputedStyle(element).backgroundColor }))
     expect(styles.blur).toBe('blur(12px) saturate(2)')
-    expect(styles.background).toBe('rgba(255, 255, 255, 0.314)')
+    expect(styles.background).toBe('rgba(255, 255, 255, 0.5)')
     expect(await activeCard(page).locator('.component-demo select').count()).toBe(0)
     await page.getByRole('option', { name: '上海', exact: true }).click()
     await expect(combo).toContainText('上海')

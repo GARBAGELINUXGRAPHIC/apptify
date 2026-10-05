@@ -62,23 +62,23 @@ test('appearance has four navigable settings with responsive columns and live de
 })
 
 
-test('glass resets independently to thirty percent opacity and twelve pixel blur', async ({ page }) => {
+test('glass resets independently to fifty percent opacity and twelve pixel blur', async ({ page }) => {
   await page.goto('/settings')
   await page.getByRole('button', { name: '深色', exact: true }).click()
   await page.getByRole('radiogroup', { name: '全局动效', exact: true }).getByText('关闭', { exact: true }).click()
   const opacity = page.getByRole('slider', { name: '玻璃不透明度', exact: true })
   const blur = page.getByRole('slider', { name: '玻璃模糊', exact: true })
-  await expect(opacity).toHaveValue('30')
+  await expect(opacity).toHaveValue('50')
   await opacity.focus()
   await opacity.press('End')
   await blur.focus()
   await blur.press('End')
   await page.getByRole('button', { name: '恢复默认玻璃效果', exact: true }).click()
-  await expect(opacity).toHaveValue('30')
+  await expect(opacity).toHaveValue('50')
   await expect(blur).toHaveValue('12')
   await expect(page.getByRole('button', { name: '深色', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('main')).toHaveAttribute('data-preview-motion', 'none')
   await page.reload()
-  await expect(opacity).toHaveValue('30')
+  await expect(opacity).toHaveValue('50')
   await expect(blur).toHaveValue('12')
 })

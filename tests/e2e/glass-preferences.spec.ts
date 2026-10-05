@@ -16,20 +16,20 @@ async function setSlider(slider: Locator, value: number) {
   }, value)
 }
 
-test('glass defaults use thirty percent opacity and expose correctly labeled library sliders', async ({ page }) => {
+test('glass defaults use fifty percent opacity and expose correctly labeled library sliders', async ({ page }) => {
   await page.goto('/settings')
   const opacity = page.getByRole('slider', { name: '玻璃不透明度', exact: true })
   const blur = page.getByRole('slider', { name: '玻璃模糊', exact: true })
   await expect(opacity).toHaveAttribute('min', '0')
   await expect(opacity).toHaveAttribute('max', '100')
-  await expect(opacity).toHaveAttribute('aria-valuetext', '30%')
+  await expect(opacity).toHaveAttribute('aria-valuetext', '50%')
   await expect(blur).toHaveValue('12')
   await expect(blur).toHaveAttribute('min', '2')
   await expect(blur).toHaveAttribute('max', '22')
   await expect(blur).toHaveAttribute('step', '1')
   await expect(blur).toHaveClass(/apple-slider/)
   await expect(page.locator('.glass-preview-panel')).toHaveCSS('backdrop-filter', 'blur(12px) saturate(2)')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.3, 3)
+  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.5, 3)
 })
 
 test('glass sliders update the live preview, persist across routes and reset with all preferences', async ({ page }) => {
@@ -51,12 +51,12 @@ test('glass sliders update the live preview, persist across routes and reset wit
   await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('19')
   await expect(page.getByRole('button', { name: '深色', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: '恢复默认设置', exact: true }).click()
-  await expect(page.getByRole('slider', { name: '玻璃不透明度', exact: true })).toHaveAttribute('aria-valuetext', '30%')
+  await expect(page.getByRole('slider', { name: '玻璃不透明度', exact: true })).toHaveAttribute('aria-valuetext', '50%')
   await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('12')
   await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-theme', 'light')
   await page.reload()
   await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('12')
-  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.3, 3)
+  expect(await alpha(page.locator('.glass-preview-panel'))).toBeCloseTo(.5, 3)
 })
 
 test('opacity endpoints are not inverted and blur supports keyboard bounds', async ({ page }) => {
@@ -166,7 +166,7 @@ for (const width of [320, 1440]) {
       }
     }
     await page.getByRole('button', { name: '恢复默认设置', exact: true }).click()
-    await expect(opacity).toHaveAttribute('aria-valuetext', '30%')
+    await expect(opacity).toHaveAttribute('aria-valuetext', '50%')
     await expect(page.getByRole('slider', { name: '玻璃模糊', exact: true })).toHaveValue('12')
   })
 }

@@ -47,7 +47,7 @@
       </apple-grid>
     </apple-stack>
     <apple-card v-else-if="name === 'AppleCard'" class="demo-product" title="AirPods Max" subtitle="每个音符，都更动听。" eyebrow="声音，出类拔萃。">
-      <apple-image :gallery="{ src: '/images/airpods-max-orange.jpg', alt: '橙色 AirPods Max 耳机' }" aspect-ratio="1" fit="contain" />
+      <apple-image :gallery="{ src: imageUrl('airpods-max-orange.jpg'), alt: '橙色 AirPods Max 耳机' }" aspect-ratio="1" fit="contain" />
       <template #actions><apple-button @click="notify('已加入购物袋')">加入购物袋</apple-button><apple-link as="button" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></template>
     </apple-card>
     <apple-stack v-else-if="name === 'AppleImage'" class="demo-image">
@@ -139,6 +139,7 @@
 </template>
 
 <script lang="ts">
+import { imageUrl } from './images'
 import { defineComponent, h, markRaw } from 'vue'
 import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Share2, Trash2 } from 'lucide-vue-next'
 import { AppleButton } from '../src'
@@ -152,20 +153,20 @@ export default defineComponent({
     dateFormat:'YYYY/MM/DD HH:mm', dateFormats:[{label:'年 / 月',value:'YYYY/MM'},{label:'年 / 月 / 日',value:'YYYY/MM/DD'},{label:'日期与时分',value:'YYYY/MM/DD HH:mm'},{label:'日期与时分秒',value:'YYYY/MM/DD HH:mm:ss'},{label:'时分',value:'HH:mm'},{label:'时分秒',value:'HH:mm:ss'}],
     previewThemes: [{label:'浅色',value:'light'},{label:'深色',value:'dark'},{label:'石墨',value:'graphite'},{label:'玫瑰',value:'rose'}], layoutItems: ['概览', '设计', '支持'],
     galleryImages: [
-      { src: '/images/lake.jpg', alt: '山间湖泊与小屋' },
-      { src: '/images/airpods-max-orange.jpg', alt: '橙色 AirPods Max 耳机' },
-      { src: '/images/city.jpg', alt: '城市天际线' },
-      { src: '/images/mountains.jpg', alt: '群山与山峰' },
-      { src: '/images/forest.jpg', alt: '阳光下的森林' },
-      { src: '/images/architecture.jpg', alt: '建筑细节' },
-      { src: '/images/coast.jpg', alt: '海岸风景' },
-      { src: '/images/food.jpg', alt: '餐桌上的美食' },
-      { src: '/images/desert.jpg', alt: '沙漠沙丘' },
-      { src: '/images/waterfall.jpg', alt: '山间瀑布' },
-      { src: '/images/sunset.jpg', alt: '夕阳风景' },
-      { src: '/images/snow.jpg', alt: '雪地风景' },
+      { src: imageUrl('lake.jpg'), alt: '山间湖泊与小屋' },
+      { src: imageUrl('airpods-max-orange.jpg'), alt: '橙色 AirPods Max 耳机' },
+      { src: imageUrl('city.jpg'), alt: '城市天际线' },
+      { src: imageUrl('mountains.jpg'), alt: '群山与山峰' },
+      { src: imageUrl('forest.jpg'), alt: '阳光下的森林' },
+      { src: imageUrl('architecture.jpg'), alt: '建筑细节' },
+      { src: imageUrl('coast.jpg'), alt: '海岸风景' },
+      { src: imageUrl('food.jpg'), alt: '餐桌上的美食' },
+      { src: imageUrl('desert.jpg'), alt: '沙漠沙丘' },
+      { src: imageUrl('waterfall.jpg'), alt: '山间瀑布' },
+      { src: imageUrl('sunset.jpg'), alt: '夕阳风景' },
+      { src: imageUrl('snow.jpg'), alt: '雪地风景' },
     ],
-    images: ['/images/lake.jpg', '/images/airpods-max-orange.jpg'], people: [{name:'林初'},{name:'Alex'},{name:'Taylor'},{name:'Quinn'},{name:'Sam'}],
+    images: [imageUrl('lake.jpg'), imageUrl('airpods-max-orange.jpg')], people: [{name:'林初'},{name:'Alex'},{name:'Taylor'},{name:'Quinn'},{name:'Sam'}],
     cities: [{label:'北京',value:'beijing'},{label:'上海',value:'shanghai'},{label:'杭州',value:'hangzhou'}], devices: [{label:'MacBook Air',value:'mac'},{label:'iPad Pro',value:'ipad'},{label:'AirPods Max',value:'airpods'}],
     deliveryItems: [{label:'快递送达',value:'express'},{label:'到店取货',value:'pickup'}], periods: [{label:'日',value:'day'},{label:'周',value:'week'},{label:'月',value:'month'}],
     regions: [{label:'北京市',value:'beijing',children:[{label:'朝阳区',value:'chaoyang'},{label:'海淀区',value:'haidian'}]},{label:'浙江省',value:'zhejiang',children:[{label:'杭州市',value:'hangzhou',children:[{label:'西湖区',value:'xihu'}]}]}],
@@ -175,7 +176,7 @@ export default defineComponent({
     folders: [{label:'设计资源',value:'design',children:[{label:'组件',value:'components',children:[{label:'按钮',value:'buttons'},{label:'输入框',value:'inputs'}]},{label:'图标',value:'icons'}]},{label:'项目文件',value:'project'}],
     settings: [{label:'个人资料',value:'profile',description:'姓名、头像和联系方式'},{label:'通知',value:'notifications',description:'推送和邮件偏好'},{label:'隐私与安全',value:'security',description:'管理账户的安全设置'}],
     events: [{label:'订单已确认',value:'confirmed',description:'我们正在准备你的订单',time:'09:41'},{label:'正在配送',value:'shipping',description:'你的包裹已出发',time:'12:00'},{label:'即将送达',value:'arrival',description:'留意配送通知',time:'预计明天'}],
-    actions: [{label:'收藏',value:'favorite'},{label:'分享',value:'share'},{label:'删除',value:'delete',danger:true}], slides: [{label:'山间清晨',value:0,src:'/images/lake.jpg'},{label:'一场聆听',value:1,src:'/images/airpods-max-orange.jpg'}],
+    actions: [{label:'收藏',value:'favorite'},{label:'分享',value:'share'},{label:'删除',value:'delete',danger:true}], slides: [{label:'山间清晨',value:0,src:imageUrl('lake.jpg')},{label:'一场聆听',value:1,src:imageUrl('airpods-max-orange.jpg')}],
     photoActions: [{label:'加入收藏',value:'favorite',description:'将这张照片保存到你的灵感收藏',icon:markRaw(Heart),danger:false},{label:'分享照片',value:'share',description:'与朋友分享山间的这一刻',icon:markRaw(Share2),danger:false},{label:'删除照片',value:'delete',description:'从当前相册中移除',icon:markRaw(Trash2),danger:true}],
     timers: [] as ReturnType<typeof setTimeout>[],
   } },
@@ -195,6 +196,7 @@ export default defineComponent({
   },
   beforeUnmount() { this.timers.forEach(clearTimeout) },
   methods: {
+    imageUrl,
     notify(message: string) { this.$apple.notify(message, {tone:'success'}) },
     validate(data: FormData) { return String(data.get('name') ?? '').trim().length > 0 || '请输入姓名' },
     updateDelivery() { this.delivered = !this.delivered; this.events[2] = this.delivered ? { label: '已签收', value: 'arrival', description: '包裹已送达，祝你使用愉快', time: new Date().toLocaleTimeString('zh-CN') } : { label: '即将送达', value: 'arrival', description: '留意配送通知', time: '预计明天' } },

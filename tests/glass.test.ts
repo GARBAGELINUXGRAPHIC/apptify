@@ -9,7 +9,7 @@ afterEach(() => { localStorage.clear(); vi.unstubAllGlobals() })
 describe('glass preferences', () => {
   it('keeps precise defaults and normalizes only finite supplied values', () => {
     const app = createApple()
-    expect(app.glass.value.opacity).toBe(30)
+    expect(app.glass.value.opacity).toBe(50)
     expect(themeStyle(app)['--apple-glass-blur']).toBe('12px')
     expect(themeStyle(app)['--apple-glass-rgb']).toBe('255 255 255')
     app.theme.value.set('dark')
@@ -24,7 +24,7 @@ describe('glass preferences', () => {
     expect(app.glass.value.blur).toBe(2)
     app.glass.value.reset()
     expect(app.glass.value).toMatchObject(defaultGlassSettings)
-    expect(Number(themeStyle(app)['--apple-glass-opacity'])).toBeCloseTo(.3, 12)
+    expect(Number(themeStyle(app)['--apple-glass-opacity'])).toBeCloseTo(.5, 12)
   })
 
   it('persists with theme and motion and restores through a reload', () => {
