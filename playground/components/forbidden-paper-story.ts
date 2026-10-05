@@ -112,9 +112,9 @@ export function createForbiddenRenderer(art: SVGSVGElement) {
     }
     function blockingArm(p: number, resting: boolean) {
 
-        const upper = 115, forearm = 86, handReach = 20;
+        const upper = 135, forearm = 100, handReach = 20;
         const distal = forearm + handReach;
-        const shoulder = { x: 662, y: 126 };
+        const shoulder = { x: 668, y: 98 };
         const target = add({ x: 539, y: 316 }, rotate({ x: 0, y: -10 }, -15));
         const dx = target.x - shoulder.x, dy = target.y - shoulder.y;
         const contactBend = Math.acos(clamp((dx * dx + dy * dy - upper * upper - distal * distal) / (2 * upper * distal), -1, 1));
@@ -191,7 +191,6 @@ export function createForbiddenRenderer(art: SVGSVGElement) {
         eatingArm(p, intro || still);
         blockingArm(p, intro);
         opacity('tap', intro || still ? 0 : track([[0, 0], [3, 0], [3.055, .8], [3.19, 0], [6.4, 0]], p));
-        transform('steam', `translate(0 ${n(still || intro ? 0 : -Math.sin(p * Math.PI * 2 / 6.4) * 2.5)})`);
         if (frame) {
 
             frame.dataset.phase = still ? 'blocked' : intro ? t < 2.3 ? 'hungry' : 'reveal' : p < 1 ? 'waiting' : p < 3 ? 'reaching' : p < 3.3 ? 'denied' : 'recovering';

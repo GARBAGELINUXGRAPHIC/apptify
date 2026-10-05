@@ -39,7 +39,8 @@ test('the blocking hand meets the paw and rigid arm joints stay attached', async
       const { createForbiddenRenderer } = await import(/* @vite-ignore */ path)
       createForbiddenRenderer(art).draw(5400 + time)
     }, time)
-    const elbow = await point(page, 'deny-upper-group', 0, 115)
+    if (time === 0 || time === 2700) await page.screenshot({ path: `artifacts/403-arm-${time}.png` })
+    const elbow = await point(page, 'deny-upper-group', 0, 135)
     const forearm = await point(page, 'deny-forearm-group', 0, 0)
     expect(Math.hypot(elbow.x - forearm.x, elbow.y - forearm.y)).toBeLessThan(.02)
     if (time === 3000) {

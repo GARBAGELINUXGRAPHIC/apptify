@@ -63,10 +63,11 @@
   <path d="m453 171 97-7v35l-96 4Z" fill="var(--dinner-photo-lake)"></path>
   <path d="m513 177 20-1m-25 8 18-1m-9 8 21-1" stroke="var(--dinner-photo-reflection)" stroke-width="1.4" opacity=".6"></path>
   <path d="m454 175 26-8 24 11-26 9-24 2Z" fill="var(--dinner-photo-bank)"></path>
-  <path d="m473 158 17-1 1 14-19 1Z" fill="#b79973"></path>
+  <path d="M473 158 480 152 490 157 491 171 472 172Z" fill="#b79973"></path>
   <path d="m469 159 11-11 14 9-4 3-11-7-6 7Z" fill="#7c6658"></path>
   <path d="m478 162 6-.5v6l-6 .5Z" fill="var(--dinner-photo-window)"></path>
-  <path d="m458 174 1-24m-5 13 5-13 6 12m-13 7 7-15 8 14" fill="none" stroke="var(--dinner-photo-tree)" stroke-width="2.4" stroke-linejoin="round"></path>
+  <path d="M457.5 163H460.5V175H457.5Z" fill="#806044"></path>
+  <path d="M459 149 454 161 456 161 452 169 467 168 462 161 465 161Z" fill="var(--dinner-photo-tree)" stroke="var(--dinner-photo-tree)" stroke-width="1" stroke-linejoin="round"></path>
 </g><path d="m454 108 103-3m-113 3 3 103" fill="none" stroke="#fff8e3" opacity=".4"></path>
       </g>
 
@@ -81,12 +82,12 @@
         <path d="m720 409 23 1-9 147-15 2Zm165 1 21-1 20 142-16 4Z" fill="var(--dinner-chair-dark)"></path>
       </g>
       <g :filter="`url(#${uid}-shadow)`">
-        <path d="m733-56 69-1-3 113-23 32-45-21Z" fill="#d8a477"></path>
-        <path d="m781-50 21-7-3 113-23 32-10-17 13-24Z" fill="#bd845e"></path>
-        <path data-part="person-torso" d="M702 47 731 57 752 78 776 88 813 47 860 64Q889 78 888 110L864 198 878 297 689 305 671 204 668 153Q634 149 635 123Q637 73 702 47Z" fill="var(--dinner-shirt)"></path>
-        <path d="m702 47 50 31-30 29-30-29-20-12Z" fill="var(--dinner-shirt-light)"></path>
-        <path d="m813 47-37 41 29 18 27-34 28-8Z" fill="var(--dinner-shirt-light)"></path>
-        <path d="m752 78 24 10-6 211-15 2Z" fill="var(--dinner-shirt-dark)" opacity=".7"></path>
+        <path d="M728-56 806-57 808 42 776 72 728 44Z" fill="#d8a477"></path>
+        <path d="M781-50 806-57 808 42 776 72 766 55 779 25Z" fill="#bd845e"></path>
+        <path data-part="person-torso" d="M702 47 728 37 752 58 776 68 810 27 860 64Q889 78 888 110L864 198 878 297 689 305 671 204 668 153Q634 149 635 123Q637 73 702 47Z" fill="var(--dinner-shirt)"></path>
+        <path d="M702 47 728 37 752 58 722 87 692 58 672 66Z" fill="var(--dinner-shirt-light)"></path>
+        <path d="M810 27 776 68 805 86 832 52 860 64Z" fill="var(--dinner-shirt-light)"></path>
+        <path d="m752 58 24 10-6 231-15 2Z" fill="var(--dinner-shirt-dark)" opacity=".7"></path>
         <path d="m848 115 18 48-4 68 16 66-53 2 8-86Z" fill="var(--dinner-shirt-dark)"></path>
 
         <path d="m785 129 47 3-5 39-23 8-21-17Z" fill="var(--dinner-shirt-dark)" opacity=".38"></path>
@@ -141,9 +142,7 @@
   <path d="m811 270 7-6 9 5-2 10-13 6-6-7Z" fill="#86956a"></path>
   <path d="m808 280 13-6 8 8-3 10-16 2-6-6Z" fill="#a3ad78"></path>
   <path d="m817 270 2 8m-7 6 9-2" fill="none" stroke="#c7ce95" stroke-width="1.3"></path>
-</g><path d="M649 273q27-10 55-1l-9 24q-19 10-37-1Z" fill="#adb9a3"></path><ellipse cx="676" cy="272" rx="28" ry="9" fill="#e4e1c5"></ellipse>
-        <path d="m653 273 7-12 9 4 8-10 9 9 10-2 6 10Z" fill="#8a996f"></path><path d="m662 272 7-7 7 7m7-5 8 4" fill="none" stroke="#b8bc84" stroke-width="4"></path>
-        <path d="m680 272 7-6 6 6-5 4Z" fill="#c58454"></path>
+</g>
         <g data-part="water-cup">
           <ellipse cx="952" cy="312" rx="18" ry="4" fill="#775c3e" opacity=".1"></ellipse>
           <path d="m938 269 30-1-4 42q-12 7-23 0Z" fill="#d6e0cc" opacity=".78"></path>
@@ -152,7 +151,6 @@
           <path d="m943 277 1 21" fill="none" stroke="#f6ecd5" stroke-width="1.8" opacity=".8"></path>
         </g>
       </g>
-      <g data-part="steam" fill="none" stroke="var(--dinner-steam)" stroke-width="2" stroke-linecap="round" opacity=".34" transform="translate(0 0)"><path d="M586 238c-12-13 10-16 0-29m17 22c-10-9 9-16 0-24"></path></g>
 
       <path d="m151 565 143-39 167 16 49 43-145 28-169-13Z" fill="var(--dinner-rug)"></path>
       <path d="m173 566 124-29 151 16 40 27-128 23-153-13Z" fill="none" stroke="var(--dinner-rug-line)" stroke-width="2" opacity=".6"></path>
@@ -218,8 +216,7 @@
   <path d="m-7-58 3-10 9 2 3 9-8 3Z" fill="#c59d55"></path>
   <path d="m-4-68 9 2-5 5-7 3Z" fill="#e0bf78"></path>
 </g><path d="M-12-9Q-5-15 6-11L13-4 12 11 5 17-7 15-13 7Z" fill="#dfae80"></path>
-          <path d="m-10-3 12-2 4 6-11 4" fill="#dfae80" stroke="#bd895f" stroke-width="1.25" stroke-linejoin="round"></path>
-          <path d="M-3 10h10" fill="none" stroke="#bd895f" stroke-width="1.2" stroke-linecap="round"></path>
+          <path d="M-7-6Q-1-8 5-6M-8 0Q-2-2 4 0M-7 6Q-1 4 5 6" fill="none" stroke="#bd895f" stroke-width="1.2" stroke-linecap="round"></path>
         </g>
       </g>
       <g data-part="food-pile-front">
@@ -233,15 +230,15 @@
   <path d="m755 290 7-6 9 4 1 7-12 2Z" fill="#9aa575"></path>
   <path d="m809 273 5-7 6 5-3 9Z" fill="#9dab77"></path>
 </g>
-      <g data-part="deny-arm-group" transform="translate(662 126)">
+      <g data-part="deny-arm-group" transform="translate(668 98)">
         <g data-part="deny-upper-group" transform="rotate(40.6782)">
-          <path data-part="deny-skin" d="M-25 65H25L20 115A20 20 0 0 1-20 115Z" fill="#dba879"></path>
+          <path data-part="deny-skin" d="M-25 65H25L20 135A20 20 0 0 1-20 135Z" fill="#dba879"></path>
           <path data-part="deny-sleeve" d="M-29 1A30 30 0 0 1 30 1L32 72 26 87-25 87-31 72Z" fill="var(--dinner-shirt)"></path>
           <path d="m-26 78 53 0-1 9-51 0Z" fill="var(--dinner-shirt-light)" opacity=".65"></path>
-          <g data-part="deny-forearm-group" transform="translate(0 115) rotate(-12.1468)">
-            <path data-part="deny-forearm" d="M-20 0A20 20 0 0 1 20 0L12 86Q0 99-12 86Z" fill="#dba879"></path>
-            <g data-part="deny-wrist" transform="translate(0 86)">
-              <path d="M-10-7Q-18-11-19-4L-20 8Q-19 13-13 13L-7 4Z" fill="#dba879"></path>
+          <g data-part="deny-forearm-group" transform="translate(0 135) rotate(-12.1468)">
+            <path data-part="deny-forearm" d="M-20 0A20 20 0 0 1 20 0L12 100Q0 113-12 100Z" fill="#dba879"></path>
+            <g data-part="deny-wrist" transform="translate(0 100)">
+              <path d="M10-7Q18-11 19-4L20 8Q19 13 13 13L7 4Z" fill="#dba879"></path>
               <path d="M-11-12Q0-16 9-10L16 3 17 15Q17 22 12 24L7 24Q3 29-1 25Q-7 28-10 22L-14 13-14-2Z" fill="#dba879"></path>
               <path d="m-7 7 2 13m5-14 2 16m5-15 2 12" fill="none" stroke="#b7825e" stroke-width="1.25" stroke-linecap="round"></path>
               <g data-part="deny-hand" transform="translate(0 20)"></g>
@@ -336,7 +333,7 @@ onBeforeUnmount(() => {
   --dinner-chair: #b29a70; --dinner-chair-dark: #917c58;
   --dinner-shirt: #829585; --dinner-shirt-light: #a3af96; --dinner-shirt-dark: #627b6d;
   --dinner-cloth: #aac4ba; --dinner-cloth-fold: #8daaa2;
-  --dinner-rug: #b4bb92; --dinner-rug-line: #d0ceaa; --dinner-bowl: #a2b6a7; --dinner-steam: #8c8167;
+  --dinner-rug: #b4bb92; --dinner-rug-line: #d0ceaa; --dinner-bowl: #a2b6a7;
   --dinner-photo-sky: #2b4051; --dinner-photo-shore: #465e65; --dinner-photo-lake: #567680;
   --dinner-photo-bank: #3e5752; --dinner-photo-tree: #304d49; --dinner-photo-reflection: #d5d0ae; --dinner-photo-window: #f1d791;
   position: relative; min-width: 0; margin: 0;
@@ -350,7 +347,7 @@ onBeforeUnmount(() => {
   --dinner-chair: #8a805b; --dinner-chair-dark: #696548;
   --dinner-shirt: #667f71; --dinner-shirt-light: #8b9d82; --dinner-shirt-dark: #486759;
   --dinner-cloth: #74978e; --dinner-cloth-fold: #5a7d76;
-  --dinner-rug: #657856; --dinner-rug-line: #899474; --dinner-bowl: #819c8e; --dinner-steam: #d9d4b2;
+  --dinner-rug: #657856; --dinner-rug-line: #899474; --dinner-bowl: #819c8e;
   --dinner-photo-sky: #dce5d5; --dinner-photo-shore: #a7ba9a; --dinner-photo-lake: #98bcc0;
   --dinner-photo-bank: #92a77a; --dinner-photo-tree: #718a63; --dinner-photo-reflection: #f8edcb; --dinner-photo-window: #6d847a;
 }
