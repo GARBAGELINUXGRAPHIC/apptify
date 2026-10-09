@@ -1,9 +1,10 @@
-import { defineComponent, h, markRaw, nextTick, ref, useId, type PropType, type CSSProperties } from 'vue'
+import { defineComponent, h, markRaw, mergeProps, nextTick, ref, useId, type PropType, type CSSProperties } from 'vue'
 import { ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, InternalImageViewer, type AppleViewerImage } from './overlays'
-import { clamp, isTouchImageDevice, touchImageQuery, type PhotoSize } from '../core/image-geometry'
-import { scrollGallery, stopGalleryScroll } from '../core/image-gallery-motion'
+import { clamp, type PhotoSize } from '../core/image-geometry'
+import { isVerticalScreen } from '../core/device'
+import { scrollGallery, stopGalleryScroll, wheelGallery } from '../core/image-gallery-motion'
 import { GalleryScrollbar } from './gallery-scrollbar'
 import { AppleButton } from './button'
 import { AppleLink } from './link'
@@ -66,12 +67,13 @@ export interface AppleImageItem extends Omit<AppleViewerImage, 'src'> {
 
 export const AppleImage = defineComponent({
   inheritAttrs: false,
-  setup: () => ({ uid: useId() }),
+  setup: () => ({ uid: useId(), isVerticalScreen }),
   inject: { apple: { from: appleKey, default: null } },
   name: 'AppleImage', props: {
     ...motionProps,
     preview: { type: Boolean, default: true }, gallery: { type: [Object, Array] as PropType<AppleImageItem | Array<string | AppleImageItem>>, default: () => [] },
     carousel: Boolean, disabled: Boolean, label: { type: String, default: '图片轮播' },
+    autoplay: { type: Boolean, default: true }, interval: { type: Number, default: 5000 },
     galleryLayout: { type: String as PropType<'compact' | 'tiled' | 'tiled-wrap'>, default: 'compact' },
     galleryShape: { type: String as PropType<'natural' | 'square'>, default: 'natural' },
     index: { type: Number, default: 0 }, squared: Boolean, aspectRatio: { type: [String, Number], default: '4/3' },
@@ -79,8 +81,10 @@ export const AppleImage = defineComponent({
   },
   emits: ['update:index', 'change'],
   data() { return {
-    open: false, previewing: false, failed: false, loaded: false, previewIndex: Number.isFinite(this.index) ? Math.trunc(this.index) : 0, mobile: isTouchImageDevice(),
-    viewportQuery: null as MediaQueryList | null, thumbnails: markRaw(new Map<number, HTMLImageElement>()),
+    open: false, previewing: false, failed: false, loaded: false, previewIndex: Number.isFinite(this.index) ? Math.trunc(this.index) : 0,
+    thumbnails: markRaw(new Map<number, HTMLImageElement>()),
+    autoplayTimer: null as ReturnType<typeof setTimeout> | null, hovered: false, focused: false,
+    pageHidden: typeof document !== 'undefined' && document.hidden, arrowCenter: null as number | null,
     galleryLoaded: {} as Record<number, boolean>, galleryFailed: {} as Record<number, boolean>,
     gallerySizes: {} as Record<string, PhotoSize>, gallerySnap: null as string | null,
     galleryTarget: null as number | null,
@@ -102,38 +106,63 @@ export const AppleImage = defineComponent({
       })
     },
     images(): AppleViewerImage[] {
-      return this.imageItems.map((item, index) => ({ ...item, src: typeof item.src === 'string' ? item.src : '', alt: item.alt ?? item.label ?? `图片 ${index + 1}` }))
+      return this.imageItems.map((item, index) => ({ ...item, src: typeof item.src === 'string' ? item.src : '', title: item.title ?? item.label, alt: item.alt ?? item.label ?? `图片 ${index + 1}` }))
     },
     grouped(): boolean { return this.images.length > 1 || this.carousel && this.images.length > 0 },
     layout(): 'compact' | 'tiled' | 'tiled-wrap' { return this.carousel ? 'compact' : this.galleryLayout },
+    canAutoplay(): boolean { return this.carousel && this.autoplay && this.interval > 0 && Number.isFinite(this.interval) && this.images.length > 1 && !this.disabled && !this.previewing && !this.hovered && !this.focused && !this.pageHidden && !this.galleryDrag },
   },
   watch: {
     imageMotion(value: string) {
-      if (value !== 'full' && this.galleryTarget !== null) this.origin(this.galleryTarget)
+      if (value !== 'full') this.origin(this.galleryTarget ?? this.previewIndex)
     },
+    canAutoplay() { this.restartAutoplay() },
+    interval() { this.restartAutoplay() },
+    previewIndex() { this.restartAutoplay(); void nextTick(this.measureArrows) },
     index(value: number) {
       const index = this.normalizeIndex(value)
       if (index === this.previewIndex) return
       this.previewIndex = index; if (!this.previewing) void nextTick(() => this.origin(index))
     },
     layout() { void nextTick(() => this.origin(this.previewIndex)) },
-    carousel() { void nextTick(() => this.origin(this.previewIndex)) },
+    carousel() { void nextTick(() => { this.origin(this.previewIndex); this.measureArrows() }) },
     galleryShape() { void nextTick(() => this.origin(this.previewIndex)) },
     gallery: { deep: true, handler() {
       this.failed = false; this.loaded = false; this.galleryLoaded = {}; this.galleryFailed = {}; this.previewIndex = this.normalizeIndex(this.previewIndex)
       if (!this.images.length) this.open = false
-      void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery() })
+      this.restartAutoplay()
+      void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery(); this.measureArrows() })
     } },
   },
   mounted() {
     this.previewIndex = this.normalizeIndex(this.previewIndex)
-    this.viewportQuery = window.matchMedia?.(touchImageQuery) ?? null
-    this.viewportQuery?.addEventListener('change', this.syncViewport)
-    this.syncViewport()
-    void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery() })
+    document.addEventListener('visibilitychange', this.syncVisibility)
+    this.restartAutoplay()
+    void nextTick(() => { this.inspectThumbnails(); this.origin(this.previewIndex); this.observeGallery(); this.measureArrows() })
   },
-  beforeUnmount() { this.cancelGalleryScroll(); this.galleryObserver?.disconnect(); this.viewportQuery?.removeEventListener('change', this.syncViewport) },
+  beforeUnmount() { this.stopAutoplay(); document.removeEventListener('visibilitychange', this.syncVisibility); this.cancelGalleryScroll(); this.galleryObserver?.disconnect() },
   methods: {
+    stopAutoplay() { if (this.autoplayTimer !== null) clearTimeout(this.autoplayTimer); this.autoplayTimer = null },
+    restartAutoplay() {
+      this.stopAutoplay()
+      if (!this.canAutoplay) return
+      this.autoplayTimer = setTimeout(() => {
+        this.autoplayTimer = null
+        if (this.canAutoplay) this.showImage((this.previewIndex + 1) % this.images.length)
+        this.restartAutoplay()
+      }, this.interval)
+    },
+    syncVisibility() { this.pageHidden = document.hidden },
+    measureArrows() {
+      const surface = this.$refs.surface as HTMLElement | undefined
+      const slide = (this.$refs.gallery as HTMLElement | undefined)?.children[this.previewIndex] as HTMLElement | undefined
+      const picture = slide?.querySelector<HTMLElement>('.apple-image__slide-picture')
+      const surfaceRect = surface?.getBoundingClientRect(), pictureRect = picture?.getBoundingClientRect()
+      this.arrowCenter = surface && surfaceRect?.height && pictureRect ? (pictureRect.top - surfaceRect.top + pictureRect.height / 2) * surface.offsetHeight / surfaceRect.height : null
+    },
+    stepImage(direction: number) {
+      this.showImage(this.carousel ? (this.previewIndex + direction + this.images.length) % this.images.length : this.previewIndex + direction)
+    },
     normalizeIndex(value: number): number { return clamp(Number.isFinite(value) ? Math.trunc(value) : 0, 0, Math.max(0, this.images.length - 1)) },
     observeGallery() {
       this.galleryObserver?.disconnect()
@@ -141,11 +170,17 @@ export const AppleImage = defineComponent({
       if (!box || typeof ResizeObserver === 'undefined') return
       let width = box.clientWidth
       this.galleryObserver = markRaw(new ResizeObserver(() => {
-        if (box.clientWidth === width) return
-        width = box.clientWidth
-        if (this.galleryTarget !== null) this.origin(this.galleryTarget)
+        if (box.clientWidth !== width) {
+          width = box.clientWidth
+          this.origin(this.galleryTarget ?? this.previewIndex)
+        }
+        this.measureArrows()
       }))
       this.galleryObserver.observe(box)
+      Array.from(box.children).forEach(slide => {
+        const picture = slide.querySelector('.apple-image__slide-picture')
+        if (picture) this.galleryObserver?.observe(picture)
+      })
     },
     cancelGalleryScroll() {
       const box = this.$refs.gallery as HTMLElement | undefined
@@ -159,18 +194,14 @@ export const AppleImage = defineComponent({
       const delta = event.shiftKey && !event.deltaX ? event.deltaY : event.deltaX
       if (!delta || !event.shiftKey && Math.abs(event.deltaY) > Math.abs(delta)) return
       if (this.disabled) { event.preventDefault(); return }
-      this.interruptGalleryScroll()
       const box = this.$refs.gallery as HTMLElement | undefined
       if (!box) return
-      // Keep native scrolling over the photos. The sibling arrow layer and
-      // Shift+vertical input forward their full distance into the same strip.
-      if (box.contains(event.target as Node) && !(event.shiftKey && !event.deltaX)) return
       event.preventDefault()
-      box.scrollBy({ left: delta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? box.clientWidth : 1), behavior: 'auto' })
+      this.galleryTarget = null
+      wheelGallery(box, delta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? box.clientWidth : 1), this.imageMotion === 'full')
     },
-    syncViewport() { if (!this.previewing) this.mobile = isTouchImageDevice() },
     afterPreview() {
-      this.previewing = false; this.syncViewport()
+      this.previewing = false
       const box = this.$refs.gallery as HTMLElement | undefined
       if (box && this.gallerySnap !== null) box.style.scrollSnapType = this.gallerySnap
       this.gallerySnap = null
@@ -191,7 +222,7 @@ export const AppleImage = defineComponent({
       }
       return image
     },
-    showImage(index: number) {
+    showImage(index: number, snap?: string) {
       if (this.previewing || this.disabled) return
       index = this.normalizeIndex(index)
       if (index === this.galleryTarget) return
@@ -207,7 +238,7 @@ export const AppleImage = defineComponent({
       const adjacent = Math.abs(index - this.previewIndex) <= 1
       this.galleryTarget = index
       this.changed(index)
-      scrollGallery(box, left, this.imageMotion === 'full', () => { this.galleryTarget = null }, adjacent)
+      scrollGallery(box, left, this.imageMotion === 'full', () => { this.galleryTarget = null }, adjacent, snap)
     },
     scrolled() {
       if (this.previewing || this.disabled || this.galleryTarget !== null) return
@@ -242,12 +273,13 @@ export const AppleImage = defineComponent({
       const drag = this.galleryDrag
       if (!drag || event.pointerId !== drag.id) return
       const box = event.currentTarget as HTMLElement
-      this.galleryDrag = null; box.style.scrollSnapType = drag.snap
+      this.galleryDrag = null
       if (drag.moved) {
         this.galleryClickUntil = performance.now() + 400
         this.scrolled()
-        if (this.layout === 'compact') this.showImage(this.previewIndex)
-      }
+        if (this.layout === 'compact') this.showImage(this.previewIndex, drag.snap)
+        else box.style.scrollSnapType = drag.snap
+      } else box.style.scrollSnapType = drag.snap
     },
     galleryKeydown(event: KeyboardEvent) {
       if (this.disabled || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
@@ -260,14 +292,12 @@ export const AppleImage = defineComponent({
     previewImage(index: number) {
       if (!this.images[index]?.src || this.disabled || this.previewing || performance.now() < this.galleryClickUntil || !this.preview || (this.grouped ? this.galleryFailed[index] : this.failed)) return
       this.cancelGalleryScroll()
-      this.syncViewport()
       this.previewIndex = this.normalizeIndex(index); this.previewing = true; this.open = true
       const box = this.$refs.gallery as HTMLElement | undefined
       if (box) { this.gallerySnap = box.style.scrollSnapType; box.style.scrollSnapType = 'none' }
     },
     changed(index: number) {
       this.previewIndex = index; this.$emit('update:index', index); this.$emit('change', index)
-      if (this.previewing && !this.mobile) void nextTick(() => this.origin(index))
     },
     inspectThumbnails() {
       this.thumbnails.forEach((image, index) => { if (image.complete && image.naturalWidth) this.loadedThumbnail(this.images[index]?.src ?? image.src, index, image) })
@@ -321,15 +351,18 @@ export const AppleImage = defineComponent({
     const ctx = this.apple as AppleContext | null
     const mode = resolveMotion(this.motion, ctx?.motion.value.mode, ctx?.motion.value.reduced)
     const ratio = this.squared || this.galleryShape === 'square' ? '1' : String(this.aspectRatio)
-    return h('figure', {
-      ...attrs,
-      class: ['apple-image', attrs.class, { 'apple-image--loaded': this.loaded && !this.failed && !this.open, 'apple-image--group': this.grouped, 'apple-image--mobile': this.mobile }],
+    return h('figure', mergeProps(attrs, {
+      class: ['apple-image', { 'apple-image--loaded': this.loaded && !this.failed && !this.open, 'apple-image--group': this.grouped }],
+      'data-vertical-screen': this.isVerticalScreen || undefined,
       'data-apple-motion': mode, 'data-gallery-layout': this.grouped ? this.layout : undefined, 'data-carousel': this.carousel || undefined,
       role: this.carousel ? 'region' : undefined, 'aria-roledescription': this.carousel ? '轮播图' : undefined, 'aria-label': this.carousel ? this.label : undefined,
       'data-gallery-shape': this.grouped ? this.squared ? 'square' : this.galleryShape : undefined, 'data-index': index,
-      style: [attrs.style as CSSProperties, this.grouped ? {} : { aspectRatio: ratio }],
-    }, [
-      h('div', { class: 'apple-image__surface', style: this.grouped && this.layout === 'compact' ? { aspectRatio: ratio } : undefined, onWheel: this.grouped ? this.galleryWheel : undefined }, [
+      style: this.grouped ? {} : { aspectRatio: ratio },
+      onMouseenter: () => { this.hovered = true }, onMouseleave: () => { this.hovered = false },
+      onFocusin: () => { this.focused = true },
+      onFocusout: (event: FocusEvent) => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.focused = false },
+    }), [
+      h('div', { ref: 'surface', class: 'apple-image__surface', style: this.grouped && this.layout === 'compact' ? { aspectRatio: ratio } : undefined, onWheel: this.grouped ? this.galleryWheel : undefined }, [
         this.grouped ? h('div', {
           ref: 'gallery', id: `${this.uid}-gallery`,
           role: 'group', tabindex: this.disabled ? -1 : 0, 'aria-label': this.carousel ? this.label : '图片组', class: ['apple-image__gallery', `apple-image__gallery--${this.layout}`, { 'is-dragging': this.galleryDrag?.moved }],
@@ -337,9 +370,9 @@ export const AppleImage = defineComponent({
           onScroll: this.scrolled, onKeydown: this.galleryKeydown, onPointerdown: this.galleryPointerDown, onPointermove: this.galleryPointerMove,
           onPointerup: this.galleryPointerUp, onPointercancel: this.galleryPointerUp, onLostpointercapture: this.galleryPointerUp,
         }, this.images.map((image, i) => this.thumbnail(image, i))) : this.images[0] ? this.thumbnail(this.images[0], 0) : h('div', { class: 'apple-image__trigger apple-image__trigger--empty', role: 'img', 'aria-label': '暂无图片' }, [h(ImageOff, { size: 28, 'aria-hidden': true }), h('span', '暂无图片')]),
-        this.images.length > 1 && this.layout === 'compact' ? h('div', { class: 'apple-image__arrows', role: 'group', 'aria-label': '图片翻页' }, [
-          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--prev', 'aria-label': '上一张图片', disabled: this.disabled || index === 0, onClick: () => this.showImage(index - 1) }, h(ChevronLeft, { size: 22, 'aria-hidden': true })),
-          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || index === this.images.length - 1, onClick: () => this.showImage(index + 1) }, h(ChevronRight, { size: 22, 'aria-hidden': true })),
+        !this.isVerticalScreen && this.images.length > 1 && this.layout === 'compact' ? h('div', { class: 'apple-image__arrows', role: 'group', 'aria-label': '图片翻页', style: { top: this.arrowCenter === null ? '50%' : `${this.arrowCenter}px` } }, [
+          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--prev', 'aria-label': '上一张图片', disabled: this.disabled || !this.carousel && index === 0, onClick: () => this.stepImage(-1) }, h(ChevronLeft, { size: 22, 'aria-hidden': true })),
+          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || !this.carousel && index === this.images.length - 1, onClick: () => this.stepImage(1) }, h(ChevronRight, { size: 22, 'aria-hidden': true })),
         ]) : null,
       ]),
       this.grouped && this.layout === 'tiled' ? h(GalleryScrollbar, {

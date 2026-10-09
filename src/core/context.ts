@@ -1,4 +1,4 @@
-import { isTouchDevice, syncTouchDevice } from './device'
+import { isTouchDevice, isVerticalScreen, syncTouchDevice, syncVerticalScreen } from './device'
 import { inject, markRaw, ref, type Component, type InjectionKey, type PropType, type Ref } from 'vue'
 
 export type Motion = 'auto' | 'full' | 'reduced' | 'none'
@@ -162,7 +162,7 @@ export function createApple(options: AppleOptions = {}) {
   let attached = 0
   let detachMedia = () => {}
   const context = {
-    theme, motion, ripple, glass, messages, overlays, portalTarget, isTouchDevice,
+    theme, motion, ripple, glass, messages, overlays, portalTarget, isTouchDevice, isVerticalScreen,
     dialog: <T = unknown>(settings: Omit<OverlayOptions, 'kind'>) => overlays.open<T>({ ...settings, kind: 'dialog' }),
     notify: (message: string, settings: Omit<OverlayOptions, 'kind' | 'message'> = {}) => overlays.open({ duration: 4000, ...settings, message, kind: 'snackbar' }),
     sendMessage: messages.sendMessage,
@@ -171,6 +171,7 @@ export function createApple(options: AppleOptions = {}) {
       attached++
       if (attached > 1 || typeof window === 'undefined') return
       syncTouchDevice()
+      syncVerticalScreen()
       let hasRipplePreference = typeof options.ripple === 'boolean'
       if (options.persist) {
         try {

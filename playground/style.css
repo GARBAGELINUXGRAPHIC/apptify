@@ -16,7 +16,7 @@ button { font: inherit; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--apple-text); text-decoration: none; font-weight: 650; font-size: 20px; }
 .brand-symbol { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--apple-text); color: var(--apple-surface); font-weight: 600; font-size: 24px; line-height: 1; padding-bottom: 4px; font-family: Georgia,serif; }
 .user-trigger { width: 38px; height: 38px; border: 1px solid var(--apple-border); border-radius: 50%; display: grid; place-items: center; background: var(--apple-surface); color: var(--apple-text); transition: background var(--apple-fast); }
-.user-trigger:hover:where(:not([data-apple-touch] *)),.user-trigger[aria-expanded=true] { background: var(--apple-selected); }
+.user-trigger:hover,.user-trigger[aria-expanded=true] { background: var(--apple-selected); }
 .user-popup.apple-popover { padding: 8px; }
 .user-summary { display: flex; align-items: center; gap: 12px; padding: 14px 10px 20px; }
 .user-summary > div { min-width: 0; }
@@ -25,7 +25,7 @@ button { font: inherit; }
 .user-summary > div > span { display: block; color: var(--apple-secondary); font-size: 11px; margin-top: 4px; overflow-wrap: anywhere; }
 .user-menu-list { border-top: 1px solid var(--apple-border); padding: 6px 0; }
 .user-menu-list > :is(button,a) { display: flex; align-items: center; gap: 11px; width: 100%; padding: 12px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--apple-text); font-size: 13px; text-align: left; text-decoration: none; }
-.user-menu-list > :is(button,a):hover:where(:not([data-apple-touch] *)) { background: var(--apple-hover); }
+.user-menu-list > :is(button,a):hover { background: var(--apple-hover); }
 .user-menu-list > :is(button,a):active { background: var(--apple-pressed); }
 .user-menu-list span { flex: 1; }
 .user-menu-list svg,.user-menu-list small { color: var(--apple-secondary); }

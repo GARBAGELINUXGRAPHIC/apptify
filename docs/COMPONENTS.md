@@ -46,7 +46,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleButton` | M；`variant=primary`（primary/secondary/outline/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot；图标位于文字右侧。纯图标按钮须提供 label。关闭动效时禁用 Ripple，其余模式遵循全局波纹开关。 |
 | `AppleLink` | `as=a`（a/button）、`href`、`external`、`disabled`、`icon`、`iconOnly`、`label` | default slot；文字操作使用 as=button；external 使用新窗口并设置 `noopener noreferrer`。 |
 | `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=none`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
-| `AppleImage` | M；`gallery: AppleImageItem | (string/AppleImageItem)[]`（唯一来源，默认空数组，单图可传对象）；`preview=true`、`carousel=false`、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、常显控件且保留自由滚动；默认点击预览；统一入口，按触屏能力选择预览交互；完整渲染图片组，compact 在固定框内横滑，桌面触控板支持自由连续横滑、一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 不缩放，多图显示左右翻页按钮（单图小窗与全屏均无翻页箭头），跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
+| `AppleImage` | M；`gallery: AppleImageItem | (string/AppleImageItem)[]`（唯一来源，默认空数组，单图可传对象）；`preview=true`、`carousel=false`、`autoplay=true`、`interval=5000`（毫秒，仅 carousel）、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、默认每 5 秒循环播放，悬停、聚焦、预览、拖动、页面隐藏或禁用时暂停，保留自由滚动；默认点击预览；统一预览交互，支持拖动、双击、捏合、平滑滚轮及键盘；连续滚轮累积目标并保持位置与速度，缩放、旋转、翻页与进退场分通道，可在动画途中继续操作；翻页按距离与速度使用 360–720ms 动画，放大图片随各自画布裁剪离场；底部单一胶囊按左旋转、缩小、可选名称、放大、右旋转排列，每次旋转 90°，旋转状态按图片保存；竖屏隐藏箭头、关闭及缩放按钮；完整渲染图片组，compact 在固定框内横滑，桌面横向滚轮或 Shift+滚轮平滑横滑，连续事件保留累计目标，停止后平滑吸附；一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 放大并使用 AppleCard 的悬停阴影，横屏多图的缩略图左右按钮仅在悬浮时淡入、移开时淡出，遵循 --apple-fast 与 --apple-ease 并对齐图片中间（单图小窗与全屏均无翻页箭头），跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
 | `AppleContainer` | `width=1200`（number/string） | default slot；数字宽度按 px，宽度不会超过可用空间。 |
 | `AppleStack` | `direction=column`、`gap=16`、`align=stretch`、`wrap=true` | default slot；Flex 布局；数字 gap 按 px。 |
@@ -99,7 +99,7 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 
 | 组件 | 主要 Props | Events / Slots / 说明 |
 | --- | --- | --- |
-| `AppleNavibar` | `v-model: string/number`、`items: AppleItem[]`、`brand`、`brandHref='/'`、`label='主导航'`、`fixed=true`、`breakpoint=640`、`hideOnPreview`（默认跟随 fixed） | `change(value,item)`、`toggle(open)`；brand、item `{item,active}`、actions `{close}` slots。固定模式自带占位；栏宽不超过 breakpoint 时折叠为三横杠菜单；选择、Escape、外部点击或焦点移出后收起。`fixed=false` 可嵌入容器。参与预览时保留占位并隐藏，退出开始时与黑色背景淡出同步淡入。 |
+| `AppleNavibar` | `v-model: string/number`、`items: AppleItem[]`、`brand`、`brandHref='/'`、`label='主导航'`、`fixed=true`、`breakpoint=640`、`hideOnPreview`（默认跟随 fixed） | `change(value,item)`、`toggle(open)`；brand、item `{item,active}`、actions `{close}` slots。固定模式自带占位；栏宽不超过 breakpoint 时折叠为三横杠菜单；选择、Escape、外部点击或焦点移出后收起。`fixed=false` 可嵌入容器。参与预览时保留占位并隐藏，退出开始时与黑色背景淡出同步执行 300ms 淡入与向下滑入。 |
 | `AppleAside` | M；`hideOnPreview=true` | 原生 aside 容器，布局由调用方提供；图片预览期间保留尺寸、隐藏并禁用交互，退出开始时 140ms 淡入。正常文档流侧栏可设 `hideOnPreview=false`。 |
 | `AppleTabs` | `v-model: string/number`、`items`、`label`、`disabled` | `change(value)`；`panel-${value}` slot `{item}` 或 default `{item,value}`；可非受控；方向键/Home/End。 |
 | `AppleTabBar` | 与 AppleTabs 相同 | 顶角圆角页签，移动选中背景与内容滑动。 |
@@ -124,7 +124,7 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `ApplePullRefresh` | `v-model: boolean`、`disabled`、`threshold=72`、`label` | `refresh(done)`；default slot `{refresh,refreshing}`；在滚动顶部下拉，也提供刷新按钮；完成必须调用 done 或将 model 设为 false。 |
 | `AppleInfiniteScroll` | `loading`、`error: boolean/string`、`finished`、`disabled`、`distance=120`、`finishedText` | `load(done)`、`retry(done)`；default slot；IntersectionObserver 及手动加载按钮；完成后调用 done，或令 loading 从 true 回到 false。 |
 | `AppleBackTop` | `target: CSS selector=''`、`threshold=300`、`label`、`disabled` | `click(event)`；default slot；空 target 使用 window，达到滚动阈值才显示。 |
-| `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区。 |
+| `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区，与 Navibar 同为 z-index 70；图片预览时隐藏，退出开始时执行 300ms FadeInLeft，尊重 reduced/none 动效。 |
 | `AppleStatistic` | 必填 `label`；`value: string/number`、`prefix`、`suffix`、`precision=0`、`locale=zh-CN`、`description` | default slot；数值本地化格式，不会自动请求统计数据。 |
 
 `AppleColumn = { key: string; label: string; sortable?: boolean; align?: 'left'|'center'|'right'; width?: number|string; minWidth?: number; maxWidth?: number; resizable?: boolean }`。表格 rows 应提供稳定唯一的 `rowKey`。
@@ -189,7 +189,7 @@ Modal slots：`title`、default `{close}`、footer `{close,confirm,cancel}`。�
 
 `AppleMenuItem = { label; value: string|number; disabled?; danger?; description?; icon?: Component }`。
 
-`AppleViewerImage = { src: string; alt?: string; title?: string; width?: number; height?: number }` 仍是 `AppleImage` 可用的公共图片类型。图片数组字符串是 URL；需要可访问描述或标题时传对象。`AppleImageItem` 扩展该类型，`src` 可选以支持 carousel 的自定义内容，另有 `label`、`value`、`description`。顶层不接受 src/alt；index 从 0 开始、默认 0，支持 `v-model:index`，非有限值归零、越界值截取到有效范围。普通图片忽略无效空项；空列表显示占位且不打开预览。点击放大由 `AppleImage` 内部管理，不另行注册独立查看器。
+`AppleViewerImage = { src: string; alt?: string; title?: string; width?: number; height?: number }` 仍是 `AppleImage` 可用的公共图片类型。图片数组字符串是 URL；需要可访问描述或标题时传对象。预览名称可选，使用 title（未提供时使用 label），不以 alt 或编号填充名称。`AppleImageItem` 扩展该类型，`src` 可选以支持 carousel 的自定义内容，另有 `label`、`value`、`description`。顶层不接受 src/alt；index 从 0 开始、默认 0，支持 `v-model:index`，非有限值归零、越界值截取到有效范围。普通图片忽略无效空项；空列表显示占位且不打开预览。点击放大由 `AppleImage` 内部管理，不另行注册独立查看器。
 
 ## 上下文与服务
 
@@ -201,6 +201,7 @@ Modal slots：`title`、default `{close}`、footer `{close,confirm,cancel}`。�
 | `theme.value.register(name,tokens,scheme='light')` | 注册自定义主题并补齐基础 token。 |
 | `theme.value.name / resolved / current / themes` | 当前配置名、解析后名称、主题内容、主题注册表。 |
 | `overlays.entries.value` | 当前弹层列表，`Ref<OverlayEntry[]>`。 |
+| `isVerticalScreen.value` | 全局只读 ref，当前视口高度大于宽度时为 true，随 resize/orientationchange 更新；也可独立导入。 |
 | `portalTarget.value` | 弹层挂载 DOM 元素。 |
 | `motion.value.set(mode)` | 即时修改全局动效策略。 |
 | `ripple.value.enabled / set(enabled)` | 全局点击波纹开关，默认 true；也可传入 `createAppleUI({ ripple: false })`。切换到减弱动效或系统开启减少动态效果时自动关闭，可手动开启；只有关闭动效时禁止开启。开启 persist 时保存偏好，嵌套 Provider 共享此开关。 |

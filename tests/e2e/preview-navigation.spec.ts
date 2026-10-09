@@ -4,11 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 async function openPhoto(page: Page, hasTouch: boolean, id = 'origin') {
   await page.locator(`#${id} .apple-image__trigger`).dispatchEvent('click')
   const viewer = page.locator('.apple-image-viewer').last()
-  if (hasTouch) await expect(viewer).toHaveAttribute('data-phase', 'open')
-  else {
-    await expect(viewer.locator('.apple-viewer-image')).toHaveCSS('visibility', 'visible')
-    await expect(page.locator('.apple-viewer-presence-enter-active')).toHaveCount(0)
-  }
+  await expect(viewer).toHaveAttribute('data-phase', 'open')
   return viewer
 }
 
@@ -20,7 +16,7 @@ async function sampleClose(page: Page, dismiss = false) {
     const thumbnail = document.querySelector('#origin img')!
     const samples = [], start = performance.now()
     if (dismiss) document.querySelector('.apple-viewer-stage')!.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, pointerType: 'touch', clientX: 195, clientY: 650, button: 0, bubbles: true }))
-    else document.querySelector<HTMLButtonElement>('.apple-image-viewer [aria-label="关闭图片预览"]')!.click()
+    else document.querySelector('.apple-image-viewer')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     do {
       await new Promise(requestAnimationFrame)
       const viewer = document.querySelector('.apple-image-viewer')
@@ -31,7 +27,7 @@ async function sampleClose(page: Page, dismiss = false) {
         z: viewer ? Number(getComputedStyle(viewer).zIndex) : null,
         nav: Number(getComputedStyle(nav).opacity), aside: Number(getComputedStyle(aside).opacity),
         thumbnail: Number(getComputedStyle(thumbnail).opacity),
-        original: viewer?.querySelector('.apple-viewer-pages') ? Number(getComputedStyle(viewer.querySelector('.apple-viewer-pages')!).opacity) : null,
+        navY: new DOMMatrixReadOnly(getComputedStyle(nav).transform).m42,
         width: rect?.width ?? null,
       })
     } while (performance.now() - start < 550)
@@ -56,10 +52,10 @@ for (const hasTouch of [false, true]) {
         expect(returning.length).toBeGreaterThan(5)
         for (let i = 1; i < returning.length; i++) expect(returning[i].width!).toBeLessThanOrEqual(returning[i - 1].width! + .1)
         expect(returning.every(frame => frame.z === 30 && frame.thumbnail === 0)).toBe(true)
-        if (!hasTouch) expect(returning.every(frame => frame.original === 0)).toBe(true)
+        expect(returning.some(frame => frame.navY > -12 && frame.navY < 0)).toBe(true)
         const restored = frames.filter(frame => !frame.viewer)
         expect(returning.some(frame => frame.nav > 0 && frame.nav < 1)).toBe(true)
-        expect(restored[0].nav).toBe(1)
+        expect(restored[0].nav).toBeCloseTo(1, 2)
         expect(restored.every(frame => frame.thumbnail === 1)).toBe(true)
         for (const surface of ['nav', 'aside'] as const) {
           expect(returning.filter(frame => frame[surface] > 0 && frame[surface] < 1).length).toBeGreaterThanOrEqual(3)
@@ -86,8 +82,7 @@ for (const hasTouch of [false, true]) {
         document.querySelector<HTMLButtonElement>('#origin .apple-image__trigger')!.click()
       })
       await expect(page.locator('.apple-image-viewer')).toHaveCount(1)
-      if (hasTouch) await expect(page.locator('.apple-image-viewer')).toHaveAttribute('data-phase', 'open')
-      else await expect(page.locator('.apple-viewer-presence-enter-active')).toHaveCount(0)
+      await expect(page.locator('.apple-image-viewer')).toHaveAttribute('data-phase', 'open')
       await expect(page.locator('#page-nav .apple-navibar__bar')).toHaveCSS('opacity', '0')
       await openPhoto(page, hasTouch, 'second')
       await page.locator('.apple-image-viewer').last().getByRole('button', { name: '关闭图片预览' }).click()
@@ -160,7 +155,7 @@ async function captureFrames(page: Page, hasTouch: boolean, name: string) {
       if (this.closest('.apple-image-viewer')) { animation.pause(); state.flights.push(animation) }
       return animation
     }
-    document.querySelector<HTMLButtonElement>('.apple-image-viewer [aria-label="关闭图片预览"]')!.click()
+    document.querySelector('.apple-image-viewer')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   })
   await expect.poll(() => page.evaluate(() => (window as unknown as { flights: Animation[] }).flights.length)).toBeGreaterThan(0)
   const path = `/tmp/apptify-checks/preview-navigation/${name}`

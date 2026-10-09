@@ -414,6 +414,18 @@ describe('menus and tooltips', () => {
 })
 
 describe('image viewer', () => {
+  const viewerState = (wrapper: VueWrapper) => wrapper.findComponent({ name: 'AppleMobileImageViewer' }).vm as any
+  const loadPictures = async (wrapper: VueWrapper) => {
+    const panel = wrapper.get('.apple-image-viewer').element
+    Object.defineProperty(panel, 'getBoundingClientRect', { value: () => ({ left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }) })
+    viewerState(wrapper).measure()
+    for (const image of wrapper.findAll('.apple-viewer-photo')) {
+      Object.defineProperties(image.element, { naturalWidth: { configurable: true, value: 800 }, naturalHeight: { configurable: true, value: 600 } })
+      await image.trigger('load')
+    }
+    await vi.waitFor(() => expect(viewerState(wrapper).phase).toBe('open'))
+    await settle()
+  }
   const originalAnimate = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'animate')
   beforeEach(() => {
     // jsdom has no WAAPI. Model its lifetime so return-animation cleanup and
@@ -447,37 +459,38 @@ describe('image viewer', () => {
   it('cleans up gestures on image changes and close, and renders load errors', async () => {
     const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'], motion: 'none' }, attachTo: document.body }))
     await settle()
-    await wrapper.find('.apple-viewer-image').trigger('load')
-    const first = wrapper.vm.panzoom!
-    const destroyFirst = vi.spyOn(first, 'destroy')
+    await loadPictures(wrapper)
+    const state = viewerState(wrapper)
+    state.scale = 2
+    state.pan = { x: 40, y: 30 }
     await wrapper.find('[aria-label="下一张"]').trigger('click')
-    expect(destroyFirst).toHaveBeenCalledOnce()
-    expect(wrapper.vm.loaded).toBe(false)
+    await settle()
+    expect(state.scale).toBe(1)
+    expect(state.pan).toEqual({ x: 0, y: 0 })
     await wrapper.find('.apple-viewer-image').trigger('error')
     expect(wrapper.find('[role="status"]').text()).toContain('图片加载失败')
     expect(wrapper.emitted('error')).toHaveLength(1)
     expect(wrapper.find('[aria-label="放大"]').attributes('disabled')).toBeDefined()
     await wrapper.find('[aria-label="上一张"]').trigger('click')
-    await wrapper.find('.apple-viewer-image').trigger('load')
-    const destroySecond = vi.spyOn(wrapper.vm.panzoom!, 'destroy')
+    await settle()
+    state.pointers.set(1, { x: 10, y: 20 })
     await wrapper.setProps({ modelValue: false })
-    await finishLeave()
-    expect(destroySecond).toHaveBeenCalledOnce()
+    await settle()
+    expect(state.pointers.size).toBe(0)
+    expect(state.present).toBe(false)
     await wrapper.setProps({ modelValue: true })
     await settle()
-    await wrapper.find('.apple-viewer-image').trigger('load')
-    expect(wrapper.vm.panzoom!.getScale()).toBe(1)
+    await loadPictures(wrapper)
+    expect(state.scale).toBe(1)
   })
   it('uses wheel distance rather than timing or event count, including fractional deltas and units', async () => {
     const scaleAfter = async (deltas: number[], deltaMode = 0) => {
       const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png'], motion: 'none' }, attachTo: document.body }))
       await settle()
-      const image = wrapper.find('.apple-viewer-image')
-      Object.defineProperties(image.element, { width: { value: 400 }, height: { value: 300 }, naturalWidth: { value: 800 } })
-      await image.trigger('load')
+      await loadPictures(wrapper)
       const panel = wrapper.find('.apple-image-viewer')
       for (const deltaY of deltas) await panel.trigger('wheel', { deltaY, deltaMode })
-      const scale = wrapper.vm.panzoom!.getScale()
+      const scale = viewerState(wrapper).scale
       await wrapper.setProps({ modelValue: false })
       await settle()
       return scale
@@ -489,29 +502,28 @@ describe('image viewer', () => {
     expect(await scaleAfter([-240, 240])).toBeCloseTo(1)
     expect(await scaleAfter([-0.5])).toBeCloseTo(Math.exp(0.001), 8)
     expect(await scaleAfter([-1], 2)).toBeCloseTo(Math.exp(window.innerHeight * 0.002))
-    expect(await scaleAfter([-100000, 1])).toBeLessThan(10)
+    expect(await scaleAfter([-100000, 1])).toBeLessThan(8)
   })
   it('zooms with the scroll wheel while preserving the shared scroll lock', async () => {
     const wrapper = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png'] }, attachTo: document.body }))
     await settle()
-    const image = wrapper.find('.apple-viewer-image')
-    Object.defineProperties(image.element, { width: { value: 400 }, height: { value: 300 }, naturalWidth: { value: 800 } })
-    await image.trigger('load')
+    await loadPictures(wrapper)
     await wrapper.find('.apple-image-viewer').trigger('wheel', { deltaY: -120 })
-    await vi.waitFor(() => expect(Number(wrapper.find('.apple-viewer-canvas').attributes('style').match(/scale\(([^)]+)\)/)?.[1])).toBeCloseTo(Math.exp(0.24)))
+    await vi.waitFor(() => expect(viewerState(wrapper).scale).toBeCloseTo(Math.exp(0.24)))
     expect(document.body.style.overflow).toBe('hidden')
     await wrapper.setProps({ modelValue: false })
-    expect(document.querySelector('.apple-viewer-presence-leave-active')).not.toBeNull()
+    expect(wrapper.get('.apple-image-viewer').attributes('data-phase')).toBe('closing')
     expect(document.body.style.overflow).toBe('hidden')
-    await finishLeave()
+    await vi.waitFor(() => expect(wrapper.find('.apple-image-viewer').exists()).toBe(false))
     expect(wrapper.find('.apple-image-viewer').exists()).toBe(false)
     expect(document.body.style.overflow).toBe('')
   })
   it('labels gallery controls and supports keyboard navigation', async () => {
     const wrapper = mounted(mount(InternalImageViewer, {
-      props: { modelValue: true, images: [{ src: '/one.png', alt: '一' }, '/two.png'] }, attachTo: document.body,
+      props: { modelValue: true, images: [{ src: '/one.png', alt: '一' }, '/two.png'], motion: 'none' }, attachTo: document.body,
     }))
     await settle()
+    await loadPictures(wrapper)
     expect(wrapper.find('.apple-viewer-canvas').exists()).toBe(true)
     expect(wrapper.find('[aria-label="关闭图片预览"]').exists()).toBe(true)
     expect(wrapper.find('.apple-viewer-count').text()).toBe('1 / 2')
@@ -520,12 +532,14 @@ describe('image viewer', () => {
     expect(wrapper.find('.apple-viewer-count').text()).toBe('2 / 2')
     expect(wrapper.emitted('update:index')).toEqual([[1]])
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await settle()
     expect(wrapper.emitted('update:modelValue')).toEqual([[false]])
   })
 
   it('does not navigate the underlying viewer while a dialog is focused', async () => {
     const viewer = mounted(mount(InternalImageViewer, { props: { modelValue: true, images: ['/one.png', '/two.png'] }, attachTo: document.body }))
     await settle()
+    await loadPictures(viewer)
     mounted(mount(AppleDialog, { props: { modelValue: true }, slots: { default: () => h('input', { 'aria-label': '内容' }) }, attachTo: document.body }))
     await settle()
     document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))

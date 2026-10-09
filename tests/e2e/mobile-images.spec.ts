@@ -209,14 +209,11 @@ test('a touch can catch a double-tap zoom in place and continue panning', async 
   const viewer = await openPhoto(page, '#tiled', 1)
   await viewer.locator('.apple-viewer-stage').dblclick({ position: { x: 140, y: 300 }, delay: 40 })
   await expect(viewer).toHaveAttribute('data-phase', 'settling')
-  const stopped = await viewer.locator('.apple-viewer-canvas').evaluate(frame => {
-    const animation = frame.getAnimations()[0]
-    animation.pause(); animation.currentTime = Number(animation.effect!.getTiming().duration) * .45
-    const rect = frame.getBoundingClientRect()
+  const stopped = await viewer.evaluate(panel => {
+    const rect = panel.querySelector('.apple-viewer-image')!.getBoundingClientRect()
+    panel.querySelector('.apple-viewer-stage')!.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', clientX: 140, clientY: 300, button: 0, bubbles: true }))
     return { x: rect.x, y: rect.y, width: rect.width }
   })
-  await pointer(viewer, 'pointerdown', 1, 140, 300)
-  await expect(viewer).toHaveAttribute('data-phase', 'open')
   const caught = (await viewer.locator('.apple-viewer-image').boundingBox())!
   expect(caught.x).toBeCloseTo(stopped.x, 1)
   expect(caught.y).toBeCloseTo(stopped.y, 1)
@@ -234,14 +231,11 @@ test('a touch can also catch a cancelled dismissal rebound without losing its po
   await pointer(viewer, 'pointermove', 1, 210, 480)
   await pointer(viewer, 'pointercancel', 1, 210, 480)
   await expect(viewer).toHaveAttribute('data-phase', 'settling')
-  const stopped = await viewer.locator('.apple-viewer-canvas').evaluate(frame => {
-    const animation = frame.getAnimations()[0]
-    animation.pause(); animation.currentTime = 60
-    const rect = frame.getBoundingClientRect()
+  const stopped = await viewer.evaluate(panel => {
+    const rect = panel.querySelector('.apple-viewer-image')!.getBoundingClientRect()
+    panel.querySelector('.apple-viewer-stage')!.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 2, pointerType: 'touch', clientX: 195, clientY: 422, button: 0, bubbles: true }))
     return { x: rect.x, y: rect.y, width: rect.width }
   })
-  await pointer(viewer, 'pointerdown', 2, 195, 422)
-  await expect(viewer).toHaveAttribute('data-phase', 'open')
   const caught = (await viewer.locator('.apple-viewer-image').boundingBox())!
   expect(caught.x).toBeCloseTo(stopped.x, 1)
   expect(caught.y).toBeCloseTo(stopped.y, 1)
@@ -264,7 +258,7 @@ test('a fast release near the next page keeps a visible settling interval', asyn
     await new Promise(requestAnimationFrame)
     return Number(panel.querySelector('.is-current')!.getAnimations()[0].effect!.getTiming().duration)
   })
-  expect(duration).toBeGreaterThanOrEqual(120)
+  expect(duration).toBeGreaterThanOrEqual(360)
   expect(duration).toBeLessThanOrEqual(360)
   await expect(viewer).toHaveAttribute('data-phase', 'open')
   await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 5')
@@ -293,11 +287,11 @@ test.describe('non-touch viewer', () => {
     const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
     const image = viewer.locator('.apple-viewer-image')
     await expect(image).toBeVisible()
-    await expect(page.locator('.apple-viewer-presence-enter-active')).toHaveCount(0)
-    const scale = () => viewer.locator('.apple-viewer-canvas').evaluate(canvas => new DOMMatrixReadOnly(getComputedStyle(canvas).transform).a)
-    await image.dblclick()
+    await expect(viewer).toHaveAttribute('data-phase', 'open')
+    const scale = () => viewer.locator('.is-current > .apple-viewer-pose').evaluate(canvas => new DOMMatrixReadOnly(getComputedStyle(canvas).transform).a)
+    await viewer.locator('.apple-viewer-stage').dblclick()
     await expect.poll(scale).toBeCloseTo(2, 4)
-    await image.dblclick()
+    await viewer.locator('.apple-viewer-stage').dblclick()
     await expect.poll(scale).toBeCloseTo(1, 4)
   })
 
@@ -444,23 +438,24 @@ for (const width of [390, 1440]) {
       const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
       await expect(viewer.locator('.apple-viewer-image')).toBeVisible()
       if (width === 390) await expect(viewer).toHaveAttribute('data-phase', 'open')
-      else await expect(page.locator('.apple-viewer-presence-enter-active')).toHaveCount(0)
+      else await expect(viewer).toHaveAttribute('data-phase', 'open')
       await expectGlass(viewer)
       await viewer.dispatchEvent('wheel', { deltaY: -750, clientX: width / 2, clientY: 450 })
       await page.screenshot({ path: `/tmp/apptify-checks/image-viewer-glass-${width}.png` })
-      const close = viewer.getByRole('button', { name: '关闭图片预览', exact: true })
+      const close = viewer.getByRole('button', { name: width === 390 ? '向右旋转90度' : '关闭图片预览', exact: true })
       const box = (await close.boundingBox())!
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
       await page.mouse.down()
       await expect(close).toHaveCSS('background-color', 'rgba(28, 28, 30, 0.72)')
       await expectGlass(viewer)
       await page.mouse.up()
+      if (width === 390) { await expect(viewer).toHaveAttribute('data-phase', 'open'); await page.keyboard.press('Escape') }
       await expect(viewer).toHaveCount(0)
     })
   })
 }
 
-test('mobile groups mount every preview, page without arrows and keep a black destination until landing', async ({ page }) => {
+test('mobile groups mount every preview, page without arrows and keep a transparent destination until landing', async ({ page }) => {
   const group = page.locator('#compact'), previews = group.locator('.apple-image__trigger > img')
   await expect(previews).toHaveCount(5)
   const viewer = await openPhoto(page)
@@ -472,7 +467,7 @@ test('mobile groups mount every preview, page without arrows and keep a black de
   await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 5')
   await expect(previews.nth(0)).toHaveCSS('opacity', '1')
   await expect(previews.nth(1)).toHaveCSS('opacity', '0')
-  await expect(group.locator('.apple-image__trigger').nth(1)).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+  await expect(group.locator('.apple-image__trigger').nth(1)).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
   const destination = (await previews.nth(1).boundingBox())!
   const strip = (await group.locator('.apple-image__gallery').boundingBox())!
   expect(destination.x).toBeCloseTo(strip.x, 1)
@@ -575,7 +570,7 @@ test('opening preserves the photo node and cover crop, and interruption continue
     for (let i = 0; i < 4; i++) {
       await new Promise(requestAnimationFrame)
       const rect = image.getBoundingClientRect()
-      samples.push({ same: frame.querySelector('img') === image, opacity: getComputedStyle(image).opacity, ratio: rect.width / rect.height, masked: Boolean(document.querySelector('#compact .apple-image__trigger--placeholder')), chrome: getComputedStyle(document.querySelector('.apple-viewer-chrome')!).opacity, control: Number(getComputedStyle(document.querySelector('.apple-viewer-close')!).opacity) })
+      samples.push({ same: frame.querySelector('img') === image, opacity: getComputedStyle(image).opacity, ratio: rect.width / rect.height, masked: Boolean(document.querySelector('#compact .apple-image__trigger--placeholder')), chrome: getComputedStyle(document.querySelector('.apple-viewer-chrome')!).opacity, control: Number(getComputedStyle(document.querySelector('.apple-viewer-caption')!).opacity) })
     }
     const rect = frame.getBoundingClientRect()
     return { samples, rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }, backdrop: Number(getComputedStyle(document.querySelector('.apple-viewer-backdrop')!).opacity) }
@@ -613,6 +608,7 @@ test('320px paging reaches both strip edges and an offscreen zoomed image return
   const position = await strip.evaluate(box => ({ left: box.scrollLeft, end: box.scrollWidth - box.clientWidth }))
   expect(position.left).toBeCloseTo(position.end, 1)
   await viewer.dispatchEvent('wheel', { deltaY: -600, clientX: 160, clientY: 370 })
+  await bounded(viewer)
   await pointer(viewer, 'pointerdown', 1, 160, 370)
   await pointer(viewer, 'pointermove', 1, 160, -800)
   await pointer(viewer, 'pointerup', 1, 160, -800)

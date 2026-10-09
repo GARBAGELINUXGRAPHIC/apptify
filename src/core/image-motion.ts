@@ -29,12 +29,12 @@ export const photoPageEasing = 'cubic-bezier(.38,0,.05,1)'
 export function photoPageTiming(distance: number, velocity: number, _width: number) {
   if (Math.abs(distance) < .1) return { duration: 0, easing: 'linear' }
   if (Math.abs(velocity) < .01) {
-    return { duration: Math.round(clamp(Math.sqrt(Math.abs(distance)) * 16, 240, 620)), easing: photoPageEasing }
+    return { duration: Math.round(clamp(Math.sqrt(Math.abs(distance)) * 20, 360, 720)), easing: photoPageEasing }
   }
-  const resting = clamp(Math.sqrt(Math.abs(distance)) * 16, 240, 620)
+  const resting = clamp(Math.sqrt(Math.abs(distance)) * 20, 360, 720)
   // Keep the compact strip's easing family after a drag, matching its initial
   // tangent to the release speed instead of switching to the opening spring.
-  const duration = distance * velocity > 0 ? clamp(Math.abs(distance / velocity) * 3, 140, resting) : resting
+  const duration = distance * velocity > 0 ? clamp(Math.abs(distance / velocity) * 3, 360, resting) : resting
   const slope = velocity * duration / distance
   const controlX = Math.min(.38, .95 / Math.max(1, Math.abs(slope)))
   // A fast flick is already at speed: progressively remove the acceleration phase.
@@ -48,14 +48,14 @@ export function photoFlightSize(from: PhotoGeometry, to: PhotoGeometry): PhotoSi
   return from.image.width > to.image.width ? from.image : to.image
 }
 
-export function photoFlightFrame(rect: PhotoGeometry, base: PhotoSize): Keyframe {
+export function photoFlightFrame(rect: PhotoGeometry, base: PhotoSize, preserveCrop = false): Keyframe {
   const scale = rect.image.width / Math.max(1, base.width)
   const crop = [
     rect.inset[0] - rect.image.top,
     rect.image.left + rect.image.width - rect.width + rect.inset[1],
     rect.image.top + rect.image.height - rect.height + rect.inset[2],
     rect.inset[3] - rect.image.left,
-  ].map(value => Math.max(0, value) / Math.max(.0001, scale))
+  ].map(value => (preserveCrop ? value : Math.max(0, value)) / Math.max(.0001, scale))
   return {
     transform: `translate3d(${rect.left + rect.image.left}px,${rect.top + rect.image.top}px,0) scale(${scale})`,
     clipPath: `inset(${crop.map(value => `${value}px`).join(' ')} round ${rect.radius / Math.max(.0001, scale)}px)`,

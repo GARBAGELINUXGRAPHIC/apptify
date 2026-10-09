@@ -26,7 +26,7 @@ defineExpose({ getEditorIns: () => editor.value?.getEditorIns() })
 .controls-pane { flex: 1; min-height: 0; overflow: auto; padding: 20px; }
 /* Vue REPL resets every descendant button, including the library select trigger. */
 .controls-pane :deep(.apple-select) { border: 1px solid var(--apple-border); background: var(--apple-surface); }
-.controls-pane :deep(.apple-select:hover:where(:not([data-apple-touch] *)):not(:disabled)) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
+.controls-pane :deep(.apple-select:hover:not(:disabled)) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
 .controls-pane :deep(.apple-select:active:not(:disabled)) { background: color-mix(in srgb, var(--apple-text) 7%, var(--apple-surface)); }
 .controls-pane :deep(.apple-select:focus) { border-color: var(--apple-accent); }
 .controls-pane :deep(.apple-field.has-error .apple-select) { border-color: var(--apple-danger); }

@@ -6,13 +6,13 @@
 .apple-control { box-sizing: border-box; min-width: 0; width: 100%; min-height: 48px; border: 1px solid var(--apple-border); border-radius: 8px; padding: 11px 14px; background: var(--apple-surface); color: var(--apple-text); font: inherit; font-size: 16px; line-height: 1.5; transition: border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease, background-color var(--apple-duration-fast, 120ms) ease, color var(--apple-duration-fast, 120ms) ease; }
 .apple-field .apple-control { font-size: 16px; }
 .apple-control::placeholder { color: var(--apple-secondary); opacity: 1; }
-.apple-control:hover:where(:not([data-apple-touch] *)):not(:disabled) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
+.apple-control:hover:not(:disabled) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
 .apple-control:focus { border-color: var(--apple-accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-accent) 20%, transparent); }
 .apple-field.has-error .apple-control, .apple-field.has-error .apple-input-wrap { border-color: var(--apple-danger); }
 .apple-control:disabled, .apple-choice:has(input:disabled), .apple-switch-row:has(input:disabled), .apple-field .is-disabled { opacity: .5; cursor: not-allowed; }
 .apple-field .apple-control:disabled { background: var(--apple-surface-alt); border-color: var(--apple-surface-alt); }
 .apple-input-wrap { display: flex; align-items: center; min-width: 0; border: 1px solid var(--apple-border); border-radius: 8px; background: var(--apple-surface); transition: border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease, background-color var(--apple-duration-fast, 120ms) ease; }
-.apple-input-wrap:hover:where(:not([data-apple-touch] *)):not(:has(input:disabled)) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
+.apple-input-wrap:hover:not(:has(input:disabled)) { border-color: color-mix(in srgb, var(--apple-secondary) 60%, var(--apple-border)); }
 .apple-input-wrap:focus-within { border-color: var(--apple-accent); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--apple-accent) 20%, transparent); }
 .apple-input-wrap > .apple-control, .apple-input-wrap > .apple-control:focus, .apple-input-wrap > .apple-control:focus-visible { border: 0; background: transparent; box-shadow: none; outline: none; }
 .apple-input-wrap > .apple-control:disabled { background: transparent; }
@@ -27,7 +27,7 @@
 .apple-input-wrap > .apple-field__icon:last-child, .apple-input-wrap > .apple-input__affix:last-child > button:last-child { border-radius: 0 7px 7px 0; }
 .apple-input__affix + .apple-control { padding-inline-start: 0; }
 .apple-field__icon { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border: 0; border-radius: 6px; color: var(--apple-secondary); background: transparent; cursor: pointer; transition: background-color var(--apple-duration-fast, 120ms) ease, color var(--apple-duration-fast, 120ms) ease; }
-.apple-field__icon:hover:where(:not([data-apple-touch] *)):not(:disabled) { color: var(--apple-text); background: var(--apple-surface-alt); }
+.apple-field__icon:hover:not(:disabled) { color: var(--apple-text); background: var(--apple-surface-alt); }
 .apple-field__icon:active:not(:disabled) { background: color-mix(in srgb, var(--apple-text) 15%, var(--apple-surface)); }
 .apple-field__icon:focus-visible, .apple-stepper__button:focus-visible, .apple-rate__star:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }
 .apple-field__icon:disabled, .apple-stepper__button:disabled { opacity: .4; cursor: not-allowed; }
@@ -52,7 +52,7 @@
 .apple-autocomplete__option > svg { flex-shrink: 0; color: var(--apple-text); }
 .apple-autocomplete__option[aria-selected=true] { background: transparent; font-weight: 600; }
 .apple-autocomplete__option.is-keyboard-active { outline: 1px solid color-mix(in srgb, var(--apple-secondary) 60%, transparent); outline-offset: -2px; }
-.apple-autocomplete__option:hover:where(:not([data-apple-touch] *)):not(.is-disabled) { background: rgb(128 128 128 / 8%); }
+.apple-autocomplete__option:hover:not(.is-disabled) { background: rgb(128 128 128 / 8%); }
 .apple-autocomplete__option:active:not(.is-disabled) { background: rgb(128 128 128 / 12%); }
 .apple-autocomplete__option.is-disabled { pointer-events: none; }
 .apple-autocomplete__empty { padding: 16px 12px; color: var(--apple-secondary); font-size: 14px; }
@@ -81,8 +81,8 @@
 .apple-slider::-moz-range-track { height: 6px; border-radius: 4px; background: linear-gradient(to right, var(--apple-accent) var(--apple-slider-progress), var(--apple-surface-alt) var(--apple-slider-progress)); }
 .apple-slider::-webkit-slider-thumb { appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%; border: 1px solid #c4c4c8; background: #fff; box-shadow: none; transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
 .apple-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #c4c4c8; background: #fff; box-shadow: none; transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
-.apple-slider:hover:where(:not([data-apple-touch] *)):not(:disabled)::-webkit-slider-thumb { background: #f0f0f2; }
-.apple-slider:hover:where(:not([data-apple-touch] *)):not(:disabled)::-moz-range-thumb { background: #f0f0f2; }
+.apple-slider:hover:not(:disabled)::-webkit-slider-thumb { background: #f0f0f2; }
+.apple-slider:hover:not(:disabled)::-moz-range-thumb { background: #f0f0f2; }
 .apple-slider:active:not(:disabled)::-webkit-slider-thumb { background: #d2d2d7; }
 .apple-slider:active:not(:disabled)::-moz-range-thumb { background: #d2d2d7; }
 .apple-slider:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 9px; }
@@ -94,7 +94,7 @@
 .apple-stepper__button { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 48px; border: 0; border-radius: 0; color: var(--apple-accent); background: transparent; cursor: pointer; transition: background-color var(--apple-duration-fast, 120ms) ease, color var(--apple-duration-fast, 120ms) ease; }
 .apple-stepper__button:first-child { border-radius: 7px 0 0 7px; }
 .apple-stepper__button:last-child { border-radius: 0 7px 7px 0; }
-.apple-stepper__button:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-surface-alt); }
+.apple-stepper__button:hover:not(:disabled) { background: var(--apple-surface-alt); }
 .apple-stepper__button:active:not(:disabled) { background: color-mix(in srgb, var(--apple-text) 15%, var(--apple-surface)); }
 .apple-segmented { position: relative; display: flex; align-items: stretch; flex-wrap: wrap; gap: 3px; min-width: 0; padding: 3px; border-radius: 8px; background: var(--apple-segmented-track, var(--apple-surface-alt)); isolation: isolate; }
 .apple-segmented[data-apple-scheme=dark] { --apple-segmented-track: #2d2d2d; --apple-segmented-selected: #434343; --apple-segmented-text: #f5f4f5; --apple-segmented-secondary: #a6a5a9; }
@@ -102,8 +102,8 @@
 .apple-segmented__item { z-index: 1; background: transparent; }
 .apple-segmented__item { color: var(--apple-segmented-secondary, var(--apple-secondary)); transition: color var(--apple-fast); }
 .apple-segmented__item.is-selected { color: var(--apple-segmented-text, var(--apple-text)); }
-.apple-segmented__item:hover:where(:not([data-apple-touch] *)):not(.is-disabled) { color: color-mix(in srgb,var(--apple-segmented-text, var(--apple-text)) 75%,var(--apple-segmented-secondary, var(--apple-secondary))); }
-.apple-segmented__item:active:where(:not([data-apple-touch] *)):not(.is-disabled) { color: var(--apple-segmented-text, var(--apple-text)); }
+.apple-segmented__item:hover:not(.is-disabled) { color: color-mix(in srgb,var(--apple-segmented-text, var(--apple-text)) 75%,var(--apple-segmented-secondary, var(--apple-secondary))); }
+.apple-segmented__item:active:not(.is-disabled) { color: var(--apple-segmented-text, var(--apple-text)); }
 [data-apple-touch] .apple-segmented { -webkit-tap-highlight-color: transparent; }
 .apple-segmented > .apple-selection-indicator { border-radius: 6px; background: var(--apple-segmented-selected, var(--apple-surface)); box-shadow: 0 1px 5px #0002; }
 .apple-segmented__item:has(input:focus-visible) { outline: 3px solid var(--apple-accent); outline-offset: 1px; }
@@ -149,7 +149,7 @@
 .apple-rate__star svg { fill: transparent; stroke-width: 1.5px; transition: fill var(--apple-duration), color var(--apple-duration); }
 .apple-rate__star.is-filled { color: var(--apple-warning); }
 .apple-rate__star.is-filled svg { fill: currentColor; }
-.apple-rate__star:hover:where(:not([data-apple-touch] *)) { background: transparent; transform: none; }
+.apple-rate__star:hover { background: transparent; transform: none; }
 .apple-rate__star:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 .apple-rate__star:disabled, .apple-rate__star[aria-disabled=true] { cursor: default; }
 .apple-rate__star:disabled { opacity: .4; }

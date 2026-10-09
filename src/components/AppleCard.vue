@@ -72,5 +72,4 @@ const mode = computed(() => resolveMotion(props.motion, apple?.motion.value.mode
 .apple-card[data-apple-motion=none] { transition: none; }
 .apple-card[data-apple-motion=reduced] { transition-duration: 80ms; }
 @media (hover: none), (pointer: coarse) { .apple-card:hover { transform: none; } }
-:global([data-apple-touch]) .apple-card:hover { transform: none; }
 </style>

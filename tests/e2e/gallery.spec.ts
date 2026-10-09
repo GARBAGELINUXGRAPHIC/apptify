@@ -17,8 +17,7 @@ async function expectNoDocumentOverflow(page: Page) {
 }
 
 async function loadOverviewImages(page: Page) {
-  const touch = await page.evaluate(() => navigator.maxTouchPoints > 0 || matchMedia('(any-pointer: coarse)').matches)
-  await expect(page.locator('.media-specimen .apple-image')).toHaveClass(touch ? /apple-image--mobile/ : /^(?!.*apple-image--mobile)/)
+  await expect(page.locator('.media-specimen .apple-image')).not.toHaveClass(/apple-image--mobile/)
   const images = page.locator('.home-page .apple-image img')
   expect(await images.count()).toBeGreaterThanOrEqual(1)
   for (const image of await images.all()) {

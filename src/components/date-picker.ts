@@ -1,5 +1,4 @@
 import { popupTransition } from '../core/popup-motion'
-import { isTouchDevice } from '../core/device'
 import { defineComponent, h, useId, type PropType, type VNodeChild } from 'vue'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from 'lucide-vue-next'
 import { addDays, addMonths, format as formatDate, getDaysInMonth, startOfMonth, startOfWeek } from 'date-fns'
@@ -55,7 +54,7 @@ function canonical(parts: Parts, segments: Segment[]): string {
 function hoverTrail(event: PointerEvent, selected: boolean) {
   const element = event.currentTarget as HTMLElement
   element.getAnimations?.().forEach(animation => animation.cancel())
-  if (isTouchDevice.value || event.pointerType === 'touch' || selected || element.closest('[data-apple-motion="none"]') || element.closest('[data-apple-motion="reduced"]') || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  if (event.pointerType === 'touch' || selected || element.closest('[data-apple-motion="none"]') || element.closest('[data-apple-motion="reduced"]') || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
   const color = 'rgb(128 128 128 / 8%)'
   element.animate?.([{ backgroundColor: color }, { backgroundColor: 'transparent' }], { duration: 240, easing: 'ease-out' })
 }
