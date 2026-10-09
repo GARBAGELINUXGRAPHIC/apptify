@@ -6,6 +6,7 @@ import { AppleTabs, AppleTabBar } from './tabs'
 export { AppleTabs, AppleTabBar } from './tabs'
 import { AppleAutoSize } from './motion'
 import { appleKey, resolveMotion, type AppleContext } from '../core/context'
+import { usePreviewNavigation } from '../core/preview-navigation'
 
 export type AppleValue = string | number
 export interface AppleItem { label: string; value: AppleValue; disabled?: boolean; description?: string; href?: string; content?: string }
@@ -549,11 +550,14 @@ export const AppleBackTop = defineComponent({
 })
 
 export const AppleFloatingGroup = defineComponent({
-  name: 'AppleFloatingGroup', setup() { provide(floatingGroupKey, true) },
+  name: 'AppleFloatingGroup', setup() { provide(floatingGroupKey, true); return usePreviewNavigation() },
   inject: { apple: { from: appleKey, default: null } },
   props: { ...motionProps, backTop: { type: Boolean, default: true }, target: { type: String, default: '' }, threshold: { type: Number, default: 300 }, label: { type: String, default: '快捷操作' } },
+  computed: {
+    motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced ?? (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)) },
+  },
   render() {
-    const node = h('div', { class: 'apple-floating-group', role: 'group', 'aria-label': this.label, 'data-motion': this.motion }, [this.$slots.default?.(), this.backTop ? h(AppleBackTop, { target: this.target, threshold: this.threshold, motion: this.motion }) : null])
+    const node = h('div', { ref: 'previewRoot', class: 'apple-floating-group', role: 'group', 'aria-label': this.label, 'data-motion': this.motionMode, 'data-preview-hidden': this.previewActive || undefined, inert: this.previewActive || undefined, 'aria-hidden': this.previewActive || undefined }, [this.$slots.default?.(), this.backTop ? h(AppleBackTop, { target: this.target, threshold: this.threshold, motion: this.motion }) : null])
     const target = (this.apple as AppleContext | null)?.portalTarget.value
     return target ? h(Teleport, { to: target }, node) : node
   },

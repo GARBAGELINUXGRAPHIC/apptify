@@ -6,7 +6,7 @@
 .apple-content-icon-button, .apple-tag button, .apple-pull-refresh__button, .apple-infinite-scroll__status button { transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
 .apple-content-icon-button:active:not(:disabled), .apple-tag button:active:not(:disabled), .apple-pull-refresh__button:active:not(:disabled), .apple-infinite-scroll__status button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-content-icon-button { display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; color: inherit; background: transparent; border: 0; border-radius: 50%; }
-.apple-content-icon-button:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: color-mix(in srgb, var(--apple-text) 6%, transparent); }
+.apple-content-icon-button:hover:not(:disabled) { background: color-mix(in srgb, var(--apple-text) 6%, transparent); }
 .apple-tone-neutral { --apple-tone: var(--apple-secondary); }
 .apple-tone-accent, .apple-tone-info { --apple-tone: var(--apple-accent); }
 .apple-tone-danger { --apple-tone: var(--apple-danger); }
@@ -18,7 +18,7 @@
 .apple-tabs__tab { position: relative; flex: 0 0 auto; min-height: 48px; max-width: 100%; padding: 10px 0 13px; border: 0; background: transparent; color: var(--apple-secondary); font-size: 14px !important; font-weight: 500 !important; overflow-wrap: anywhere; }
 .apple-tabs__tab { transition: color var(--apple-fast), background-color var(--apple-fast); }
 .apple-tabs__tab.is-active { color: var(--apple-text); }
-.apple-tabs__tab:hover:where(:not([data-apple-touch] *)):not(:disabled) { color: color-mix(in srgb,var(--apple-text) 75%,var(--apple-secondary)); }
+.apple-tabs__tab:hover:not(:disabled) { color: color-mix(in srgb,var(--apple-text) 75%,var(--apple-secondary)); }
 .apple-tabs__tab:active:not(:disabled) { color: var(--apple-text); }
 .apple-tabs--underline .apple-selection-indicator { background: transparent; border-radius: 0; }
 .apple-tabs--underline .apple-selection-indicator::after { position: absolute; inset: auto 0 0; height: 2px; background: var(--apple-text); content: ''; }
@@ -47,16 +47,16 @@
 .apple-breadcrumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; padding: 0; margin: 0; list-style: none; }
 .apple-breadcrumbs li { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
 .apple-breadcrumbs a, .apple-breadcrumbs button { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; font: inherit; color: inherit; text-decoration: none; cursor: pointer; transition: color var(--apple-fast); }
-.apple-breadcrumbs a:hover:where(:not([data-apple-touch] *)), .apple-breadcrumbs button:hover:where(:not([data-apple-touch] *)) { text-decoration: none; color: var(--apple-text); }
+.apple-breadcrumbs a:hover, .apple-breadcrumbs button:hover { text-decoration: none; color: var(--apple-text); }
 .apple-breadcrumbs a:active, .apple-breadcrumbs button:active { color: var(--apple-accent); }
 .apple-breadcrumbs [aria-current] { color: var(--apple-text); }
 .apple-breadcrumbs svg { flex-shrink: 0; opacity: .5; }
 .apple-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; max-width: 100%; }
 .apple-pagination__pages > button { position: relative; z-index: 1; display: inline-flex; flex: 0 0 44px; min-width: 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--apple-secondary); font-size: 13px; font-variant-numeric: tabular-nums; transition: background-color var(--apple-fast), color var(--apple-fast); }
-.apple-pagination__pages > button:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-surface-alt); }
+.apple-pagination__pages > button:hover:not(:disabled) { background: var(--apple-surface-alt); }
 .apple-pagination__pages > button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-pagination__pages > button.is-active { background: transparent; color: var(--apple-accent-text); }
-.apple-pagination__pages > button.is-active:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: transparent; }
+.apple-pagination__pages > button.is-active:hover:not(:disabled) { background: transparent; }
 .apple-pagination__pages > button.is-active:active:not(:disabled) { background: transparent; }
 .apple-pagination__gap { flex: 0 0 12px; display: inline-flex; justify-content: center; align-items: center; width: 12px; color: var(--apple-secondary); }
 
@@ -83,7 +83,7 @@
 .apple-accordion__item.is-open .apple-accordion__region { grid-template-rows: 1fr; }
 .apple-accordion__clip { min-height: 0; overflow: hidden; }
 .apple-accordion h3 button { padding-inline: 12px; transition: color var(--apple-fast), background-color var(--apple-fast); }
-.apple-accordion h3 button:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-hover); }
+.apple-accordion h3 button:hover:not(:disabled) { background: var(--apple-hover); }
 .apple-accordion h3 button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-accordion__content { padding-left: 12px; }
 
@@ -94,13 +94,13 @@
 .apple-table td { padding: 14px 16px; border-bottom: 1px solid var(--apple-border); line-height: 1.5; overflow-wrap: anywhere; }
 .apple-table tbody tr { transition: background-color var(--apple-fast); }
 .apple-table tbody tr.is-selected { background: var(--apple-selected); }
-.apple-table tbody tr:hover:where(:not([data-apple-touch] *)) { background: var(--apple-hover); }
+.apple-table tbody tr:hover { background: var(--apple-hover); }
 .apple-table tbody tr:active { background: var(--apple-pressed); }
 .apple-table .apple-table__select { width: 44px; padding: 0 12px; }
 .apple-table__select input { display: block; width: 18px; height: 18px; accent-color: var(--apple-accent); cursor: pointer; }
 .apple-table__select input:disabled { cursor: not-allowed; }
 .apple-table__sort { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; max-width: 100%; padding: 0 8px; margin-inline: -8px; color: inherit; background: transparent; border: 0; border-radius: 4px; text-align: inherit; transition: color var(--apple-fast), background-color var(--apple-fast); }
-.apple-table__sort:hover:where(:not([data-apple-touch] *)):not(:disabled) { color: var(--apple-text); background: var(--apple-hover); }
+.apple-table__sort:hover:not(:disabled) { color: var(--apple-text); background: var(--apple-hover); }
 .apple-table__sort:active:not(:disabled) { color: var(--apple-text); background: var(--apple-pressed); }
 .apple-table__sort svg { transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-table__sort svg.is-ascending { transform: rotate(180deg); }
@@ -109,14 +109,14 @@
 .apple-table__footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; color: var(--apple-secondary); }
 .apple-table__resize { position: absolute; z-index: 2; top: 0; right: -4px; width: 10px; height: 100%; cursor: col-resize; touch-action: none; }
 .apple-table__resize::after { position: absolute; top: 12px; bottom: 12px; left: 4px; width: 2px; background: var(--apple-border); content: ''; transition: background-color var(--apple-fast); }
-.apple-table__resize:hover:where(:not([data-apple-touch] *))::after, .apple-table__resize:focus-visible::after { background: var(--apple-secondary); }
+.apple-table__resize:hover::after, .apple-table__resize:focus-visible::after { background: var(--apple-secondary); }
 .apple-table__resize:active::after { background: var(--apple-text); }
 .apple-table__resize[aria-disabled] { cursor: not-allowed; }
 .apple-table--virtual .apple-table__scroll { overflow: auto; }
 .apple-table--virtual thead th { position: sticky; z-index: 3; top: 0; }
 .apple-table--virtual td { box-sizing: border-box; height: var(--apple-row-height); padding-block: 0; }
 .apple-table--virtual .apple-table__cell { max-height: calc(var(--apple-row-height) - 2px); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.apple-table .apple-table__spacer, .apple-table .apple-table__spacer:hover:where(:not([data-apple-touch] *)) { background: transparent; }
+.apple-table .apple-table__spacer, .apple-table .apple-table__spacer:hover { background: transparent; }
 .apple-table .apple-table__spacer td { height: 0; padding: 0; border: 0; }
 
 .apple-tree, .apple-tree ul { padding: 0; margin: 0; list-style: none; }
@@ -125,7 +125,7 @@
 .apple-tree li:focus-visible > .apple-tree__row { outline: 3px solid var(--apple-accent); outline-offset: -2px; }
 .apple-tree__row { position: relative; display: flex; align-items: center; gap: 4px; min-height: 44px; padding-block: 2px; padding-inline-end: 8px; border-radius: 0; color: var(--apple-secondary); cursor: pointer; font-size: 14px; transition: background-color var(--apple-fast), color var(--apple-fast); }
 .apple-tree__row > span:last-child { min-width: 0; overflow-wrap: anywhere; }
-.apple-tree__row:hover:where(:not([data-apple-touch] *)):not(.is-disabled) { background: var(--apple-hover); }
+.apple-tree__row:hover:not(.is-disabled) { background: var(--apple-hover); }
 .apple-tree__row:active:not(.is-disabled) { background: var(--apple-pressed); }
 .apple-tree__row.is-selected { color: var(--apple-text); background: var(--apple-selected); font-weight: 550; }
 .apple-tree__row.is-selected:active:not(.is-disabled) { background: var(--apple-pressed); }
@@ -139,7 +139,7 @@
 .apple-list > li:first-child { border-start-start-radius: inherit; border-start-end-radius: inherit; }
 .apple-list > li:last-child { border-end-start-radius: inherit; border-end-end-radius: inherit; }
 .apple-list__item { display: flex; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box; width: 100%; min-height: 60px; padding: 12px 2px; border: 0; background: transparent; text-decoration: none; color: var(--apple-text); text-align: left; }
-button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__item:hover:where(:not([data-apple-touch] *)) { background: color-mix(in srgb, var(--apple-text) 3%, transparent); }
+button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(in srgb, var(--apple-text) 3%, transparent); }
 .apple-list__item.is-selected > svg { color: var(--apple-accent); }
 .apple-list__copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .apple-list__label { font-size: 14px; overflow-wrap: anywhere; }
@@ -162,7 +162,7 @@ button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__i
 .apple-tag button { position: relative; display: inline-flex; flex: 0 0 26px; align-self: stretch; align-items: center; justify-content: center; width: 26px; height: auto; margin: -3px -10px -3px 0; padding: 0; border: 0; border-radius: 0 999px 999px 0; overflow: hidden; background: transparent; color: var(--apple-tag-ink); }
 .apple-tag button:focus-visible { outline: 2px solid var(--apple-text); outline-offset: -3px; }
 .apple-tag > svg { color: var(--apple-tag-ink); }
-.apple-tag button:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: rgb(128 128 128 / 8%); }
+.apple-tag button:hover:not(:disabled) { background: rgb(128 128 128 / 8%); }
 .apple-tag button:active:not(:disabled) { background: rgb(128 128 128 / 12%); }
 .apple-alert { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid color-mix(in srgb, var(--apple-tone) 18%, var(--apple-border)); border-radius: 8px; background: color-mix(in srgb, var(--apple-tone) 5%, var(--apple-surface)); color: var(--apple-text); font-size: 13px; line-height: 1.6; }
 .apple-alert > svg { flex: 0 0 auto; margin-top: 1px; color: var(--apple-tone); }
@@ -220,12 +220,12 @@ button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__i
 .apple-step-symbol-enter-active, .apple-step-symbol-leave-active { transition: opacity var(--apple-fast); }
 .apple-step-symbol-enter-from, .apple-step-symbol-leave-to { opacity: 0; }
 .apple-steps .is-current .apple-steps__number { border-color: var(--apple-accent); background: var(--apple-accent); color: var(--apple-accent-text); }
-.apple-steps button.apple-steps__number:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-accent); color: var(--apple-accent-text); }
+.apple-steps button.apple-steps__number:hover:not(:disabled) { background: var(--apple-accent); color: var(--apple-accent-text); }
 .apple-steps button.apple-steps__number:active:not(:disabled) { background: color-mix(in srgb,var(--apple-accent) 80%,black); color: var(--apple-accent-text); }
 .apple-steps__copy { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; max-width: 100%; text-align: center; overflow-wrap: anywhere; }
 .apple-steps .apple-steps__label { display: inline; max-width: 100%; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font-size: 13px; font-weight: 500; line-height: 1.5; text-align: center; overflow-wrap: anywhere; transition: color var(--apple-fast); }
 .apple-steps .is-current .apple-steps__label { color: var(--apple-text); }
-.apple-steps button.apple-steps__label:hover:where(:not([data-apple-touch] *)):not(:disabled), .apple-steps button.apple-steps__label:active:not(:disabled) { color: var(--apple-accent); background: transparent; }
+.apple-steps button.apple-steps__label:hover:not(:disabled), .apple-steps button.apple-steps__label:active:not(:disabled) { color: var(--apple-accent); background: transparent; }
 .apple-steps__copy > span { font-size: 11px; line-height: 1.5; }
 .apple-steps > li.is-disabled > span.apple-steps__number, .apple-steps > li.is-disabled .apple-steps__copy > span, .apple-steps > li.is-disabled strong { opacity: .45; }
 .apple-timeline { padding: 0; margin: 0; list-style: none; }
@@ -247,10 +247,14 @@ button.apple-list__item:hover:where(:not([data-apple-touch] *)), a.apple-list__i
 .apple-pull-refresh__button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin: 8px auto 0; padding: 0 12px; border: 0; background: transparent; color: var(--apple-accent); font-size: 12px !important; }
 .apple-infinite-scroll__status { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; min-height: 64px; color: var(--apple-secondary); font-size: 12px; }
 .apple-infinite-scroll__status button { min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: var(--apple-accent); font-size: 12px; }
-.apple-floating-group { position: fixed; z-index: 25; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 10px; max-height: calc(100dvh - 40px); }
+.apple-floating-group { position: fixed; z-index: 70; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 10px; max-height: calc(100dvh - 40px); opacity: 1; transform: translateX(0); transition: opacity 300ms ease-out, transform 300ms var(--apple-ease), visibility 0s; }
+.apple-floating-group[data-preview-hidden] { opacity: 0; transform: translateX(12px); visibility: hidden; pointer-events: none; transition: opacity 100ms linear, transform 100ms ease-out, visibility 0s 100ms; }
+.apple-floating-group[data-motion=none], .apple-floating-group[data-motion=reduced] { transition: none; }
+@media (prefers-reduced-motion: reduce) { .apple-floating-group { transition: none; } }
 .apple-back-top { position: relative; order: 1000; display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--apple-border); border-radius: 50%; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); color: var(--apple-text); box-shadow: var(--apple-shadow); transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
 .apple-back-top--fixed { position: fixed; z-index: 25; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); }
-.apple-back-top:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-surface-alt); }
+.apple-floating-group .apple-back-top { background: var(--apple-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.apple-back-top:hover:not(:disabled) { background: var(--apple-surface-alt); }
 .apple-back-top:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-floating-action-enter-active, .apple-floating-action-leave-active { transition: transform var(--apple-duration) var(--apple-ease), opacity var(--apple-fast); }
 .apple-floating-action-enter-from, .apple-floating-action-leave-to { transform: translateY(24px); opacity: 0; }

@@ -6,6 +6,10 @@ async function freeSmallPreview(page: Page, placement: 'center' | 'previous' | '
   const figure = activeCard(page).locator('.demo-image .apple-image[data-gallery-layout="compact"]')
   const strip = figure.locator('.apple-image__gallery--compact')
   await expect.poll(() => figure.locator('img').evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true)
+  const surface = figure.locator('.apple-image__surface')
+  await surface.hover()
+  await expect(figure.locator('.apple-image__arrows')).toHaveCSS('opacity', '1')
+  await surface.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))))
   const metrics = await strip.evaluate(box => ({ stride: (box.children[1] as HTMLElement).offsetLeft, count: box.children.length, max: box.scrollWidth - box.clientWidth }))
   await figure.evaluate(figure => {
     const box = figure.querySelector('.apple-image__gallery--compact')!
@@ -82,6 +86,7 @@ test('free compact scrolling keeps arrows, full-view opening and closing usable'
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
   await page.mouse.wheel(stride * 2, 0)
   await expect(figure).toHaveAttribute('data-index', '2')
+  await figure.locator('.apple-image__surface').hover()
   await figure.getByRole('button', { name: '下一张图片', exact: true }).click()
   await expect(figure).toHaveAttribute('data-index', '3')
   await expect.poll(() => strip.evaluate(box => box.scrollLeft)).toBeCloseTo(stride * 3, 0)

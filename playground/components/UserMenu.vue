@@ -101,7 +101,7 @@ function showProfile() {
 .user-popup.apple-popover { border-radius: 24px; background: var(--apple-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .user-popup .user-menu-list > .apple-link > .apple-link__content { width: 100%; justify-content: flex-start; gap: 11px; }
 .user-popup .user-menu-list > .apple-link { min-height: 44px; font-weight: 400; line-height: inherit; }
-.user-popup .user-menu-list > .apple-link:hover:where(:not([data-apple-touch] *)):not(:disabled) { background: var(--apple-hover); }
+.user-popup .user-menu-list > .apple-link:hover:not(:disabled) { background: var(--apple-hover); }
 .user-popup .user-menu-list > .apple-link:active:not(:disabled) { background: var(--apple-pressed); }
 .user-trigger.user-account-trigger { width: 44px; height: 44px; border: 0; background: transparent; }
 .user-trigger.user-account-trigger:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }

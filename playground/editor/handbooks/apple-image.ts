@@ -29,6 +29,18 @@ export default defineHandbook({
       "description": "轮播模式，强制 compact 布局，并启用 item 插槽和标题说明。"
     },
     {
+      "name": "autoplay",
+      "type": "boolean",
+      "default": "true",
+      "description": "carousel 模式自动循环播放；悬浮、聚焦、预览、拖动、页面隐藏或禁用时暂停。"
+    },
+    {
+      "name": "interval",
+      "type": "number",
+      "default": "5000",
+      "description": "carousel 自动播放间隔，单位毫秒，默认每 5 秒切换一张图片。"
+    },
+    {
       "name": "disabled",
       "type": "boolean",
       "default": "false",
@@ -104,6 +116,7 @@ export default defineHandbook({
   "methods": [],
   "notes": [
     "图片数组不接受顶层 src/alt；描述应放在 gallery 对象内。预览由组件内部管理，没有独立公开 Viewer 组件。",
-    "图片组支持方向键、Home/End、拖动和分页；无效或加载失败的图片不会打开预览。"
+    "图片组支持方向键、Home/End、拖动和分页；无效或加载失败的图片不会打开预览。横屏缩略图左右按钮在悬浮时淡入、移开时淡出，遵循 --apple-fast 和 --apple-ease；竖屏隐藏左右箭头、关闭及缩放按钮。",
+    "所有设备使用统一预览交互，平滑滚轮、缩放、旋转、翻页和进退场支持动画打断与叠加；底部胶囊依次为左旋转、缩小、可选名称、放大、右旋转，每次旋转 90°。"
   ]
 })

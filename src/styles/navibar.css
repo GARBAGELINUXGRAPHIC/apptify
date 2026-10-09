@@ -8,7 +8,7 @@
 .apple-navibar__links { display: flex; align-self: stretch; align-items: stretch; gap: 32px; min-width: 0; }
 .apple-navibar__item { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; padding: 1px 0 0; border: 0; border-radius: 0; background: transparent; color: var(--apple-secondary); font: inherit; font-size: 13px; text-decoration: none; cursor: pointer; overflow-wrap: anywhere; transition: color var(--apple-fast) var(--apple-ease); }
 .apple-navibar__item.is-active { color: var(--apple-text); }
-.apple-navibar__item:hover:where(:not([data-apple-touch] *)):not(:disabled):not([aria-disabled=true]) { color: var(--apple-text); }
+.apple-navibar__item:hover:not(:disabled):not([aria-disabled=true]) { color: var(--apple-text); }
 .apple-navibar__item[aria-disabled=true] { opacity: .42; cursor: not-allowed; }
 .apple-navibar__actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; min-width: 0; }
 .apple-navibar__toggle { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
@@ -31,7 +31,9 @@
 
 /* Hide navigation without changing the fixed layout or its occupied space. */
 .apple-navibar__bar, .apple-aside { transition: opacity 140ms ease-out, visibility 0s; }
+.apple-navibar__bar { transform: translateY(0); transition: opacity 300ms ease-out, transform 300ms var(--apple-ease), visibility 0s; }
 .apple-navibar[data-preview-hidden] > .apple-navibar__bar, .apple-aside[data-preview-hidden] { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 100ms linear, visibility 0s 100ms; }
+.apple-navibar[data-preview-hidden] > .apple-navibar__bar { transform: translateY(-12px); transition: opacity 100ms linear, transform 100ms ease-out, visibility 0s 100ms; }
 .apple-navibar[data-preview-hidden] > .apple-navibar__backdrop { opacity: 0; visibility: hidden; transition: none; }
 .apple-navibar[data-apple-motion=none] > .apple-navibar__bar, .apple-navibar[data-apple-motion=reduced] > .apple-navibar__bar,
 .apple-aside[data-apple-motion=none], .apple-aside[data-apple-motion=reduced] { transition: none; }

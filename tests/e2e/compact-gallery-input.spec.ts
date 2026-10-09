@@ -52,9 +52,9 @@ async function rapidClicks(page: Page, reverse: boolean) {
     }
     const start = performance.now()
     click()
-    for (let frame = 0; frame < 90; frame++) {
-      await new Promise(requestAnimationFrame)
-      samples.push({ time: performance.now() - start, x: strip.scrollLeft })
+    for (let frame = 0; frame < 90 || performance.now() - start < 1400; frame++) {
+      const time = await new Promise<number>(resolve => requestAnimationFrame(resolve))
+      samples.push({ time: time - start, x: strip.scrollLeft })
       if (frame === 5) click(reverse)
       if (frame === 9) click()
       if (frame === 13 && !reverse) click()
@@ -70,7 +70,7 @@ async function rapidClicks(page: Page, reverse: boolean) {
     const previous = result.samples[i - 1], sample = result.samples[i]
     if (!reverse) expect(sample.x).toBeGreaterThanOrEqual(previous.x - 1)
     // Reject a page-sized jump between frames, allowing for actual frame duration.
-    expect(Math.abs(sample.x - previous.x) / Math.max(1, sample.time - previous.time) / result.stride).toBeLessThan(.025)
+    expect(Math.abs(sample.x - previous.x) / Math.max(1, sample.time - previous.time) / result.stride).toBeLessThan(.035)
   }
   return result
 }

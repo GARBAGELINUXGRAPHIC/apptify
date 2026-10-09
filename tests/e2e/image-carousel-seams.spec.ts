@@ -21,7 +21,7 @@ for (const theme of ['light', 'dark']) for (const width of [320, 1440]) {
     geometry.horizontal.forEach(gap => expect(Math.abs(gap)).toBeLessThan(.1))
     expect(geometry.radii.every(radius => radius === '0px')).toBe(true)
     await expect(figure.locator('.apple-image__slide-caption').first()).toContainText('山间清晨')
-    await expect(figure.locator('.apple-image__arrows')).toHaveCount(1)
+    await expect(figure.locator('.apple-image__arrows')).toHaveCount(width > 1100 ? 1 : 0)
     await expect(figure.locator('.apple-image__dot')).toHaveCount(4)
     for (const [stage, fraction] of [['first', 0], ['between', .5], ['last', 3]] as const) {
       await strip.evaluate((element, fraction) => {
@@ -39,7 +39,7 @@ for (const theme of ['light', 'dark']) for (const width of [320, 1440]) {
     await figure.getByRole('button', { name: '查看一场聆听', exact: true }).click()
     await expect(figure).toHaveAttribute('data-index', '1')
     await expect.poll(() => strip.evaluate(element => element.scrollLeft)).toBeCloseTo(stride, 0)
-    await figure.getByRole('button', { name: '下一张图片', exact: true }).click()
+    await figure.getByRole('button', { name: '查看安静片刻', exact: true }).click()
     await expect(figure).toHaveAttribute('data-index', '2')
     await expect.poll(() => strip.evaluate(element => element.scrollLeft)).toBeCloseTo(stride * 2, 0)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -61,5 +61,5 @@ test('component demo lake and headphones remain flush during carousel scrolling'
     await figure.screenshot({ path: `/tmp/apptify-carousel-seams/demo-${stage}.png` })
   }
   await expect(figure.locator('.apple-image__dot')).toHaveCount(2)
-  await expect(figure.getByRole('button', { name: '下一张图片', exact: true })).toBeDisabled()
+  await expect(figure.getByRole('button', { name: '下一张图片', exact: true })).toBeEnabled()
 })

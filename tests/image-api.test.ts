@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import * as api from '../src/index'
 import { AppleImage } from '../src/components/foundation'
 
@@ -37,6 +37,7 @@ describe('AppleImage public API', () => {
       expect(wrapper.find('[aria-label="上一张"]').exists()).toBe(false)
       expect(wrapper.find('[aria-label="下一张"]').exists()).toBe(false)
       await wrapper.get('[aria-label="关闭图片预览"]').trigger('click')
+      await flushPromises()
       expect(wrapper.find('.apple-image-viewer').exists()).toBe(false)
     })
   }
@@ -54,6 +55,7 @@ describe('AppleImage public API', () => {
     expect(wrapper.get('img').attributes('src')).toBe('/valid.jpg')
     await wrapper.get('.apple-image__trigger').trigger('click')
     await wrapper.setProps({ gallery: [] })
+    await flushPromises()
     expect(wrapper.find('.apple-image-viewer').exists()).toBe(false)
     expect(wrapper.attributes('data-index')).toBe('0')
   })

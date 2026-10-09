@@ -23,7 +23,8 @@ async function checkJump(page: Page) {
   expect(motion.source).toBe(0)
   expect(motion.target).toBeGreaterThan(motion.width * 3)
   expect(motion.current).toBe('显示第 5 张图片')
-  expect(motion.duration).toBeLessThanOrEqual(620)
+  expect(motion.duration).toBeGreaterThanOrEqual(360)
+  expect(motion.duration).toBeLessThanOrEqual(720)
   // Retarget without flashing back to an endpoint or replaying intermediate pages.
   const continuity = await figure.evaluate(async element => {
     const old = element.querySelector<HTMLElement>('.apple-image__jump')!

@@ -11,7 +11,7 @@ export const catalog: CatalogItem[] = [
   item('AppleStack', 'direction(row|column) · gap · align · wrap | slot: default', '<apple-stack direction="row" :gap="16" align="center">\n  <apple-button>继续</apple-button>\n  <apple-button variant="secondary">取消</apple-button>\n</apple-stack>'),
   item('AppleGrid', 'min(number) · gap(number) | slot: default', '<apple-grid :min="240" :gap="20">\n  <div v-for="item in items" :key="item.id">{{ item.label }}</div>\n</apple-grid>'),
   item('AppleCard', 'title · subtitle · text · image · zoom · shadow · motion | slots: media, title, icon, actions', '<apple-card title="AirPods Max" subtitle="声音，出类拔萃。" motion="auto">\n  <template #actions><apple-button>进一步了解</apple-button></template>\n</apple-card>'),
-  item('AppleImage', 'gallery(object|array) · index · preview · carousel · disabled · label · galleryLayout(compact|tiled|tiled-wrap) · v-model:index | item({item,index,active}) · squared · aspectRatio · fit', '<apple-image :gallery="images" gallery-layout="compact" :index="0" />'),
+  item('AppleImage', 'gallery(object|array) · index · preview · carousel · autoplay · interval(5000ms) · disabled · label · galleryLayout(compact|tiled|tiled-wrap) · v-model:index | item({item,index,active}) · squared · aspectRatio · fit', '<apple-image :gallery="images" gallery-layout="compact" :index="0" />'),
   item('AppleAvatar', 'src · name · size', '<apple-avatar name="林初" :size="48" />'),
   item('AppleAvatarGroup', 'items[{name,src,value}] · max · size · label | slot: default', '<apple-avatar-group :items="members" :max="4" :size="40" label="项目成员" />'),
   item('AppleBadge', 'value · max · dot · tone', '<apple-badge :value="8"><apple-button>消息</apple-button></apple-badge>'),

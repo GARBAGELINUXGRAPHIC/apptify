@@ -45,6 +45,7 @@ export default defineHandbook({
   ],
   "methods": [],
   "notes": [
-    "默认固定右下并考虑安全区，回顶按钮排在附加操作之后。示例滚动容器用于体验 threshold。"
+    "默认固定右下并考虑安全区，回顶按钮排在附加操作之后。示例滚动容器用于体验 threshold。",
+    "与 Navibar 同为 z-index 70；图片预览时隐藏，退出开始时执行 FadeInLeft，遵循全局和局部动效设置。组内回顶按钮使用不透明背景。"
   ]
 })

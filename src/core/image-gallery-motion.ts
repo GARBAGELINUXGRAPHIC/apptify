@@ -1,4 +1,5 @@
 import { photoPageTiming } from './image-motion'
+import { MotionDriver } from './motion-driver'
 
 interface ScrollMotion {
   overlay: HTMLElement | null
@@ -7,16 +8,79 @@ interface ScrollMotion {
   stop: (retain?: boolean) => HTMLElement | null
 }
 const motions = new WeakMap<HTMLElement, ScrollMotion>()
+const wheels = new WeakMap<HTMLElement, { driver: MotionDriver; snap: string; target: number; overlay: HTMLElement | null; timer: ReturnType<typeof setTimeout> | null }>()
 
-export function stopGalleryScroll(box: HTMLElement) { motions.get(box)?.stop() }
+function snapshot(box: HTMLElement) {
+  const clone = box.cloneNode(true) as HTMLElement
+  clone.removeAttribute('id'); clone.removeAttribute('tabindex')
+  Object.assign(clone.style, { opacity: box.style.opacity || '1', scrollSnapType: 'none', scrollBehavior: 'auto', pointerEvents: 'none' })
+  return clone
+}
+
+function stopWheel(box: HTMLElement, restore = true, retain = false): HTMLElement | null {
+  const wheel = wheels.get(box)
+  if (!wheel) return null
+  wheel.driver.cancel(); if (wheel.timer !== null) clearTimeout(wheel.timer)
+  let painted: HTMLElement | null = null
+  if (retain && wheel.overlay) {
+    painted = document.createElement('div')
+    Object.assign(painted.style, { position: 'absolute', inset: '0', overflow: 'hidden', pointerEvents: 'none' })
+    const base = snapshot(box), left = box.scrollLeft
+    wheel.overlay.before(painted); painted.append(base, wheel.overlay)
+    base.scrollLeft = left
+  } else wheel.overlay?.remove()
+  if (restore) box.style.scrollSnapType = wheel.snap
+  wheels.delete(box)
+  return painted
+}
+export function stopGalleryScroll(box: HTMLElement) { motions.get(box)?.stop(); stopWheel(box) }
+
+export function wheelGallery(box: HTMLElement, delta: number, animated: boolean) {
+  let wheel = wheels.get(box)
+  let velocity: number[] | undefined
+  if (!wheel) {
+    const prior = motions.get(box), snap = prior?.snap ?? box.style.scrollSnapType
+    velocity = [prior?.velocity ? prior.velocity * 1000 : 0]
+    const overlay = prior?.stop(animated) ?? null
+    wheel = { driver: new MotionDriver(), snap, target: box.scrollLeft, overlay, timer: null }
+    wheels.set(box, wheel)
+    if (overlay) {
+      const session = wheel
+      void wheel.driver.to('handoff', [1], [0], value => { overlay.style.opacity = String(value[0]) }, { frequency: 18, epsilon: [.001] }).then(completed => {
+        if (completed && wheels.get(box) === session) { overlay.remove(); session.overlay = null }
+      })
+    }
+  }
+  box.style.scrollSnapType = 'none'
+  const session = wheel, maximum = Math.max(0, box.scrollWidth - box.clientWidth)
+  const target = Math.max(0, Math.min(maximum, wheel.target + delta))
+  wheel.target = target
+  const move = (left: number) => wheel!.driver.to('scroll', [box.scrollLeft], [left], value => box.scrollTo({ left: value[0], behavior: 'instant' }), { frequency: 24, epsilon: [.25], bounds: [[0, maximum]], immediate: !animated, velocity })
+  void move(target)
+  velocity = undefined
+  if (wheel.timer !== null) clearTimeout(wheel.timer)
+  wheel.timer = setTimeout(() => {
+    if (wheels.get(box) !== session) return
+    const center = target + box.clientWidth / 2
+    const nearest = Array.from(box.children).reduce<HTMLElement | null>((nearest, element) => {
+      const item = element as HTMLElement
+      return !nearest || Math.abs(item.offsetLeft + item.offsetWidth / 2 - center) < Math.abs(nearest.offsetLeft + nearest.offsetWidth / 2 - center) ? item : nearest
+    }, null)
+    const left = nearest ? Math.max(0, Math.min(maximum, nearest.offsetLeft - (box.clientWidth - nearest.offsetWidth) / 2)) : target
+    void move(left).then(completed => { if (completed && wheels.get(box) === session) stopWheel(box) })
+  }, 120)
+}
 
 // Adjacent compact pages retain their painted position and velocity on retarget.
 // Distant destinations travel only one viewport instead of sweeping through all pages.
-export function scrollGallery(box: HTMLElement, left: number, animated: boolean, complete: () => void, adjacent = false) {
+export function scrollGallery(box: HTMLElement, left: number, animated: boolean, complete: () => void, adjacent = false, snapOverride?: string) {
+  const wheelSnap = wheels.get(box)?.snap
+  const wheelVelocity = wheels.get(box)?.driver.sample('scroll')?.velocity[0]
+  const wheelPainted = stopWheel(box, false, animated)
   const old = motions.get(box)
-  const snap = old?.snap ?? box.style.scrollSnapType
-  const velocity = old?.velocity ?? 0
-  const outgoing = old?.stop(animated) ?? null
+  const snap = snapOverride ?? old?.snap ?? wheelSnap ?? box.style.scrollSnapType
+  const velocity = old?.velocity ?? (wheelVelocity ?? 0) / 1000
+  const outgoing = old?.stop(animated) ?? wheelPainted
   const start = box.scrollLeft, width = box.clientWidth
   if (!animated || typeof box.animate !== 'function' || Math.abs(left - start) < 1 && !outgoing) {
     outgoing?.remove()
@@ -93,13 +157,7 @@ export function scrollGallery(box: HTMLElement, left: number, animated: boolean,
   overlay.setAttribute('aria-hidden', 'true'); overlay.inert = true
   Object.assign(overlay.style, { position: 'absolute', inset: '0', overflow: 'hidden', pointerEvents: 'none' })
   state.overlay = overlay
-  const snapshot = () => {
-    const clone = box.cloneNode(true) as HTMLElement
-    clone.removeAttribute('id'); clone.removeAttribute('tabindex')
-    Object.assign(clone.style, { opacity: opacity || '1', scrollSnapType: 'none', scrollBehavior: 'auto', pointerEvents: 'none' })
-    return clone
-  }
-  const from = outgoing ?? snapshot(), to = snapshot()
+  const from = outgoing ?? snapshot(box), to = snapshot(box)
   overlay.append(from, to); box.after(overlay)
   if (!outgoing) from.scrollLeft = start
   to.scrollLeft = left

@@ -8,6 +8,7 @@ test('carousel mode shares the image controls, labels and selected-slide focus b
   await expect(cards).toHaveAttribute('aria-roledescription', '轮播图')
   await expect(cards.getByRole('button', { name: '选择第一项', exact: true })).toBeVisible()
   await expect(cards.getByRole('button', { name: '选择第二项', exact: true })).toHaveCount(0)
+  await cards.locator('.apple-image__surface').hover()
   await cards.getByRole('button', { name: '下一张图片', exact: true }).click()
   await expect(cards).toHaveAttribute('data-index', '1')
   await expect(cards.getByRole('button', { name: '选择第二项', exact: true })).toBeVisible()
@@ -18,7 +19,8 @@ test('carousel mode shares the image controls, labels and selected-slide focus b
   await track.focus()
   await page.keyboard.press('ArrowRight')
   await expect(cards).toHaveAttribute('data-index', '2')
-  await expect(cards.getByRole('button', { name: '下一张图片', exact: true })).toBeDisabled()
+  await cards.getByRole('button', { name: '下一张图片', exact: true }).click()
+  await expect(cards).toHaveAttribute('data-index', '0')
   await cards.getByRole('button', { name: '查看第一项', exact: true }).click()
   await expect(cards).toHaveAttribute('data-index', '0')
 })
@@ -57,13 +59,22 @@ test('carousel default photos preserve preview opening and reduced motion behavi
 })
 
 for (const width of [320, 1440]) {
-  test(`carousel controls remain visible without hover at ${width}px`, async ({ page }) => {
+  test(`carousel controls follow screen orientation at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 })
     const photos = page.locator('#photos')
-    await expect(photos.locator('.apple-image__arrows')).toHaveCSS('opacity', '1')
-    await expect(photos.getByRole('button', { name: '下一张图片', exact: true })).toBeVisible()
+    if (width < 1000) await expect(photos.locator('.apple-image__arrows')).toHaveCount(0)
+    else {
+      const arrows = photos.locator('.apple-image__arrows')
+      await expect(arrows).toHaveCSS('opacity', '0')
+      await expect(photos.locator('.apple-image__arrow').first()).toHaveCSS('pointer-events', 'none')
+      await photos.locator('.apple-image__surface').hover()
+      await expect(arrows).toHaveCSS('opacity', '1')
+      await expect(photos.getByRole('button', { name: '下一张图片', exact: true })).toBeVisible()
+      await page.mouse.move(0, 0)
+      await expect(arrows).toHaveCSS('opacity', '0')
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    await photos.getByRole('button', { name: '下一张图片', exact: true }).click()
+    await photos.getByRole('button', { name: '查看一场聆听', exact: true }).click()
     await expect(photos).toHaveAttribute('data-index', '1')
   })
 }

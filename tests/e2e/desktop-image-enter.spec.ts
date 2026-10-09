@@ -20,9 +20,11 @@ for (const engine of ['chromium', 'webkit']) {
         })
         const source = page.locator('#tiled .apple-image__trigger').nth(index)
         await source.scrollIntoViewIfNeeded()
-        const original = await source.locator('img').boundingBox()
+        await source.hover()
+        await page.waitForTimeout(400)
+        const original = await source.boundingBox()
         await source.click()
-        const flight = page.locator('.apple-viewer-enter-photo')
+        const flight = page.locator('.apple-viewer-canvas')
         await expect(flight).toHaveCount(1)
         const samples = await flight.evaluate(samplePhotoFlight)
         expect(samples.duration).toBe(360)
@@ -32,13 +34,15 @@ for (const engine of ['chromium', 'webkit']) {
         expect(visible[0].top).toBeCloseTo(original!.y, 0)
         expect(visible[0].width).toBeCloseTo(original!.width, 0)
         expect(visible[0].height).toBeCloseTo(original!.height, 0)
+        await flight.evaluate(frame => frame.getAnimations().forEach(animation => { animation.currentTime = Number(animation.effect!.getTiming().duration) }))
         const target = await page.locator('.apple-viewer-image').boundingBox()
         expect(visible[2].left).toBeCloseTo(target!.x, 0)
         expect(visible[2].top).toBeCloseTo(target!.y, 0)
         expect(visible[2].width).toBeCloseTo(target!.width, 0)
         expect(visible[2].height).toBeCloseTo(target!.height, 0)
         expect(visible[1].width).toBeGreaterThan(visible[0].width)
-        await expect(page.locator('.apple-viewer-pages')).toHaveCSS('opacity', '0')
+        await expect(page.locator('.apple-image-viewer')).toHaveAttribute('data-phase', 'opening')
+        await expect(page.locator('.apple-viewer-photo')).toHaveCount(5)
         await expect(source.locator('img')).toHaveCSS('opacity', '0')
         await mkdir(`/tmp/apptify-checks/desktop-enter/${engine}-${index}`, { recursive: true })
         for (const time of [0, 60, 120, 240, 360]) {
@@ -48,8 +52,8 @@ for (const engine of ['chromium', 'webkit']) {
           await page.screenshot({ path: `/tmp/apptify-checks/desktop-enter/${engine}-${index}/${time}.png`, animations: 'allow' })
         }
         await page.locator('.apple-image-viewer').evaluate(panel => panel.getAnimations({ subtree: true }).filter(animation => Number.isFinite(Number(animation.effect?.getComputedTiming().endTime))).forEach(animation => animation.finish()))
-        await expect(flight).toHaveCount(0)
-        await expect(page.locator('.apple-viewer-pages')).toHaveCSS('opacity', '1')
+        await expect(page.locator('.apple-image-viewer')).toHaveAttribute('data-phase', 'open')
+        await expect(flight).toHaveCount(1)
       } finally { await context.close(); await own?.close() }
     })
   }
@@ -61,18 +65,25 @@ test('closing during desktop entry continues from the painted crop', async ({ pa
     const animate = Element.prototype.animate
     Element.prototype.animate = function (...args) {
       const animation = animate.apply(this, args)
-      if (this.closest('.apple-image-viewer')) { animation.pause(); animation.currentTime = this.classList.contains('apple-viewer-enter-photo') ? 80 : 0 }
+      if (this.closest('.apple-image-viewer')) { animation.pause(); animation.currentTime = this.classList.contains('apple-viewer-canvas') && !this.closest('[data-phase=closing]') ? 80 : 0 }
       return animation
     }
   })
   await page.locator('#compact .apple-image__trigger').first().click()
-  const before = await page.locator('.apple-viewer-enter-photo').evaluate(element => ({ rect: element.getBoundingClientRect().toJSON(), clip: getComputedStyle(element).clipPath }))
+  const painted = (element: Element) => {
+    const rect = element.getBoundingClientRect(), photo = element.querySelector('img')!.getBoundingClientRect()
+    const inset = getComputedStyle(element).clipPath.match(/^inset\(([^)]*)/)![1].split('round')[0].trim().split(/\s+/).map(parseFloat)
+    const scale = rect.width / (element as HTMLElement).offsetWidth
+    const [top, right = top, bottom = top, left = right] = inset.map(value => value * scale)
+    return { left: rect.left + left, top: rect.top + top, width: rect.width - left - right, height: rect.height - top - bottom, photo: photo.toJSON() }
+  }
+  const before = await page.locator('.apple-viewer-canvas').evaluate(painted)
   await page.keyboard.press('Escape')
-  const returning = page.locator('.apple-viewer-return-photo')
-  await expect(returning).toHaveCount(1)
-  const after = await returning.evaluate(element => ({ rect: element.getBoundingClientRect().toJSON(), clip: getComputedStyle(element).clipPath }))
-  for (const key of ['x','y','width','height']) expect(after.rect[key]).toBeCloseTo(before.rect[key], 0)
-  expect(after.clip).toBe(before.clip)
+  const returning = page.locator('.apple-viewer-canvas')
+  await expect(page.locator('.apple-image-viewer')).toHaveAttribute('data-phase', 'closing')
+  const after = await returning.evaluate(painted)
+  for (const key of ['left','top','width','height'] as const) expect(after[key]).toBeCloseTo(before[key], 0)
+  for (const key of ['x','y','width','height']) expect(after.photo[key]).toBeCloseTo(before.photo[key], 0)
   await page.locator('.apple-image-viewer').evaluate(panel => panel.getAnimations({ subtree: true }).filter(animation => Number.isFinite(Number(animation.effect?.getComputedTiming().endTime))).forEach(animation => animation.finish()))
   await expect(page.locator('.apple-image-viewer')).toHaveCount(0)
   await expect(page.locator('#compact .apple-image__trigger img').first()).toHaveCSS('opacity', '1')
