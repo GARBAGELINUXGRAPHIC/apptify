@@ -1,6 +1,6 @@
 import { defineAsyncComponent, type Component } from 'vue'
 import type { ComponentDocument } from './contract'
-import { catalog, componentId } from '../catalog'
+import { componentMetadata } from './component-metadata'
 /** Lightweight route directory. Each document is downloaded only on its own page. */
 export interface DocumentRegistration {
   name: string
@@ -11,10 +11,10 @@ export interface DocumentRegistration {
   load: () => Promise<{ default: ComponentDocument }>
 }
 const handbooks = import.meta.glob<{ default: ComponentDocument }>('./handbooks/apple-*.ts')
-export const componentDocuments: Record<string, DocumentRegistration> = Object.fromEntries(catalog.map(item => {
-  const slug = componentId(item.name)
+export const componentDocuments: Record<string, DocumentRegistration> = Object.fromEntries(Object.entries(componentMetadata).map(([name, item]) => {
+  const slug = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   return [slug, {
-    name: item.name, label: item.label, group: item.group, description: item.description,
+    name, ...item,
     load: handbooks[`./handbooks/${slug}.ts`],
   }]
 }))

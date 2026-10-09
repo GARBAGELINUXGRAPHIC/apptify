@@ -3,6 +3,7 @@ import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
 import { components } from '../src'
 import { catalog, componentId } from '../playground/catalog'
 import { componentDocuments } from '../playground/editor/documents'
+import { componentMetadata } from '../playground/editor/component-metadata'
 import { createPlaygroundConfig, generateComponentCode, propControl } from '../playground/editor/component-playground'
 import type { ComponentDocument } from '../playground/editor/contract'
 
@@ -17,6 +18,7 @@ describe('component handbooks', () => {
   it('covers the complete public registry and every gallery entry', () => {
     expect(catalog.map(item => item.name).sort()).toEqual(Object.keys(components).sort())
     expect(Object.values(componentDocuments).map(item => item.name).sort()).toEqual(Object.keys(components).sort())
+    expect(Object.keys(componentMetadata).sort()).toEqual(Object.keys(components).sort())
     for (const item of catalog) expect(componentDocuments[componentId(item.name)].load).toBeTypeOf('function')
   })
 

@@ -114,6 +114,14 @@ async function checkPage(baseURL, path, check) {
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Page overflow: ' + path)
   await page.close()
 }
+async function checkTableHandbook(page) {
+  await expect(page.getByTestId('component-playground')).toHaveAttribute('data-component', 'AppleTable')
+  const frame = page.frameLocator('.vue-repl iframe')
+  await frame.getByRole('button', { name: '评分', exact: true }).click()
+  await expect(frame.locator('tbody tr').first()).toContainText('Alex')
+  await expect(frame.getByRole('textbox', { name: '事件记录内容' })).toHaveValue(/update:sortBy "score"/)
+  await expect(page.getByTestId('component-document').locator('iframe')).toHaveCount(0)
+}
 let server
 try {
   server = await serve()
@@ -138,6 +146,7 @@ try {
     await frame.locator('.apple-input-wrap input').first().fill('Template src preview')
     await expect(frame.locator('.apple-input-wrap input').first()).toHaveValue('Template src preview')
   })
+  await checkPage(server.url, '/component-docs/apple-table', checkTableHandbook)
   await checkPage(server.url, '/settings', async page => {
     await page.setViewportSize({ width: 320, height: 900 })
     await page.getByRole('button', { name: '深色', exact: true }).click()
@@ -174,6 +183,7 @@ try {
   run(['run', 'typecheck'], app)
   run(['run', 'build'], app)
   server = await serve()
+  await checkPage(server.url, '/component-docs/apple-table', checkTableHandbook)
   await checkPage(server.url, '/settings', async page => {
     assert.equal(await page.locator('.site-nav a.apple-navibar__item').count(), 1)
     assert.equal(await page.locator('.site-nav .brand').getAttribute('href'), '/settings')
