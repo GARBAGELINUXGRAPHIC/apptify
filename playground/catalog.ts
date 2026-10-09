@@ -5,6 +5,7 @@ export const catalog: CatalogItem[] = [
   item('AppleLink', '链接', '基础', '让下一步清楚可见。', 'href · external · disabled | slot: default', '<apple-link href="https://www.apple.com.cn/" external>Apple 官网</apple-link>'),
   item('AppleSearch', '搜索', '基础', '快速找到关心的内容。', 'v-model(string) · label · placeholder · disabled | search(query)', '<apple-search v-model="query" label="搜索设置" placeholder="搜索设置" @search="search" />'),
   item('AppleProvider', '主题容器', '基础', '独立区域，也有统一的设计语言。', 'theme · motion(auto|full|reduced|none) | slot: default', '<apple-provider theme="dark" motion="auto">\n  <apple-button>继续</apple-button>\n</apple-provider>'),
+  item('AppleOverlayHost', '弹层宿主', '基础', '显示当前上下文的弹层与通知。', '由 AppleProvider 自动包含；无公开 props、事件或插槽', '<apple-overlay-host />'),
   item('AppleContainer', '内容容器', '基础', '在不同屏幕上保留合适的内容宽度。', 'width(number|string) | slot: default', '<apple-container :width="960">\n  <apple-stack>内容</apple-stack>\n</apple-container>'),
   item('AppleStack', '弹性布局', '基础', '有序排列，自然换行。', 'direction(row|column) · gap · align · wrap | slot: default', '<apple-stack direction="row" :gap="16" align="center">\n  <apple-button>继续</apple-button>\n  <apple-button variant="secondary">取消</apple-button>\n</apple-stack>'),
   item('AppleGrid', '网格布局', '基础', '让列数随内容空间变化。', 'min(number) · gap(number) | slot: default', '<apple-grid :min="240" :gap="20">\n  <div v-for="item in items" :key="item.id">{{ item.label }}</div>\n</apple-grid>'),

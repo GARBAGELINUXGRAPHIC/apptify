@@ -6,21 +6,22 @@
       <div class="documentation-layout directory-layout">
         <aside ref="documentationIndex" class="documentation-index directory-index" aria-label="API 导航"><span>本页接口</span><apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" /></aside>
         <div ref="documentationContent" class="documentation-content">
-          <section class="component-overview" aria-label="组件演示"><component :is="registration.preview" v-if="registration.preview" /></section>
-          <ComponentWorkshop v-if="doc" :doc="doc" />
+          <section class="component-overview" aria-label="组件演示"><component :is="registration.preview" v-if="registration.preview" /><ComponentPlayground v-else-if="doc" :key="doc.name" :doc="doc" /></section>
+          <ComponentWorkshop v-if="doc" :key="doc.name" :doc="doc" />
           <apple-alert v-else-if="failed" tone="danger" title="文档加载失败"><apple-button variant="secondary" @click="loadDocument">重试</apple-button></apple-alert>
           <apple-spinner v-else label="正在加载组件 API" />
         </div>
       </div>
     </template>
-    <apple-empty v-else title="组件文档尚未开放" description="当前阶段仅开放 AppleInput 样板。"><router-link to="/components" custom v-slot="{ href, navigate }"><apple-link :href="href" @click="navigate">返回组件目录</apple-link></router-link></apple-empty>
+    <apple-empty v-else title="未找到组件文档"><router-link to="/components" custom v-slot="{ href, navigate }"><apple-link :href="href" @click="navigate">返回组件目录</apple-link></router-link></apple-empty>
   </apple-container>
   <DirectoryDialog v-if="registration" v-model="mobileIndex" title="本页接口">
     <apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" />
   </DirectoryDialog>
 </template>
 <script setup lang="ts">
-import { computed, shallowRef, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+defineOptions({ inheritAttrs: false })
+import { computed, defineAsyncComponent, shallowRef, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { AppleItem, AppleTreeItem, AppleValue } from '../../../src'
 import { componentDocuments } from '../../editor/documents'
@@ -28,6 +29,7 @@ import type { ComponentDocument } from '../../editor/contract'
 import { documentSections } from '../../editor/sections'
 import ComponentWorkshop from '../../editor/ComponentWorkshop.vue'
 import DirectoryDialog from '../../components/DirectoryDialog.vue'
+const ComponentPlayground = defineAsyncComponent(() => import('../../editor/ComponentPlayground.vue'))
 const route = useRoute()
 const router = useRouter()
 const breadcrumbs = computed(() => [

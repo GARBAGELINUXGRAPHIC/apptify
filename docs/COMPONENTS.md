@@ -1,6 +1,6 @@
 # 组件 API 参考
 
-本页按 `src/index.ts` 合并的组件注册表列出当前 **66 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
+本页按 `src/index.ts` 合并的组件注册表列出当前 **65 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
 
 ## 公共约定
 
