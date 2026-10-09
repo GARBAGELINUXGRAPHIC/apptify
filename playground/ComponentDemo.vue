@@ -28,6 +28,7 @@
         </apple-stack>
       </apple-provider>
     </apple-stack>
+    <apple-button v-else-if="name === 'AppleOverlayHost'" @click="notify('由 Provider 内的 OverlayHost 显示')">显示通知</apple-button>
     <apple-stack v-else-if="name === 'AppleContainer'">
       <apple-slider v-model="containerWidth" label="内容宽度" :min="240" :max="640" :step="40" />
       <apple-container :width="containerWidth">

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import routes from 'virtual:generated-pages'
 import { nextTick } from 'vue'
+import { componentDocuments } from '../editor/documents'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,7 +26,8 @@ const router = createRouter({
 
 router.afterEach(to => {
   const titles: Record<string, string> = { '/': '首页', '/components': '组件', '/settings': '设置' }
-  document.title = `${to.meta.title ?? titles[to.path] ?? '页面不存在'} · Apptify`
+  const handbook = to.path.startsWith('/component-docs/') ? componentDocuments[String(to.params.component)] : undefined
+  document.title = `${handbook ? `${handbook.label} ${handbook.name}` : to.meta.title ?? titles[to.path] ?? '页面不存在'} · Apptify`
 })
 
 export default router

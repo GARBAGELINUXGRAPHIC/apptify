@@ -25,12 +25,7 @@
             <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
               <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
               <section class="detail-preview" :class="{ 'mobile-preview': previewMode === 'mobile' }" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
-              <ComponentDocumentLink v-if="documentPaths[item.name]" :href="documentPaths[item.name]" label="代码与 API" />
-              <apple-accordion v-else class="component-source" :items="sourceSections">
-                <template #item>
-                  <div class="code-view"><div class="code-toolbar"><span>使用示例</span><apple-link @click="copy(item.code)">复制代码</apple-link></div><pre><code>{{ item.code }}</code></pre><h4>接口</h4><p class="api-line">{{ item.api }}</p></div>
-                </template>
-              </apple-accordion>
+              <ComponentDocumentLink :href="documentPaths[item.name]" label="代码与 API" />
             </apple-card>
             </MasonryFeed>
           </section>
@@ -49,7 +44,6 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Hash, Monitor, Smartphone } from 'lucide-vue-next'
-import { useApple } from '../../src'
 import { catalog, sections, componentId } from '../catalog'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
@@ -61,7 +55,6 @@ import { componentDocuments, componentDocumentPath } from '../editor/documents'
 const documentPaths = Object.fromEntries(Object.entries(componentDocuments).map(([slug, document]) => [document.name, componentDocumentPath(slug)]))
 const route = useRoute()
 const router = useRouter()
-const apple = useApple()
 const feed = ref<HTMLElement>()
 const activeGroup = ref(sections[0].id)
 const activeId = ref('')
@@ -69,7 +62,6 @@ const previewMode = ref('desktop')
 const mobileIndex = ref(false)
 const directorySearch = ref('')
 const expandedGroups = ref(sections.map(section => section.id))
-const sourceSections = [{ label: '代码与 API', value: 'source' }]
 let anchors: HTMLElement[] = []
 let frame = 0
 let observer: ResizeObserver | undefined
@@ -92,10 +84,6 @@ function schedulePosition() {
 function navigateGroup(label: string) {
   const section = sections.find(section => section.label === label)
   void router.push(section ? `/components#${section.id}` : '/components')
-}
-async function copy(value: string) {
-  try { await navigator.clipboard.writeText(value); apple.notify('已复制', { tone: 'success' }) }
-  catch { apple.notify('无法访问剪贴板，请手动选择代码复制', { tone: 'warning' }) }
 }
 watch(() => route.hash, () => { mobileIndex.value = false; schedulePosition() })
 watch(activeId, async () => {
@@ -137,13 +125,5 @@ onBeforeUnmount(() => {
 .feed-group-heading { padding-bottom: 20px; }
 .component-card { width: 100%; padding: 0; }
 .component-card :deep(> .apple-card__body) { padding: 0; border-radius: inherit; }
-.component-card :deep(> .apple-card__body > .documentation-entry),
-.component-card :deep(> .apple-card__body > .component-source) { border-radius: 0 0 18px 18px; overflow: hidden; }
-.component-source :deep(.apple-accordion__item) { border: 0; }
-.component-source :deep(.apple-accordion__item > h3) { font-size: 11px; font-weight: 400; }
-.component-source :deep(.apple-accordion__item > h3 > button) { min-height: 44px; gap: 8px; padding: 13px 28px; color: var(--apple-secondary); }
-.component-source :deep(.apple-accordion__content) { padding: 0; }
-@media (max-width: 800px) {
-  .component-source :deep(.apple-accordion__item > h3 > button) { padding-inline: 18px; }
-}
+.component-card :deep(> .apple-card__body > .documentation-entry) { border-radius: 0 0 18px 18px; overflow: hidden; }
 </style>

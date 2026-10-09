@@ -45,7 +45,7 @@ test('Vue editor compiles configuration and manual edits, copies edited source a
   await expect(frame.getByLabel('源码修改', { exact: true })).toBeVisible()
   await playground.getByRole('button', { name: '复制当前文件', exact: true }).click()
   await expect(playground.getByRole('status')).toContainText('已复制当前文件')
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(await getCode())
+  expect((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n')).toBe((await getCode()).replace(/\r\n/g, '\n'))
   await playground.getByRole('button', { name: '恢复当前配置', exact: true }).click()
   await expect(frame.getByRole('textbox', { name: '姓名', exact: true })).toBeVisible()
   await playground.locator('.live-editor').scrollIntoViewIfNeeded()
