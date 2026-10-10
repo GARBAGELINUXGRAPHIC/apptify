@@ -9,17 +9,17 @@ for (const [path, title, treeName, itemName, hash] of [
     await page.setViewportSize({ width: 820, height: 720 })
     await page.goto(path)
     await waitForPageLayout(page)
-    const toggle = page.getByRole('button', { name: `展开${title}` })
+    const toggle = page.getByRole('button', { name: '展开目录', exact: true })
     await expect(toggle).toBeVisible()
     await expect(page.locator('.directory-index')).toBeHidden()
     await page.evaluate(() => window.scrollTo({ top: 600, behavior: 'instant' }))
-    const backtop = page.getByRole('group', { name: '页面导航' }).getByRole('button', { name: '回到顶部' })
+    const backtop = page.locator('.apple-speed-dial').getByRole('button', { name: '回到顶部' })
     await expect(backtop).toBeVisible()
     if (path === '/components') {
       const preview = page.locator('#apple-floating-group .demo-floating-preview')
       await expect(preview.locator('.apple-floating-group')).toHaveCSS('position', 'relative')
       await expect(preview.getByRole('button', { name: '回到顶部' })).toHaveCount(1)
-      await expect(page.locator('.apple-floating-group').filter({ has: page.locator('.directory-toggle') })).toHaveCount(1)
+      await expect(page.locator('.apple-speed-dial')).toHaveCount(1)
       expect(await page.locator('.apple-floating-group').evaluateAll(groups => groups.filter(group => getComputedStyle(group).position === 'fixed').length)).toBe(1)
     }
     await expect.poll(async () => {
@@ -28,7 +28,7 @@ for (const [path, title, treeName, itemName, hash] of [
       return toggleBounds!.y >= topBounds!.y + topBounds!.height + 9
     }).toBe(true)
     await toggle.click()
-    const dialog = page.getByRole('dialog', { name: title })
+    const dialog = page.getByRole('dialog', { name: treeName })
     await expect(dialog).toBeVisible()
     await dialog.getByRole('tree', { name: treeName }).getByRole('treeitem', { name: itemName, exact: true }).click()
     await expect(dialog).toBeHidden()
@@ -57,7 +57,7 @@ test('the floating menu shares the navigation layer and fades in left during ima
   await page.setViewportSize({ width: 820, height: 720 })
   await page.goto('/components#apple-image')
   await waitForPageLayout(page)
-  const menu = page.locator('.apple-floating-group').filter({ has: page.locator('.directory-toggle') })
+  const menu = page.locator('.apple-speed-dial')
   await page.locator('#apple-image .apple-image__trigger').first().click()
   const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
   await expect(viewer).toHaveAttribute('data-phase', 'open')
@@ -66,7 +66,7 @@ test('the floating menu shares the navigation layer and fades in left during ima
   await expect(menu).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 12, 0)')
   const returning = await viewer.evaluate(async panel => {
     panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    const toggle = document.querySelector('.directory-toggle')!, menu = toggle.closest('.apple-floating-group')!
+    const toggle = document.querySelector('.apple-speed-dial-directory')!, menu = toggle.closest('.apple-floating-group')!
     for (let frame = 0; frame < 30 && !menu.getAnimations().length; frame++) await new Promise(requestAnimationFrame)
     const animations = [...panel.getAnimations({ subtree: true }), ...menu.getAnimations()]
     animations.forEach(animation => { animation.pause(); animation.currentTime = 150 })

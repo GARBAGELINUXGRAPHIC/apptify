@@ -51,6 +51,7 @@ test('a direct component anchor survives refresh and scrolling updates the index
   await expect(directoryItem(page, 'apple-table')).toHaveAttribute('aria-selected', 'true')
   await page.reload()
   await expect(page.locator('#apple-table')).toBeInViewport()
+  await expect.poll(() => page.locator('#apple-table').evaluate(element => Math.round(element.getBoundingClientRect().top))).toBe(96)
   await page.locator('#apple-dialog').evaluate(element => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - 100, behavior: 'instant' }))
   await expect(directoryItem(page, 'apple-dialog')).toHaveAttribute('aria-selected', 'true')
 })
@@ -115,8 +116,8 @@ for (const width of [320, 390, 768, 1440]) {
       const user = await page.getByRole('button', { name: '打开用户菜单', exact: true }).boundingBox()
       expect(user!.x + user!.width).toBeGreaterThan(width - 34)
       if (route === '/components' && width <= 800) {
-        await page.getByRole('button', { name: '展开组件目录', exact: true }).click()
-        const drawer = page.getByRole('dialog', { name: '组件目录', exact: true })
+        await page.getByRole('button', { name: '展开目录', exact: true }).click()
+        const drawer = page.getByRole('dialog', { name: '组件目录树', exact: true })
         await drawer.getByRole('treeitem', { name: '对话框', exact: true }).click()
         await expect(drawer).toHaveCount(0)
         await expect(page.locator('#apple-dialog')).toBeInViewport()

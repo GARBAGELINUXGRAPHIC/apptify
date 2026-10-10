@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import routes from 'virtual:generated-pages'
 import { nextTick } from 'vue'
+import { cancelMotionScroll, scrollToWithMotion } from '../../src/core/motion'
 import { componentDocuments } from '../editor/documents'
 
 const router = createRouter({
@@ -18,11 +19,18 @@ const router = createRouter({
     if (savedPosition) return { ...savedPosition, behavior: 'instant' }
     if (to.hash && document.getElementById(to.hash.slice(1))) {
       const motion = document.querySelector('#app > .apple-provider')?.getAttribute('data-apple-motion')
-      return { el: to.hash, top: 96, behavior: to.path === from.path && motion === 'full' ? 'smooth' : 'instant' }
+      if (motion !== 'full') return { el: to.hash, top: 96, behavior: 'instant' }
+      if (router.currentRoute.value !== to) return false
+      const target = document.getElementById(to.hash.slice(1))!
+      const top = () => Math.min(target.getBoundingClientRect().top + window.scrollY - 96, Math.max(0, document.documentElement.scrollHeight - window.innerHeight))
+      await scrollToWithMotion(window, top).finished
+      return false
     }
     return { top: 0, behavior: 'instant' }
   },
 })
+
+router.beforeEach(() => { cancelMotionScroll(window) })
 
 router.afterEach(to => {
   const titles: Record<string, string> = { '/': '首页', '/components': '组件', '/settings': '设置' }

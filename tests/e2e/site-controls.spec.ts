@@ -67,10 +67,10 @@ for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/components')
     if (width === 320) {
-      const directory = page.getByRole('button', { name: '展开组件目录', exact: true })
+      const directory = page.getByRole('button', { name: '展开目录', exact: true })
       await expect(directory).toHaveClass(/apple-button/)
       await directory.click()
-      await expect(page.getByRole('dialog', { name: '组件目录', exact: true })).toBeVisible()
+      await expect(page.getByRole('dialog', { name: '组件目录树', exact: true })).toBeVisible()
       await page.keyboard.press('Escape')
       await expect(directory).toBeFocused()
     }

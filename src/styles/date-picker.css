@@ -31,6 +31,8 @@
 /* Keep the shared TabBar indicator and panel motion inside the glass menu. */
 .apple-date-menu .apple-calendar__tabs { margin: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .apple-date-menu .apple-calendar__tabs .apple-tabs__list { background: rgb(128 128 128 / 8%); }
+.apple-date-menu .apple-calendar__tabs .apple-selection-indicator { background: var(--apple-surface-alt); }
+.apple-date-menu .apple-calendar__tabs .apple-selection-indicator::before, .apple-date-menu .apple-calendar__tabs .apple-selection-indicator::after { background: radial-gradient(circle at var(--apple-tab-corner) 0, transparent var(--apple-tab-radius), var(--apple-surface-alt) var(--apple-tab-radius)); }
 .apple-date-menu .apple-calendar__tabs .apple-tabs__tab { min-height: 40px; padding: 8px 10px; }
 .apple-date-menu .apple-calendar__tabs .apple-tabs__viewport { background: transparent; }
 .apple-date-menu .apple-calendar__tabs .apple-tabs__panel { padding: 0; }

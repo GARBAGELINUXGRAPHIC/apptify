@@ -12,6 +12,7 @@
       </div>
     </router-view>
     <div class="site-footer"><PageFooter /></div>
+    <apple-speed-dial />
   </apple-provider>
 </template>
 

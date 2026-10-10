@@ -5,6 +5,18 @@ export default defineHandbook({
   "source": "src/components/content.ts",
   "props": [
     {
+      "name": "searchable",
+      "type": "boolean",
+      "default": "true",
+      "description": "默认显示顶部搜索，匹配名称、value 和描述并保留祖先路径；清空搜索恢复原展开状态。"
+    },
+    {
+      "name": "mobileDirectory",
+      "type": "boolean",
+      "default": "true",
+      "description": "宽度不超过 900px 时自动进入全局 AppleSpeedDial 目录；设为 false 保持原位。没有宿主时保持原位。多个目录使用 AppleTabBar 切换，label 作为标签。"
+    },
+    {
       "name": "motion",
       "type": "'inherit' | 'auto' | 'full' | 'reduced' | 'none'",
       "default": "\"inherit\"",

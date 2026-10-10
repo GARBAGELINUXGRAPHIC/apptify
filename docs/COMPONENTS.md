@@ -107,7 +107,7 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `ApplePagination` | `v-model: number=1`、`total=0`、`pageSize=10`、`disabled`、`label` | `change(page)`；页码从 1 开始，total 是总条目数。 |
 | `AppleAccordion` | `v-model: string/number/array`、`items`、`multiple`、`disabled` | `change(value)`；`item-${value}` 或 item slot `{item,open}`；默认内容使用 item.content；multiple 时模型为数组。 |
 | `AppleTable` | `columns: AppleColumn[]`、`rows: Record[]`、`rowKey=id`、`label`、`selectable`、`v-model:selected`、`v-model:sort-by`、`v-model:sort-direction`、`v-model:page`、`pageSize=0`、`loading`、`disabled`、`emptyText` | `sort({key,direction})`、`row-click(row)`；`cell-${key}` slot `{row,value,index}`、empty slot；本地排序/分页；pageSize=0 不分页。 |
-| `AppleTree` | `items: AppleTreeItem[]`、`v-model`、`v-model:expanded`、`disabled`、`label` | `select(item)`；item slot `{item,expanded,selected}`；递归 children；单选与键盘树导航，不含勾选联动。 |
+| `AppleTree` | `items: AppleTreeItem[]`、`v-model`、`v-model:expanded`、`disabled`、`label`、`searchable=true`、`mobileDirectory=true` | 默认顶部搜索；宽度 ≤900px 自动进入全局 SpeedDial 目录，无宿主保留原位。`select(item)`；item slot `{item,expanded,selected}`；递归 children；单选与键盘树导航，不含勾选联动。 |
 | `AppleList` | `items`、`v-model`、`selectable`、`disabled`、`label` | `select(item)`；item slot `{item,selected}`；selectable 时更新模型，否则 href 生成链接。 |
 | `AppleAvatar` | `src`、`name='用户'`、`size=40`、`square` | `error(event)`；default slot；图片失败回退到姓名前两个字符。 |
 | `AppleAvatarGroup` | `items: {name,src?,value?}[]`、`max=4`、`size=36`、`label` | default slot 可替换头像集合；超出数量显示 +N。 |
@@ -123,8 +123,11 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `AppleTimeline` | `items: AppleTimelineItem[]`、`orientation=vertical`（horizontal/vertical）、`label` | item slot `{item}`；选项增加 `time?` 和 `tone?: default/success/danger`。 |
 | `ApplePullRefresh` | `v-model: boolean`、`disabled`、`threshold=72`、`label` | `refresh(done)`；default slot `{refresh,refreshing}`；在滚动顶部下拉，也提供刷新按钮；完成必须调用 done 或将 model 设为 false。 |
 | `AppleInfiniteScroll` | `loading`、`error: boolean/string`、`finished`、`disabled`、`distance=120`、`finishedText` | `load(done)`、`retry(done)`；default slot；IntersectionObserver 及手动加载按钮；完成后调用 done，或令 loading 从 true 回到 false。 |
+| `AppleScrollBar` | `target: string/HTMLElement/()=>HTMLElement`、`axis='both'`、`label`、`controls` | `interaction()`；`refresh()`；fixed 悬浮滚动条，不占空间，支持横向/纵向、拖动、轨道点击、键盘及 RTL。AppleProvider 自动接管文档滚动容器，原本隐藏滚动条的控件除外；`data-apple-scrollbar-ignore` 可排除容器。 |
 | `AppleBackTop` | `target: CSS selector=''`、`threshold=300`、`label`、`disabled` | `click(event)`；default slot；空 target 使用 window，达到滚动阈值才显示。 |
 | `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区，与 Navibar 同为 z-index 70；图片预览时隐藏，退出开始时执行 300ms FadeInLeft，尊重 reduced/none 动效。 |
+| `AppleSpeedDial` | `backTop=true`、`threshold=300`、`target`、`label` | App.vue 全局唯一宿主，嵌套 Provider 共享注册表；BackTop 排第一，操作按注册顺序排列，primary 目录按钮排最后。移动目录弹窗保持高高度，多目录用 AppleTabBar 切换。 |
+| `AppleSpeedDialItem` | `label`、`icon`、`disabled`、`visible=true`、`variant='primary'` | `click(event)`；default slot 可放按钮文字；页面声明后自动注册全局宿主，卸载或 KeepAlive 停用时注销；无需父子通信。 |
 | `AppleStatistic` | 必填 `label`；`value: string/number`、`prefix`、`suffix`、`precision=0`、`locale=zh-CN`、`description` | default slot；数值本地化格式，不会自动请求统计数据。 |
 
 `AppleColumn = { key: string; label: string; sortable?: boolean; align?: 'left'|'center'|'right'; width?: number|string; minWidth?: number; maxWidth?: number; resizable?: boolean }`。表格 rows 应提供稳定唯一的 `rowKey`。

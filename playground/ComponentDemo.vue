@@ -62,6 +62,7 @@
     <apple-stack v-else-if="name === 'AppleBadge'" direction="row" align="center"><apple-badge :value="unread"><apple-link variant="secondary" :icon="icons.Bell" @click="unread++">新消息</apple-link></apple-badge><apple-link as="button" :disabled="!unread" @click="unread = 0">全部已读</apple-link></apple-stack>
     <apple-stack v-else-if="name === 'AppleTag'" class="demo-tag-row" direction="row" align="center" :gap="10"><apple-tag>默认标签</apple-tag><apple-tag tone="success">已完成</apple-tag><apple-tag tone="info">进行中</apple-tag><apple-tag tone="warning">待确认</apple-tag><apple-tag v-if="tag" label="设计系统" closable @close="tag = false">设计系统</apple-tag><apple-link as="button" v-else :icon="icons.Plus" @click="tag = true">添加标签</apple-link></apple-stack>
     <apple-stack v-else-if="name === 'AppleDivider'"><apple-switch v-model="dividerVertical" label="纵向分隔" /><apple-stack :direction="dividerVertical ? 'row' : 'column'" :gap="0" align="center"><span>配送到家</span><apple-divider :vertical="dividerVertical" :label="dividerVertical ? undefined : '更多选择'" /><span>到店取货</span></apple-stack></apple-stack>
+    <div v-else-if="name === 'AppleScrollBar'" class="demo-scroll-bar" tabindex="0" aria-label="滚动示例"><div class="demo-scroll-bar__content"><apple-card v-for="n in 12" :key="n" class="demo-layout-tile"><strong>0{{ n }}</strong></apple-card></div></div>
     <apple-input v-else-if="name === 'AppleInput'" v-model="text" label="姓名" placeholder="怎么称呼你" clearable />
     <apple-textarea v-else-if="name === 'AppleTextarea'" v-model="bio" label="个人简介" placeholder="写下你的想法" :maxlength="160" counter />
     <apple-select v-else-if="name === 'AppleSelect'" v-model="city" label="所在城市" :items="cities" />
@@ -95,7 +96,7 @@
     <apple-steps v-else-if="name === 'AppleSteps'" v-model="step" :items="steps" clickable />
     <apple-accordion v-else-if="name === 'AppleAccordion'" :items="questions" />
     <apple-stack v-else-if="name === 'AppleTable'"><apple-switch v-model="virtualTable" label="虚拟滚动 · 5000 行" /><apple-table :columns="columns" :rows="virtualTable ? virtualRows : rows" selectable :virtual="virtualTable" :height="360" :page-size="virtualTable ? 0 : 3" /></apple-stack>
-    <apple-tree v-else-if="name === 'AppleTree'" v-model="tree" :items="folders" />
+    <apple-tree v-else-if="name === 'AppleTree'" v-model="tree" :items="folders" :mobile-directory="false" />
     <apple-list v-else-if="name === 'AppleList'" v-model="setting" :items="settings" selectable @select="notify('已选择设置项')" />
     <apple-stack v-else-if="name === 'AppleTimeline'"><apple-segmented-control v-model="timelineDirection" :items="[{label:'纵向',value:'vertical'},{label:'横向',value:'horizontal'}]" label="时间线方向" /><apple-timeline :items="events" :orientation="timelineDirection" /><apple-link variant="secondary" @click="updateDelivery">{{ delivered ? '查看配送过程' : '确认签收' }}</apple-link></apple-stack>
     <apple-stack v-else-if="name === 'AppleStatistic'"><apple-segmented-control v-model="period" :items="periods" label="统计周期" /><apple-statistic :label="period === 'day' ? '今日访问' : period === 'week' ? '本周访问' : '本月访问'" :value="period === 'day' ? 428 : period === 'week' ? 2996 : 12840" suffix="次" description="最新访问数据" /></apple-stack>
@@ -126,6 +127,8 @@
     <apple-pull-refresh v-else-if="name === 'ApplePullRefresh'" @refresh="refresh"><apple-list :items="[{label:'最新内容',value:'latest',description:refreshText},{label:'最近更新',value:'recent',description:'所有内容已同步'}]" /></apple-pull-refresh>
     <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.ArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" :fixed="false" /></template>
     <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-card class="demo-floating-preview"><apple-provider><apple-floating-group :threshold="0" /></apple-provider></apple-card></template>
+    <apple-card v-else-if="name === 'AppleSpeedDial'" class="demo-floating-preview"><apple-provider><apple-floating-group :back-top="false" label="全局快捷操作预览"><apple-back-top :threshold="0" :fixed="false" /><apple-button :icon="icons.Plus" icon-only label="新增" @click="notify('已新增')" /><apple-button :icon="icons.Menu" icon-only label="目录" :disabled="!$apple.speedDial.mobile.value" @click="$apple.speedDial.open.value = true" /></apple-floating-group></apple-provider></apple-card>
+    <apple-button v-else-if="name === 'AppleSpeedDialItem'" :icon="icons.Plus" icon-only label="新增" @click="notify('已新增')" />
     <apple-stack v-else-if="name === 'AppleAutoSize'"><apple-switch v-model="checked" label="显示详情" /><apple-auto-size><apple-list :items="checked ? settings : settings.slice(0,1)" selectable /></apple-auto-size></apple-stack>
     <apple-stack v-else-if="name === 'AppleTransition'">
       <apple-segmented-control v-model="period" :items="periods" label="统计周期" />
@@ -142,12 +145,12 @@
 <script lang="ts">
 import { imageUrl } from './images'
 import { defineComponent, h, markRaw } from 'vue'
-import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Share2, Trash2 } from 'lucide-vue-next'
-import { AppleButton } from '../src'
+import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Share2, Trash2, Menu } from 'lucide-vue-next'
+import { AppleButton, resolveMotion, scrollToWithMotion, type MotionScroll } from '../src'
 export default defineComponent({
   name: 'ComponentDemo', props: { name: { type: String, required: true } }, emits: ['navigate'],
   data() { return {
-    icons: markRaw({ Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
+    icons: markRaw({ Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Menu }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
     searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageLayout: 'compact' as 'compact' | 'tiled' | 'tiled-wrap', imageSquare: false, imageCarousel: false,
     virtualTable: false, transitionBackward: false,
     timelineDirection:'vertical' as 'vertical'|'horizontal', skeletonVariant:'text' as 'text'|'avatar'|'card'|'list'|'table'|'image', skeletonVariants:[{label:'文本',value:'text'},{label:'头像',value:'avatar'},{label:'卡片',value:'card'},{label:'列表',value:'list'},{label:'表格',value:'table'},{label:'图片',value:'image'}],
@@ -179,6 +182,7 @@ export default defineComponent({
     events: [{label:'订单已确认',value:'confirmed',description:'我们正在准备你的订单',time:'09:41'},{label:'正在配送',value:'shipping',description:'你的包裹已出发',time:'12:00'},{label:'即将送达',value:'arrival',description:'留意配送通知',time:'预计明天'}],
     actions: [{label:'收藏',value:'favorite'},{label:'分享',value:'share'},{label:'删除',value:'delete',danger:true}], slides: [{label:'山间清晨',value:0,src:imageUrl('lake.jpg')},{label:'一场聆听',value:1,src:imageUrl('airpods-max-orange.jpg')}],
     photoActions: [{label:'加入收藏',value:'favorite',description:'将这张照片保存到你的灵感收藏',icon:markRaw(Heart),danger:false},{label:'分享照片',value:'share',description:'与朋友分享山间的这一刻',icon:markRaw(Share2),danger:false},{label:'删除照片',value:'delete',description:'从当前相册中移除',icon:markRaw(Trash2),danger:true}],
+    topScroll: undefined as MotionScroll | undefined,
     timers: [] as ReturnType<typeof setTimeout>[],
   } },
   computed: {
@@ -195,7 +199,7 @@ export default defineComponent({
       this.transitionBackward = this.periods.findIndex(item => item.value === next) < this.periods.findIndex(item => item.value === previous)
     },
   },
-  beforeUnmount() { this.timers.forEach(clearTimeout) },
+  beforeUnmount() { this.topScroll?.cancel(); this.timers.forEach(clearTimeout) },
   methods: {
     imageUrl,
     notify(message: string) { this.$apple.notify(message, {tone:'success'}) },
@@ -209,7 +213,7 @@ export default defineComponent({
     },
     refresh(done: () => void) { this.timers.push(setTimeout(() => { this.refreshText = `更新于 ${new Date().toLocaleTimeString('zh-CN')}`; done() }, 700)) },
     loadMore(done: () => void) { this.timers.push(setTimeout(() => { this.itemsCount = Math.min(12, this.itemsCount + 3); done() }, 500)) },
-    toTop() { window.scrollTo({top:0,behavior:this.$apple.motion.value.mode === 'none' || this.$apple.motion.value.reduced ? 'instant':'smooth'}) },
+    toTop() { this.topScroll = scrollToWithMotion(window, 0, resolveMotion('inherit', this.$apple.motion.value.mode, this.$apple.motion.value.reduced) === 'full') },
   },
 })
 </script>
@@ -223,6 +227,8 @@ export default defineComponent({
 .component-demo > .demo-tag-row > :deep(.apple-button) { align-self: center; max-width: 100%; }
 
 .demo-transition-stage { display: grid; min-width: 0; overflow: hidden; --demo-slide-distance: 24px; }
+.demo-scroll-bar { height: 240px; overflow: auto; border-radius: 12px; }
+.demo-scroll-bar__content { width: 720px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px; }
 .demo-transition-stage.is-backward { --demo-slide-distance: -24px; }
 .demo-transition-stage :deep(.apple-statistic) { grid-area: 1 / 1; min-width: 0; }
 .demo-transition-stage :deep(.apple-slide-x-enter-active),

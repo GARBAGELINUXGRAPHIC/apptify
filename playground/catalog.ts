@@ -64,9 +64,12 @@ export const catalog: CatalogItem[] = [
   item('ApplePullRefresh', 'v-model(refreshing) · threshold · label · disabled | refresh(done)', '<apple-pull-refresh @refresh="async done => { await reload(); done() }">内容</apple-pull-refresh>'),
   item('AppleBackTop', 'threshold · label', '<apple-back-top :threshold="400" />'),
   item('AppleFloatingGroup', 'backTop · threshold · target · label · motion | default', '<apple-floating-group :threshold="300" />'),
+  item('AppleSpeedDial', 'backTop · threshold · target · label', '<!-- App.vue -->\n<apple-speed-dial />'),
+  item('AppleSpeedDialItem', 'label · icon · visible · disabled · variant | click', '<apple-speed-dial-item label="新增" :icon="Plus" @click="create" />'),
   item('AppleAutoSize', 'axis(height|both) · motion | default', '<apple-auto-size><div v-if="expanded">详情内容</div></apple-auto-size>'),
   item('AppleTransition', 'name(page|slide-x|slide-y|fade) · mode · appear · motion | default', '<apple-transition name="page"><router-view /></apple-transition>'),
   item('AppleInfiniteScroll', 'loading · finished · error · disabled · distance | load(done), retry(done)', '<apple-infinite-scroll :finished="finished" @load="async done => { await loadMore(); done() }">内容</apple-infinite-scroll>'),
+  item('AppleScrollBar', 'target · axis(both|horizontal|vertical) · label | interaction · refresh()', '<apple-scroll-bar target="#scroll-area" />'),
 ]
 export const groups = ['全部组件', '基础', '表单', '导航', '数据展示', '反馈', '移动交互']
 

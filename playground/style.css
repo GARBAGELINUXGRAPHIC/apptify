@@ -91,8 +91,8 @@ button { font: inherit; }
 
 .specimen > .apple-card__body > .apple-search { margin-bottom: 12px; }
 .directory-layout { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 32px; align-items: start; }
-.directory-index { position: sticky; top: 100px; max-height: calc(100dvh - 120px); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-top: 16px; font-size: 13px; min-width: 0; }
-.directory-index > span { color: var(--apple-secondary); font-size: 12px; display: block; margin: 0 0 12px 8px; }
+.directory-index { position: sticky; top: 100px; display: flex; flex-direction: column; max-height: calc(100dvh - 120px); overflow: hidden; padding-top: 16px; font-size: 13px; min-width: 0; }
+.directory-index > span { flex-shrink: 0; color: var(--apple-secondary); font-size: 12px; display: block; margin: 0 0 12px 8px; }
 .directory-index .apple-tree__row { min-height: 34px; }
 .directory-index .apple-tree__row > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .components-page { padding: 40px 40px 0; }

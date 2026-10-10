@@ -15,6 +15,7 @@ const gallery = JSON.stringify([{ src: image('#0071e3', 'Apptify'), alt: '蓝色
 const scroll = '<div id="demo-scroll" class="scroll-demo" tabindex="0" aria-label="滚动示例"><div style="height: 900px">向下滚动，体验回到顶部。</div></div>'
 
 const examples: Record<string, PlaygroundExample> = {
+  AppleScrollBar: { props: { target: '"#demo-scroll"' }, before: '<div id="demo-scroll" class="scroll-demo" tabindex="0" aria-label="滚动示例"><div style="width: 760px; height: 900px; display: grid; gap: 16px"><div v-for="n in 12" :key="n" class="tile">{{ n }}</div></div></div>' },
   AppleButton: { slots: { default: { code: '继续', enabled: true } } },
   AppleLink: { props: { as: '"button"' }, slots: { default: { code: '了解更多', enabled: true } } },
   AppleProvider: { props: { theme: '"dark"' }, slots: { default: { code: '<AppleInput v-model="fieldValue" label="局部主题" /><AppleButton @click="record(\'click\')">继续</AppleButton>', enabled: true } } },
@@ -50,7 +51,7 @@ const examples: Record<string, PlaygroundExample> = {
   AppleSteps: { props: { items: options, clickable: 'true' } },
   AppleAccordion: { props: { items: '[{"label":"如何使用？","value":"first","content":"从 apptify 导入组件。"},{"label":"支持键盘吗？","value":"second","content":"按钮可以用 Enter 或空格操作。"}]' } },
   AppleTable: { props: { columns: '[{"key":"name","label":"姓名","sortable":true},{"key":"score","label":"评分","sortable":true,"align":"right"}]', rows: '[{"id":1,"name":"林初","score":92},{"id":2,"name":"Alex","score":85},{"id":3,"name":"Taylor","score":97},{"id":4,"name":"Sam","score":88}]', selectable: 'true', pageSize: '3' } },
-  AppleTree: { props: { items: '[{"label":"文档","value":"docs","children":[{"label":"指南","value":"guide"},{"label":"API","value":"api"}]},{"label":"设置","value":"settings"}]', expanded: '["docs"]' } },
+  AppleTree: { props: { items: '[{"label":"文档","value":"docs","children":[{"label":"指南","value":"guide"},{"label":"API","value":"api"}]},{"label":"设置","value":"settings"}]', expanded: '["docs"]', mobileDirectory: 'false' } },
   AppleList: { props: { items: options, selectable: 'true', modelValue: '"first"' } },
   AppleAvatar: { props: { name: '"林初"', size: '48' } },
   AppleAvatarGroup: { props: { items: '[{"name":"林初"},{"name":"Alex"},{"name":"Taylor"},{"name":"Sam"},{"name":"陈安"}]' } },
@@ -75,6 +76,8 @@ const examples: Record<string, PlaygroundExample> = {
   AppleInfiniteScroll: { slots: { default: { code: '<p v-for="n in batches" :key="n" class="tile">已加载第 {{ n }} 批</p>', enabled: true } } },
   AppleBackTop: { props: { target: '"#demo-scroll"', threshold: '120', fixed: 'false' }, before: scroll },
   AppleFloatingGroup: { props: { target: '"#demo-scroll"', threshold: '120' }, before: scroll, slots: { default: { code: '<AppleButton @click="record(\'action\')">帮助</AppleButton>', enabled: true } } },
+  AppleSpeedDial: { props: { target: '"#demo-scroll"', threshold: '120' }, before: scroll + '<AppleTree label="示例目录" :items="[{ label: \'概览\', value: \'overview\' }]" /><AppleSpeedDialItem label="新增" @click="record(\'create\')" />' },
+  AppleSpeedDialItem: { props: { label: '"新增"' }, before: '<AppleSpeedDial :threshold="0" />' },
   AppleAutoSize: { before: '<AppleLink as="button" @click="expanded = !expanded">切换内容</AppleLink>', slots: { default: { code: '<div class="tile"><p>内容</p><p v-if="expanded">更多内容<br />更多内容<br />更多内容</p></div>', enabled: true } } },
   AppleTransition: { before: '<AppleLink as="button" @click="expanded = !expanded">切换内容</AppleLink>', slots: { default: { code: '<div :key="String(expanded)" class="tile">{{ expanded ? \'第二页\' : \'第一页\' }}</div>', enabled: true } } },
   AppleOverlayHost: { before: '<AppleButton @click="$apple.notify(\'内容已保存\', { tone: \'success\' })">显示通知</AppleButton><AppleButton variant="secondary" @click="$apple.dialog({ title: \'宿主对话框\', message: \'由 OverlayHost 渲染\' })">打开对话框</AppleButton>' },

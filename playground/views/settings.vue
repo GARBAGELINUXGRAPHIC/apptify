@@ -38,7 +38,7 @@
         <div class="settings-section-heading"><div><h2 id="ripple-heading">点击波纹</h2><p>让每一次轻点，都有细微的回应。</p></div></div>
         <apple-switch :model-value="rippleAllowed && apple.ripple.value.enabled" :disabled="!rippleAllowed" label="点击波纹" :hint="rippleAllowed ? '减弱动效时自动关闭，可手动开启；偏好保存在这台设备上。' : '关闭动效时，无法开启点击波纹。'" @update:model-value="apple.ripple.value.set" />
         <div ref="rippleDemo" class="effect-demo ripple-sample" aria-label="波纹自动演示" @pointerenter="ripplePaused = true" @pointerleave="ripplePaused = false" @focusin="ripplePaused = true" @focusout="ripplePaused = false">
-          <apple-button variant="outline" @click="rippleDemoClicks++">试试点击波纹</apple-button>
+          <apple-list :items="rippleDemoItems" selectable label="点击波纹演示" @select="rippleDemoClicks++" />
           <span class="ripple-click-count">已点击 {{ rippleDemoClicks }} 次</span>
         </div>
         <div class="settings-card-foot">{{ rippleAllowed && apple.ripple.value.enabled ? '自动点击 · 也可以手动试一试' : '点击波纹已关闭 · 静态展示' }}</div>
@@ -93,6 +93,7 @@ const rippleDemo = ref<HTMLElement>()
 const motionDemoOpened = ref<string[]>([])
 const motionDemoItems = [{ label: '预览效果', value: 'preview', content: '折叠面板与所有组件的动画速度、数量都会跟随你选择的动效强度。' }]
 const rippleDemoClicks = ref(0)
+const rippleDemoItems = [{ label: '试试点击波纹', value: 'ripple-preview' }]
 const motionPaused = ref(false)
 const ripplePaused = ref(false)
 let demoTimer: number | undefined
@@ -193,6 +194,8 @@ function reset() {
 .motion-sample :deep(.apple-accordion h3) { font-size: 14px; }
 .motion-sample :deep(.apple-accordion__content) { font-size: 12px; }
 .ripple-sample { flex: 1; max-height: 180px; margin-block: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 20px; }
+.ripple-sample :deep(.apple-list-size) { width: 100%; border-radius: 12px; background: var(--apple-surface); }
+.ripple-sample :deep(.apple-list__item) { padding-inline: 16px; }
 .ripple-click-count { color: var(--apple-secondary); font-size: 11px; }
 .glass-sample { min-height: 156px; display: grid; place-items: center; margin: 0 0 20px; isolation: isolate; }
 .glass-sample-colors { position: absolute; inset: -40px; display: flex; align-items: center; justify-content: center; gap: 20px; animation: sample-glass 6s ease-in-out infinite; }

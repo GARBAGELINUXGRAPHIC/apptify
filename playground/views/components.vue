@@ -6,9 +6,8 @@
       <aside class="directory-index sidebar" aria-label="组件目录">
         <header class="directory-header">
           <span>组件目录</span>
-          <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
         </header>
-        <div class="directory-tree"><ComponentIndex v-model:expanded="expandedGroups" :active-group="activeGroup" :active-id="activeId" :search="directorySearch" /></div>
+        <div class="directory-tree"><ComponentIndex v-model:expanded="expandedGroups" :active-group="activeGroup" :active-id="activeId" /></div>
       </aside>
       <div class="components-content">
         <div class="feed-toolbar">
@@ -34,10 +33,6 @@
     </div>
   </apple-container>
   </main>
-  <DirectoryDialog v-model="mobileIndex" title="组件目录">
-    <div class="directory-search"><apple-search v-model="directorySearch" label="搜索组件目录" placeholder="名称、标签或描述" /></div>
-    <ComponentIndex v-model:expanded="expandedGroups" :active-group="activeGroup" :active-id="activeId" :search="directorySearch" @navigate="mobileIndex = false" />
-  </DirectoryDialog>
 </template>
 
 <script setup lang="ts">
@@ -47,7 +42,6 @@ import { Hash, Monitor, Smartphone } from 'lucide-vue-next'
 import { catalog, sections, componentId } from '../catalog'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
-import DirectoryDialog from '../components/DirectoryDialog.vue'
 import MasonryFeed from '../components/MasonryFeed.vue'
 import ComponentDocumentLink from '../editor/ComponentDocumentLink.vue'
 import { componentDocuments, componentDocumentPath } from '../editor/documents'
@@ -59,8 +53,6 @@ const feed = ref<HTMLElement>()
 const activeGroup = ref(sections[0].id)
 const activeId = ref('')
 const previewMode = ref('desktop')
-const mobileIndex = ref(false)
-const directorySearch = ref('')
 const expandedGroups = ref(sections.map(section => section.id))
 let anchors: HTMLElement[] = []
 let frame = 0
@@ -85,10 +77,10 @@ function navigateGroup(label: string) {
   const section = sections.find(section => section.label === label)
   void router.push(section ? `/components#${section.id}` : '/components')
 }
-watch(() => route.hash, () => { mobileIndex.value = false; schedulePosition() })
+watch(() => route.hash, schedulePosition)
 watch(activeId, async () => {
   await nextTick()
-  const sidebar = document.querySelector<HTMLElement>('.directory-tree')
+  const sidebar = document.querySelector<HTMLElement>('.directory-tree .apple-tree-scroll')
   const current = sidebar?.querySelector<HTMLElement>('.apple-tree__row.is-selected')
   if (!sidebar || !current) return
   const item = current.getBoundingClientRect(), bounds = sidebar.getBoundingClientRect()
@@ -115,11 +107,8 @@ onBeforeUnmount(() => {
 .directory-index { display: flex; flex-direction: column; overflow: hidden; }
 .directory-header { flex-shrink: 0; }
 .directory-header > span { color: var(--apple-secondary); font-size: 12px; display: block; margin: 0 0 12px 8px; }
-.directory-tree { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.directory-tree { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 @media (max-width: 900px) { .directory-index { display: none; } }
-.directory-search { min-width: 0; margin: 0 4px 16px; }
-.directory-search :deep(.apple-field__label) { font-size: 11px; }
-.directory-search :deep(input) { min-width: 0; font-size: 12px; }
 .components-page > * { max-width: none; }
 .feed-anchor { scroll-margin-top: 96px; }
 .feed-group-heading { padding-bottom: 20px; }

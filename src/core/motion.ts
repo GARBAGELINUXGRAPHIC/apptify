@@ -166,3 +166,5 @@ export const AppleSelection: ObjectDirective<HTMLElement, SelectionValue> = {
   updated(element, binding) { selections.get(element)?.update(binding.value) },
   unmounted(element) { selections.get(element)?.destroy(); selections.delete(element) },
 }
+
+export { scrollToWithMotion, cancelMotionScroll, type MotionScroll } from './scroll-motion'

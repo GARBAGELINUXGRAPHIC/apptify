@@ -1,0 +1,18 @@
+[data-apple-scrollbar-native] { scrollbar-width: none !important; scrollbar-gutter: auto !important; }
+[data-apple-scrollbar-native]::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+.apple-scroll-bar { position: fixed; box-sizing: border-box; inset: auto; margin: 0; padding: 0; max-width: none; max-height: none; border: 0; border-radius: 999px; background: transparent; overflow: hidden; z-index: 80; touch-action: none; user-select: none; outline: none; }
+.apple-scroll-bar[hidden] { display: none !important; }
+.apple-scroll-bar__slider { position: absolute; }
+.apple-scroll-bar__thumb { display: block; border-radius: 999px; background: rgb(var(--apple-scrollbar-thumb-rgb, 0 0 0) / .32); transition: background-color 120ms ease; }
+.apple-scroll-bar--horizontal .apple-scroll-bar__slider { left: 0; bottom: 0; height: 8px; }
+.apple-scroll-bar--horizontal .apple-scroll-bar__thumb { height: calc(100% - 2px); }
+.apple-scroll-bar--vertical .apple-scroll-bar__slider { top: 0; right: 0; width: 8px; }
+.apple-scroll-bar--vertical .apple-scroll-bar__thumb { height: 100%; }
+.apple-scroll-bar--vertical[dir=rtl] .apple-scroll-bar__slider { right: auto; left: 0; }
+.apple-scroll-bar__slider:hover .apple-scroll-bar__thumb { background: rgb(var(--apple-scrollbar-thumb-rgb, 0 0 0) / .5); }
+.apple-scroll-bar.is-dragging .apple-scroll-bar__thumb { background: rgb(var(--apple-scrollbar-thumb-rgb, 0 0 0) / .64); }
+.apple-scroll-bar:focus-visible { outline: none; }
+.apple-scroll-bar:focus-visible .apple-scroll-bar__thumb { background: rgb(var(--apple-scrollbar-thumb-rgb, 0 0 0) / .64); }
+.apple-scroll-bar[data-apple-motion=none] *, .apple-scroll-bar[data-apple-motion=reduced] * { transition: none; }
+@media (prefers-reduced-motion: reduce) { .apple-scroll-bar * { transition: none; } }
+@media (forced-colors: active) { .apple-scroll-bar__thumb { background: CanvasText; } .apple-scroll-bar:focus-visible .apple-scroll-bar__thumb { outline: 1px solid CanvasText; } }

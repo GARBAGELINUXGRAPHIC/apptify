@@ -1,6 +1,7 @@
 export interface ComponentMetadata { label: string; group: string; description: string }
 
 export const componentMetadata: Record<string, ComponentMetadata> = {
+  AppleScrollBar: { label: '滚动条', group: '基础', description: '悬浮在内容之上。' },
   AppleButton: {"label":"按钮","group":"基础","description":"清晰的操作层级。"},
   AppleLink: {"label":"链接","group":"基础","description":"让下一步清楚可见。"},
   AppleSearch: {"label":"搜索","group":"基础","description":"快速找到关心的内容。"},
@@ -63,6 +64,8 @@ export const componentMetadata: Record<string, ComponentMetadata> = {
   ApplePullRefresh: {"label":"下拉刷新","group":"移动交互","description":"轻轻下拉，获取新内容。"},
   AppleBackTop: {"label":"回到顶部","group":"移动交互","description":"回到开始，毫不费力。"},
   AppleFloatingGroup: {"label":"悬浮操作组","group":"移动交互","description":"常用操作，触手可及。"},
+  AppleSpeedDial: {"label":"全局快捷操作","group":"移动交互","description":"目录与常用操作，集中在一处。"},
+  AppleSpeedDialItem: {"label":"快捷操作项","group":"移动交互","description":"页面声明，全局呈现。"},
   AppleAutoSize: {"label":"自适应尺寸","group":"基础","description":"内容变化，布局随行。"},
   AppleTransition: {"label":"动效容器","group":"基础","description":"为页面保留连续感。"},
   AppleInfiniteScroll: {"label":"无限滚动","group":"移动交互","description":"浏览，不必被翻页打断。"},

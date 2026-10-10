@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<div id="app"></div>
+<script type="module">
+import { createApp, h, ref } from 'vue'
+import { Plus } from 'lucide-vue-next'
+import { createAppleUI, AppleProvider, AppleSpeedDial, AppleSpeedDialItem, AppleTree } from '/src/index.ts'
+const items = [{ label: '接口', value: 'root', children: Array.from({ length: 80 }, (_, i) => ({ label: `参数 ${i + 1}`, value: `prop-${i + 1}` })) }]
+createApp({ setup() {
+  const selected = ref('')
+  const count = ref(0)
+  return () => h(AppleProvider, null, { default: () => [
+    h('main', { style: 'min-height: 2000px; padding: 24px' }, [
+      h('output', { id: 'selected' }, selected.value),
+      h('output', { id: 'count' }, String(count.value)),
+      h(AppleTree, { label: '接口目录', items, expanded: ['root'], modelValue: selected.value, 'onUpdate:modelValue': value => { selected.value = value } }),
+      h(AppleTree, { label: '设置目录', items: [{ label: '主题', value: 'theme' }], onSelect: item => { selected.value = item.value } }),
+      h(AppleSpeedDialItem, { label: '新增', icon: Plus, onClick: () => { count.value++ } }),
+      h(AppleSpeedDialItem, { label: '第二操作', icon: Plus }),
+    ]),
+    h(AppleSpeedDial),
+  ] })
+} }).use(createAppleUI({ motion: 'none' })).mount('#app')
+</script>
+</html>

@@ -1,12 +1,14 @@
 import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, useId, withDirectives, type PropType, type VNodeChild } from 'vue'
 import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, X } from 'lucide-vue-next'
 import { Virtualizer, elementScroll, observeElementOffset, observeElementRect, type VirtualizerOptions } from '@tanstack/virtual-core'
-import { ripple } from '../core/motion'
+import { ripple, scrollToWithMotion, type MotionScroll } from '../core/motion'
 import { AppleTabs, AppleTabBar } from './tabs'
 export { AppleTabs, AppleTabBar } from './tabs'
 import { AppleAutoSize } from './motion'
 import { appleKey, resolveMotion, type AppleContext } from '../core/context'
 import { usePreviewNavigation } from '../core/preview-navigation'
+import { useSpeedDialEntry } from '../core/speed-dial'
+import { AppleSearch } from './foundation'
 
 export type AppleValue = string | number
 export interface AppleItem { label: string; value: AppleValue; disabled?: boolean; description?: string; href?: string; content?: string }
@@ -299,11 +301,28 @@ export const AppleTable = defineComponent({
 
 export const AppleTree = defineComponent({
   name: 'AppleTree',
-  props: { ...motionProps, items: { type: Array as PropType<AppleTreeItem[]>, default: () => [] }, modelValue: valueProp, expanded: { type: Array as PropType<AppleValue[]>, default: undefined }, disabled: Boolean, label: { type: String, default: '树形列表' } },
+  setup(props) { const directory = useSpeedDialEntry('directory', () => props.label, () => props.mobileDirectory); return { directoryTarget: directory.target, inMobileDirectory: directory.hosted, closeDirectory: directory.close } },
+  props: { ...motionProps, items: { type: Array as PropType<AppleTreeItem[]>, default: () => [] }, modelValue: valueProp, expanded: { type: Array as PropType<AppleValue[]>, default: undefined }, disabled: Boolean, label: { type: String, default: '树形列表' }, searchable: { type: Boolean, default: true }, mobileDirectory: { type: Boolean, default: true } },
   emits: ['update:modelValue', 'update:expanded', 'select'],
-  data: () => ({ internalExpanded: [] as AppleValue[], internalValue: undefined as AppleValue | undefined, focusValue: undefined as AppleValue | undefined }),
+  data: () => ({ search: '', searchCollapsed: [] as AppleValue[], internalExpanded: [] as AppleValue[], internalValue: undefined as AppleValue | undefined, focusValue: undefined as AppleValue | undefined }),
   computed: {
-    expandedValues(): AppleValue[] { return this.expanded ?? this.internalExpanded },
+    query(): string { return this.searchable ? this.search.trim().toLocaleLowerCase() : '' },
+    filteredItems(): AppleTreeItem[] {
+      if (!this.query) return this.items
+      const filter = (items: AppleTreeItem[]): AppleTreeItem[] => items.flatMap(item => {
+        if (`${item.label} ${item.value} ${item.description ?? ''}`.toLocaleLowerCase().includes(this.query)) return [item]
+        const children = item.children && filter(item.children)
+        return children?.length ? [{ ...item, children }] : []
+      })
+      return filter(this.items)
+    },
+    expandedValues(): AppleValue[] {
+      if (!this.query) return this.expanded ?? this.internalExpanded
+      const values: AppleValue[] = []
+      const visit = (items: AppleTreeItem[]) => { for (const item of items) if (item.children?.length) { values.push(item.value); visit(item.children) } }
+      visit(this.filteredItems)
+      return values.filter(value => !this.searchCollapsed.includes(value))
+    },
     selectedValue(): AppleValue | undefined {
       const value = this.modelValue ?? this.internalValue
       const pathTo = (items: AppleTreeItem[]): AppleTreeItem[] | undefined => {
@@ -321,15 +340,16 @@ export const AppleTree = defineComponent({
     visibleItems(): { item: AppleTreeItem; parent?: AppleValue }[] {
       const result: { item: AppleTreeItem; parent?: AppleValue }[] = []
       const visit = (items: AppleTreeItem[], parent?: AppleValue) => { for (const item of items) { result.push({ item, parent }); if (this.expandedValues.includes(item.value) && item.children) visit(item.children, item.value) } }
-      visit(this.items)
+      visit(this.filteredItems)
       return result
     },
     tabValue(): AppleValue | undefined { return this.visibleItems.find(entry => entry.item.value === this.focusValue && !entry.item.disabled)?.item.value ?? this.visibleItems.find(entry => entry.item.value === this.selectedValue && !entry.item.disabled)?.item.value ?? this.visibleItems.find(entry => !entry.item.disabled)?.item.value },
   },
+  watch: { query() { this.searchCollapsed = []; this.focusValue = undefined } },
   methods: {
-    toggle(item: AppleTreeItem) { if (this.disabled || item.disabled || !item.children?.length) return; const next = this.expandedValues.includes(item.value) ? this.expandedValues.filter(value => value !== item.value) : [...this.expandedValues, item.value]; this.internalExpanded = next; this.$emit('update:expanded', next) },
-    select(item: AppleTreeItem) { if (this.disabled || item.disabled) return; this.focus(item.value); if (item.children?.length) { this.toggle(item); return }; this.internalValue = item.value; this.$emit('update:modelValue', item.value); this.$emit('select', item) },
-    focus(value: AppleValue | undefined) { if (value === undefined) return; this.focusValue = value; this.$nextTick(() => { const index = this.visibleItems.findIndex(entry => entry.item.value === value); (this.$el as HTMLElement).querySelectorAll<HTMLElement>('[role="treeitem"]')[index]?.focus() }) },
+    toggle(item: AppleTreeItem) { if (this.disabled || item.disabled || !item.children?.length) return; if (this.query) { this.searchCollapsed = this.searchCollapsed.includes(item.value) ? this.searchCollapsed.filter(value => value !== item.value) : [...this.searchCollapsed, item.value]; return }; const next = this.expandedValues.includes(item.value) ? this.expandedValues.filter(value => value !== item.value) : [...this.expandedValues, item.value]; this.internalExpanded = next; this.$emit('update:expanded', next) },
+    select(item: AppleTreeItem) { if (this.disabled || item.disabled) return; this.focus(item.value); if (item.children?.length) { this.toggle(item); return }; this.internalValue = item.value; this.$emit('update:modelValue', item.value); this.$emit('select', item); this.closeDirectory() },
+    focus(value: AppleValue | undefined) { if (value === undefined) return; this.focusValue = value; this.$nextTick(() => { const index = this.visibleItems.findIndex(entry => entry.item.value === value); (this.$refs.treeContent as HTMLElement | undefined)?.querySelectorAll<HTMLElement>('[role="treeitem"]')[index]?.focus() }) },
     keydown(event: KeyboardEvent, item: AppleTreeItem) {
       if (this.disabled || item.disabled) return
       const enabled = this.visibleItems.filter(entry => !entry.item.disabled)
@@ -357,7 +377,13 @@ export const AppleTree = defineComponent({
       })
     },
   },
-  render() { return h(AppleAutoSize, { motion: this.motion, class: 'apple-tree-size' }, { default: () => h('ul', { class: 'apple-tree', role: 'tree', 'aria-label': this.label, 'data-motion': this.motion }, this.renderItems(this.items)) }) },
+  render() {
+    const content = h('div', { ref: 'treeContent', class: 'apple-tree-content' }, [
+      this.searchable ? h(AppleSearch, { modelValue: this.search, 'onUpdate:modelValue': (value: string) => { this.search = value }, label: `搜索${this.label}`, disabled: this.disabled }) : null,
+      h('div', { class: 'apple-tree-scroll' }, [h(AppleAutoSize, { motion: this.motion, class: 'apple-tree-size' }, { default: () => h('ul', { class: 'apple-tree', role: 'tree', 'aria-label': this.label, 'data-motion': this.motion }, this.renderItems(this.filteredItems)) }), this.query && !this.filteredItems.length ? h('p', { class: 'apple-tree-empty', role: 'status' }, '无匹配结果') : null]),
+    ])
+    return h('div', { class: ['apple-tree-host', { 'is-mobile-directory': this.inMobileDirectory }] }, h(Teleport, { to: this.directoryTarget ?? 'body', disabled: !this.inMobileDirectory }, content))
+  },
 })
 
 export const AppleList = defineComponent({
@@ -508,7 +534,7 @@ const floatingGroupKey = Symbol('apple-floating-group')
 export const AppleBackTop = defineComponent({
   name: 'AppleBackTop', setup: () => ({ grouped: inject(floatingGroupKey, false) }), props: { ...motionProps, target: { type: String, default: '' }, threshold: { type: Number, default: 300 }, label: { type: String, default: '回到顶部' }, disabled: Boolean, fixed: { type: Boolean, default: true } },
   inject: { apple: { from: appleKey, default: null } },
-  emits: ['click'], data: () => ({ visible: false, scrollTarget: undefined as HTMLElement | Window | undefined, scrollFrame: 0 }),
+  emits: ['click'], data: () => ({ visible: false, scrollTarget: undefined as HTMLElement | Window | undefined, scrollRun: undefined as MotionScroll | undefined }),
   computed: {
     motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced ?? (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)) },
   },
@@ -519,27 +545,11 @@ export const AppleBackTop = defineComponent({
     bindTarget() { this.cancelScroll(); this.scrollTarget?.removeEventListener('scroll', this.onScroll); this.scrollTarget = this.target ? document.querySelector<HTMLElement>(this.target) ?? window : window; this.scrollTarget.addEventListener('scroll', this.onScroll, { passive: true }); this.onScroll() },
     scrollPosition(): number { return this.scrollTarget === window ? window.scrollY : (this.scrollTarget as HTMLElement)?.scrollTop ?? 0 },
     onScroll() { this.visible = this.scrollPosition() >= this.threshold },
-    interruptScroll(event: Event) { if (event.type !== 'keydown' || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'].includes((event as KeyboardEvent).key)) this.cancelScroll() },
-    cancelScroll() { cancelAnimationFrame(this.scrollFrame); this.scrollFrame = 0; for (const type of ['wheel', 'touchstart', 'keydown']) window.removeEventListener(type, this.interruptScroll, true) },
+    cancelScroll() { this.scrollRun?.cancel(); this.scrollRun = undefined },
     go(event: Event) {
       if (this.disabled || !this.scrollTarget) return
       this.$emit('click', event)
-      // A second click retains the current deadline instead of queuing another run.
-      if (this.scrollFrame) return
-      const target = this.scrollTarget, distance = Math.max(0, this.scrollPosition())
-      // Instant writes prevent consumer scroll-behavior:smooth from adding a
-      // second browser-controlled animation to our bounded frame sequence.
-      if (this.motionMode !== 'full' || distance === 0) { target.scrollTo({ top: 0, behavior: 'instant' }); return }
-      const duration = Math.min(2000, Math.max(180, Math.sqrt(distance) * 20)), started = performance.now()
-      for (const type of ['wheel', 'touchstart', 'keydown']) window.addEventListener(type, this.interruptScroll, { capture: true, passive: true })
-      const tick = (now: number) => {
-        const progress = Math.min(1, Math.max(0, (now - started) / duration))
-        target.scrollTo({ top: distance * (1 - progress) ** 3, behavior: 'instant' })
-        this.onScroll()
-        if (progress < 1) this.scrollFrame = requestAnimationFrame(tick)
-        else this.cancelScroll()
-      }
-      this.scrollFrame = requestAnimationFrame(tick)
+      this.scrollRun = scrollToWithMotion(this.scrollTarget, 0, this.motionMode === 'full')
     },
   },
   render() {
@@ -551,13 +561,14 @@ export const AppleBackTop = defineComponent({
 
 export const AppleFloatingGroup = defineComponent({
   name: 'AppleFloatingGroup', setup() { provide(floatingGroupKey, true); return usePreviewNavigation() },
+  inheritAttrs: false,
   inject: { apple: { from: appleKey, default: null } },
   props: { ...motionProps, backTop: { type: Boolean, default: true }, target: { type: String, default: '' }, threshold: { type: Number, default: 300 }, label: { type: String, default: '快捷操作' } },
   computed: {
     motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced ?? (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)) },
   },
   render() {
-    const node = h('div', { ref: 'previewRoot', class: 'apple-floating-group', role: 'group', 'aria-label': this.label, 'data-motion': this.motionMode, 'data-preview-hidden': this.previewActive || undefined, inert: this.previewActive || undefined, 'aria-hidden': this.previewActive || undefined }, [this.$slots.default?.(), this.backTop ? h(AppleBackTop, { target: this.target, threshold: this.threshold, motion: this.motion }) : null])
+    const node = h('div', { ...this.$attrs, ref: 'previewRoot', class: ['apple-floating-group', this.$attrs.class], role: 'group', 'aria-label': this.label, 'data-motion': this.motionMode, 'data-preview-hidden': this.previewActive || undefined, inert: this.previewActive || undefined, 'aria-hidden': this.previewActive || undefined }, [this.$slots.default?.(), this.backTop ? h(AppleBackTop, { target: this.target, threshold: this.threshold, motion: this.motion }) : null])
     const target = (this.apple as AppleContext | null)?.portalTarget.value
     return target ? h(Teleport, { to: target }, node) : node
   },

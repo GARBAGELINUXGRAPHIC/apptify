@@ -101,16 +101,6 @@
 .apple-image__gallery--compact > .apple-image__trigger { flex: 0 0 100%; scroll-snap-align: center; }
 .apple-image__gallery--tiled { display: flex; gap: 8px; height: var(--apple-image-tile-height, clamp(112px, 28vw, 180px)); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
 .apple-image__gallery--tiled::-webkit-scrollbar { display: none; }
-.apple-image__scrollbar { position: relative; height: 24px; width: 100%; cursor: pointer; touch-action: none; user-select: none; }
-.apple-image__scrollbar[hidden] { display: none; }
-.apple-image__scrollbar::before { content: ''; position: absolute; inset: 9px 0; border-radius: 999px; background: color-mix(in srgb, var(--apple-secondary) 10%, transparent); }
-.apple-image__scrollbar-thumb { position: absolute; top: 50%; height: 6px; min-width: min(32px, 100%); max-width: 100%; border-radius: 999px; background: color-mix(in srgb, var(--apple-secondary) 46%, var(--apple-surface)); cursor: grab; transition: background-color 120ms ease, height 120ms ease; }
-.apple-image__scrollbar:hover .apple-image__scrollbar-thumb, .apple-image__scrollbar:focus-visible .apple-image__scrollbar-thumb { height: 8px; background: color-mix(in srgb, var(--apple-secondary) 72%, var(--apple-surface)); }
-.apple-image__scrollbar.is-dragging .apple-image__scrollbar-thumb { height: 8px; background: var(--apple-secondary); cursor: grabbing; }
-.apple-image__scrollbar:focus-visible { outline: 2px solid var(--apple-accent); outline-offset: 1px; border-radius: 8px; }
-.apple-image[data-apple-motion=none] .apple-image__scrollbar-thumb, .apple-image[data-apple-motion=reduced] .apple-image__scrollbar-thumb { transition: none; }
-@media (pointer: coarse) { .apple-image__scrollbar { height: 32px; } .apple-image__scrollbar::before { inset-block: 13px; } }
-@media (prefers-reduced-motion: reduce) { .apple-image__scrollbar-thumb { transition: none; } }
 .apple-image__gallery--tiled > .apple-image__trigger { flex: 0 0 auto; width: auto; height: 100%; scroll-snap-align: center; }
 .apple-image[data-gallery-layout=tiled-wrap] > .apple-image__surface { background: transparent; }
 .apple-image__gallery--tiled-wrap { column-width: var(--apple-image-tile-width, 144px); column-gap: 8px; height: auto; }

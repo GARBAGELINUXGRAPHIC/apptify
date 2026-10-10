@@ -15,9 +15,6 @@
     </template>
     <apple-empty v-else title="未找到组件文档"><router-link to="/components" custom v-slot="{ href, navigate }"><apple-link :href="href" @click="navigate">返回组件目录</apple-link></router-link></apple-empty>
   </apple-container>
-  <DirectoryDialog v-if="registration" v-model="mobileIndex" title="本页接口">
-    <apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" />
-  </DirectoryDialog>
 </template>
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
@@ -28,7 +25,6 @@ import { componentDocuments } from '../../editor/documents'
 import type { ComponentDocument } from '../../editor/contract'
 import { documentSections } from '../../editor/sections'
 import ComponentWorkshop from '../../editor/ComponentWorkshop.vue'
-import DirectoryDialog from '../../components/DirectoryDialog.vue'
 const ComponentPlayground = defineAsyncComponent(() => import('../../editor/ComponentPlayground.vue'))
 const route = useRoute()
 const router = useRouter()
@@ -58,7 +54,6 @@ watch(registration, loadDocument, { immediate: true })
 onBeforeUnmount(() => { loadVersion++ })
 const documentationIndex = ref<HTMLElement>()
 const documentationContent = ref<HTMLElement>()
-const mobileIndex = ref(false)
 const selectedApi = ref<AppleValue>('props')
 const expandedSections = ref<AppleValue[]>(['props', 'events', 'slots', 'methods'])
 const apiTree = computed<AppleTreeItem[]>(() => doc.value ? [
@@ -107,10 +102,11 @@ function queueScrollSelection() {
 function revealSelection() {
   const index = documentationIndex.value
   const row = index?.querySelector<HTMLElement>('.apple-tree__row.is-selected')
-  if (!index || !row) return
-  const bounds = index.getBoundingClientRect(), selected = row.getBoundingClientRect()
-  if (selected.top < bounds.top) index.scrollTop += selected.top - bounds.top
-  else if (selected.bottom > bounds.bottom) index.scrollTop += selected.bottom - bounds.bottom
+  const scroll = index?.querySelector<HTMLElement>('.apple-tree-scroll')
+  if (!scroll || !row) return
+  const bounds = scroll.getBoundingClientRect(), selected = row.getBoundingClientRect()
+  if (selected.top < bounds.top) scroll.scrollTop += selected.top - bounds.top
+  else if (selected.bottom > bounds.bottom) scroll.scrollTop += selected.bottom - bounds.bottom
 }
 watch([selectedApi, expandedSections], async () => {
   await nextTick()
@@ -142,7 +138,6 @@ onBeforeUnmount(() => {
 
 async function navigateApi(item: AppleTreeItem) {
   if (item.children?.length) return
-  mobileIndex.value = false
   const id = String(item.value)
   await nextTick()
   await router.replace({ hash: `#${id}` })

@@ -110,7 +110,7 @@ test('accordion animates measured height and retains inert content on close', as
 test('pagination remains square on a narrow viewport', async ({ page }) => {
   await openComponent(page, 'apple-pagination')
   await page.setViewportSize({ width: 320, height: 740 })
-  const buttons = activeCard(page).locator('.component-demo .apple-pagination__pages > button')
+  const buttons = activeCard(page).locator('.component-demo .apple-pagination__pages > button:visible')
   for (const button of await buttons.all()) {
     const rect = (await button.boundingBox())!
     expect(rect.width).toBeCloseTo(44, 3)
@@ -121,7 +121,7 @@ test('pagination remains square on a narrow viewport', async ({ page }) => {
 
 test('floating actions stay inside their feed preview and retain their provider theme', async ({ page }) => {
   await openComponent(page, 'apple-floating-group')
-  const group = page.getByRole('group', { name: '快捷操作', exact: true })
+  const group = activeCard(page).getByRole('group', { name: '快捷操作', exact: true })
   await expect(group).toBeVisible()
   expect(await group.evaluate(element => element.parentElement?.hasAttribute('data-apple-portals'))).toBe(true)
   const bounds = (await activeCard(page).boundingBox())!

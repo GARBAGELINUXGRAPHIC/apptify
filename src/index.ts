@@ -6,6 +6,8 @@ import { contentComponents } from './components/content'
 import { overlayComponents } from './components/overlays'
 import { motionComponents } from './components/motion'
 import { navigationComponents } from './components/navibar'
+import { speedDialComponents } from './components/speed-dial'
+import { scrollBarComponents } from './components/scrollbar'
 import { AppleEntrance, AppleRipple, AppleSelection } from './core/motion'
 import './styles/base.css'
 import './styles/forms.css'
@@ -13,12 +15,15 @@ import './styles/date-picker.css'
 import './styles/content.css'
 import './styles/navibar.css'
 import './styles/overlays.css'
+import './styles/scrollbar.css'
 
 export * from './core/context'
 export { isTouchDevice, isVerticalScreen } from './core/device'
 export * from './components/foundation'
 export * from './components/forms'
 export * from './components/content'
+export * from './components/speed-dial'
+export * from './components/scrollbar'
 // The image viewer is an implementation detail of AppleImage. Keep the public
 // overlay surface explicit so internal components cannot become package APIs.
 export { AppleDialog, AppleDrawer, AppleSheet, AppleSnackbar, AppleOverlayHost, ApplePopover, AppleTooltip, AppleMenu, AppleActionSheet } from './components/overlays'
@@ -28,7 +33,7 @@ export * from './components/navibar'
 export * from './core/motion'
 
 export { overlayComponents }
-export const components = { ...foundationComponents, ...formComponents, ...contentComponents, ...overlayComponents, ...motionComponents, ...navigationComponents }
+export const components = { ...foundationComponents, ...formComponents, ...contentComponents, ...overlayComponents, ...motionComponents, ...navigationComponents, ...speedDialComponents, ...scrollBarComponents }
 
 export function createAppleUI(options: AppleOptions = {}): AppleContext & { install(app: App): void } {
   const context = createApple(options)

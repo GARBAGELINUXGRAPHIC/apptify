@@ -1,5 +1,6 @@
 import { isTouchDevice, isVerticalScreen, syncTouchDevice, syncVerticalScreen } from './device'
 import { inject, markRaw, ref, type Component, type InjectionKey, type PropType, type Ref } from 'vue'
+import { createSpeedDialRegistry } from './speed-dial'
 
 export type Motion = 'auto' | 'full' | 'reduced' | 'none'
 export type ComponentMotion = Motion | 'inherit'
@@ -156,13 +157,33 @@ export function createApple(options: AppleOptions = {}) {
     set(value: Partial<AppleGlassSettings>) { Object.assign(glass.value, glassSettings(value, glass.value)); persist() },
     reset() { glass.value.set(defaultGlassSettings) },
   })
+  let hasRipplePreference = typeof options.ripple === 'boolean'
+  if (typeof window !== 'undefined') {
+    if (options.persist) {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')
+        if (stored.theme === 'system' || themes.value[stored.theme]) theme.value.name = stored.theme
+        if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.value.mode = stored.motion
+        if (typeof stored.ripple === 'boolean') { ripple.value.enabled = stored.ripple; hasRipplePreference = true }
+        else if (stored.motion === 'reduced') ripple.value.enabled = false
+        if (motion.value.mode === 'none') ripple.value.enabled = false
+        Object.assign(glass.value, glassSettings(stored.glass, glass.value))
+      } catch { /* Ignore invalid preferences, not application state. */ }
+    }
+    if (window.matchMedia) {
+      systemDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+      motion.value.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (motion.value.reduced && !hasRipplePreference) ripple.value.enabled = false
+    }
+  }
   const messages = createMessageBus()
   const overlays = createOverlayService()
   const portalTarget: Ref<HTMLElement | undefined> = ref()
+  const speedDial = createSpeedDialRegistry()
   let attached = 0
   let detachMedia = () => {}
   const context = {
-    theme, motion, ripple, glass, messages, overlays, portalTarget, isTouchDevice, isVerticalScreen,
+    theme, motion, ripple, glass, messages, overlays, portalTarget, speedDial, isTouchDevice, isVerticalScreen,
     dialog: <T = unknown>(settings: Omit<OverlayOptions, 'kind'>) => overlays.open<T>({ ...settings, kind: 'dialog' }),
     notify: (message: string, settings: Omit<OverlayOptions, 'kind' | 'message'> = {}) => overlays.open({ duration: 4000, ...settings, message, kind: 'snackbar' }),
     sendMessage: messages.sendMessage,
@@ -172,18 +193,6 @@ export function createApple(options: AppleOptions = {}) {
       if (attached > 1 || typeof window === 'undefined') return
       syncTouchDevice()
       syncVerticalScreen()
-      let hasRipplePreference = typeof options.ripple === 'boolean'
-      if (options.persist) {
-        try {
-          const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')
-          if (stored.theme === 'system' || themes.value[stored.theme]) theme.value.name = stored.theme
-          if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.value.mode = stored.motion
-          if (typeof stored.ripple === 'boolean') { ripple.value.enabled = stored.ripple; hasRipplePreference = true }
-          else if (stored.motion === 'reduced') ripple.value.enabled = false
-          if (motion.value.mode === 'none') ripple.value.enabled = false
-          Object.assign(glass.value, glassSettings(stored.glass, glass.value))
-        } catch { /* Ignore invalid preferences, not application state. */ }
-      }
       if (!window.matchMedia) return
       const dark = window.matchMedia('(prefers-color-scheme: dark)')
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)')

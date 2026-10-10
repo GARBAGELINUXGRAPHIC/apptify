@@ -1,6 +1,6 @@
 {
   "name": "apptify",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "An Apple-inspired, responsive Vue 3 component library.",
   "repository": {
     "type": "git",

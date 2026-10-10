@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ScrollBar</title>
+<style>body{margin:0}main{padding:24px;min-height:1500px}.port{width:320px;height:200px;overflow:auto;border:2px solid #888}.canvas{width:720px;height:800px;background:linear-gradient(135deg,#d2e7f8,#eacdf6)}.nest{height:140px;overflow:auto;margin-top:24px}.nest .port{margin-top:60px}.rtl{direction:rtl}#transformed{transform:translate(20px,10px)}#dynamic{width:320px;height:100px;overflow:auto;margin-top:20px}</style></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h, nextTick } from 'vue'
+import { AppleProvider, AppleScrollBar, AppleDialog, AppleNavibar, ApplePopover, createAppleUI } from '/src/index.ts'
+const canvas = () => h('div', { class: 'canvas' })
+const app = createApp({
+  data: () => ({ open: false, upper: false, growing: false, rtl: false }),
+  render() { return h(AppleProvider, null, () => h('main', [
+    h(AppleNavibar, { fixed: true, items: [{ label: '首页', value: '/' }] }),
+    h('div', { id: 'transformed' }, [h('div', { id: 'port', class: ['port', { rtl: this.rtl }], tabindex: 0, 'aria-label': '主内容' }, [canvas()])]),
+    h('div', { id: 'dynamic' }, [h('div', { style: { height: this.growing ? '600px' : '20px' } })]),
+    h('button', { id: 'grow', onClick: () => this.growing = !this.growing }, '切换内容'),
+    h('button', { id: 'rtl', onClick: () => this.rtl = !this.rtl }, 'RTL'),
+    h('div', { class: 'nest' }, [h('div', { id: 'nested', class: 'port', 'aria-label': '嵌套内容' }, [canvas()])]),
+    h('div', { id: 'ignored', class: 'port', 'data-apple-scrollbar-ignore': '' }, [canvas()]),
+    h('div', { id: 'explicit', class: 'port', 'data-apple-scrollbar-ignore': '' }, [canvas()]),
+    h(AppleScrollBar, { target: '#explicit', axis: 'horizontal', label: '指定滚动条' }),
+    h(AppleScrollBar),
+    h('button', { id: 'open', onClick: () => this.open = true }, '打开对话框'),
+    h(ApplePopover, { label: '打开浮层', width: 320 }, () => h('div', { style: { height: '1200px' } }, '浮层内容')),
+    h(AppleDialog, { modelValue: this.open, 'onUpdate:modelValue': value => this.open = value, title: '长内容' }, () => [h('button', { id: 'upper', onClick: () => this.upper = true }, '打开第二层'), h(ApplePopover, { label: '对话框内浮层', width: 320 }, () => h('div', { style: { height: '1200px' } }, '浮层内容')), h('div', { style: { height: '1200px' } }, '弹窗内容')]),
+    h(AppleDialog, { modelValue: this.upper, 'onUpdate:modelValue': value => this.upper = value, title: '第二层' }, () => h('div', { style: { height: '1200px' } }, '第二层内容')),
+  ])) },
+})
+app.use(createAppleUI({ motion: 'none' })).mount('#app')
+window.unmount = () => app.unmount()
+</script></body></html>

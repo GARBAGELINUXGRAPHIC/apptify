@@ -10,7 +10,7 @@ async function ready(page: Page) {
 
 async function dragScrollbar(page: Page) {
   const bar = await ready(page), strip = page.locator('#tiled .apple-image__gallery')
-  const thumb = bar.locator('.apple-image__scrollbar-thumb')
+  const thumb = bar.locator('.apple-scroll-bar__thumb')
   const trackBox = (await bar.boundingBox())!, thumbBox = (await thumb.boundingBox())!
   const startX = thumbBox.x + thumbBox.width / 2, y = thumbBox.y + thumbBox.height / 2
   await page.mouse.move(startX, y)
@@ -84,7 +84,9 @@ test('scrollbar matches light and dark themes, including its focused and drag st
     await page.locator('#tiled').screenshot({ path: `/tmp/apptify-checks/tiled-scrollbar-${colorScheme}.png` })
   }
   await bar.focus()
-  await expect(bar).toHaveCSS('outline-style', 'solid')
+  await expect(bar).toHaveCSS('outline-style', 'none')
+  await expect(bar.locator('span')).toHaveCSS('box-shadow', 'none')
+  await expect.poll(() => bar.locator('span').evaluate(element => getComputedStyle(element).backgroundColor)).toMatch(/0\.64\)/)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(bar.locator('span')).toHaveCSS('transition-duration', '0s')
 })
