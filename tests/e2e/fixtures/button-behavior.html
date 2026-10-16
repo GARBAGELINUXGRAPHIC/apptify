@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Button behavior</title></head>
+<body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { ArrowRight } from 'lucide-vue-next'
+import { AppleProvider, AppleButton, createAppleUI } from '/src/index.ts'
+createApp({
+  data: () => ({ submits: 0, resets: 0 }),
+  render() {
+    return h(AppleProvider, null, () => [
+      h('div', { style: 'display:flex;gap:16px;align-items:center' }, ['small', 'medium', 'large'].flatMap(size => [
+        h(AppleButton, { id: size, size }, () => 'Continue'),
+        h(AppleButton, { id: `${size}-icon`, size, icon: ArrowRight, iconOnly: true, label: 'Continue' }, () => 'Hidden label'),
+      ])),
+      h('form', { onSubmit: event => { event.preventDefault(); this.submits++ }, onReset: () => this.resets++ }, [
+        h('input', { name: 'name', value: 'Initial', 'aria-label': 'Name' }),
+        ...['button', 'submit', 'reset'].map(type => h(AppleButton, { type }, () => type)),
+      ]),
+      h('output', { id: 'form-events' }, `${this.submits} submits, ${this.resets} resets`),
+      h(AppleButton, { href: '#destination', type: 'submit' }, () => 'Navigate'),
+      h(AppleButton, { href: '#blocked', disabled: true }, () => 'Disabled link'),
+      h(AppleButton, { href: '#blocked', loading: true }, () => 'Loading link'),
+      h('div', { id: 'destination' }, 'Destination'),
+    ])
+  },
+}).use(createAppleUI()).mount('#app')
+</script></body></html>

@@ -11,6 +11,7 @@
               <AppleSelect v-else-if="controls[entry.name].kind === 'select'" :model-value="String(config.props[entry.name].value)" @update:model-value="config.props[entry.name].value = String($event)" :items="controls[entry.name].options.map(value => ({ label: value, value }))" :label="entry.name" :disabled="!config.props[entry.name].enabled" />
               <AppleTextarea v-else-if="['json', 'expression'].includes(controls[entry.name].kind)" :model-value="String(config.props[entry.name].value)" @update:model-value="config.props[entry.name].value = String($event)" :label="entry.name" :hint="controls[entry.name].kind === 'json' ? 'JSON' : 'JavaScript 表达式'" :rows="3" :error="errors[entry.name] || ''" :disabled="!config.props[entry.name].enabled" />
               <AppleInput v-else :model-value="String(config.props[entry.name].value)" @update:model-value="config.props[entry.name].value = String($event)" :label="entry.name" :error="errors[entry.name] || ''" :disabled="!config.props[entry.name].enabled" />
+              <blockquote v-if="doc.name === 'AppleButton' && entry.name === 'href' && config.props.href.enabled" class="sandbox-note">沙箱预览不支持打开外部链接；在实际页面中，href 可正常跳转。</blockquote>
             </div>
           </div>
           <AppleAccordion v-if="doc.slots.length" :items="[{ label: '插槽', value: 'slots' }]">
@@ -84,6 +85,7 @@ onBeforeUnmount(() => clearTimeout(updateTimer))
 .config-heading h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
 .config-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .prop-control { display: grid; align-content: start; gap: 10px; min-width: 0; }
+.sandbox-note { margin: 0; padding-left: 12px; border-left: 2px solid var(--apple-border); color: var(--apple-secondary); font-size: 12px; line-height: 1.7; }
 .slot-control + .slot-control { border-top: 1px solid var(--apple-border); padding-top: 20px; }
 @media (max-width: 1100px) { .config-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>

@@ -12,15 +12,15 @@ export default defineHandbook({
     },
     {
       "name": "variant",
-      "type": "'primary' | 'secondary' | 'outline' | 'danger'",
+      "type": "'primary' | 'secondary' | 'outline' | 'borderless' | 'danger'",
       "default": "\"primary\"",
-      "description": "primary 为主要操作，secondary 和 outline 为描边按钮，danger 为危险操作。"
+      "description": "primary 为主要操作，secondary 和 outline 为描边按钮，borderless 无背景和边框、悬停时显示灰色背景，danger 为危险操作。"
     },
     {
       "name": "size",
       "type": "'small' | 'medium' | 'large'",
       "default": "\"medium\"",
-      "description": "按钮尺寸：small、medium、large。"
+      "description": "按钮尺寸：small、medium、large。窄屏下 small 保留至少 44px 的触控高度。"
     },
     {
       "name": "icon",
@@ -32,7 +32,7 @@ export default defineHandbook({
       "name": "iconOnly",
       "type": "boolean",
       "default": "false",
-      "description": "紧凑的纯图标布局。用 label 为按钮提供可访问名称。"
+      "description": "纯图标布局；提供 icon 或加载中时自动隐藏默认插槽文字，未提供 icon 时可用默认插槽放图标。用 label 提供可访问名称。"
     },
     {
       "name": "label",
@@ -62,13 +62,13 @@ export default defineHandbook({
       "name": "href",
       "type": "string",
       "default": "undefined",
-      "description": "非空且可用时渲染为 a；禁用或加载时渲染为 button，移除 href。"
+      "description": "链接地址，非空且可用时渲染为 a 并原生跳转；禁用或加载时移除 href。"
     },
     {
       "name": "type",
       "type": "'button' | 'submit' | 'reset'",
       "default": "\"button\"",
-      "description": "原生按钮类型。仅在渲染为 button 时使用，默认 button，避免意外提交表单。"
+      "description": "原生按钮类型：button 仅触发点击，submit 提交关联表单，reset 将关联表单控件恢复初始值。默认 button；渲染为 a 时不使用此属性。"
     }
   ],
   "events": [

@@ -1,7 +1,7 @@
 import { build } from 'esbuild'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 import { existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { parse, compileScript, compileStyle } from 'vue/compiler-sfc'
@@ -74,8 +74,9 @@ export default function playgroundEditor({ appDir = 'playground', libraryDir = '
       return { code, map: null }
     },
     async handleHotUpdate(ctx) {
-      const source = libraryDir ? resolve(config.root, libraryDir) + '/' : undefined
-      if (!(source && ctx.file.startsWith(source)) && ctx.file !== resolve(config.root, appDir, 'editor/runtime.ts')) return
+      const source = libraryDir ? resolve(config.root, libraryDir) + sep : undefined
+      const changedFile = resolve(ctx.file)
+      if (!(source && changedFile.startsWith(source)) && changedFile !== resolve(config.root, appDir, 'editor/runtime.ts')) return
       // Preview resources are an in-memory bundle, separate from Vite's normal CSS HMR.
       // Rebuild it when library files change, then recreate the preview realm.
       await rebuild()

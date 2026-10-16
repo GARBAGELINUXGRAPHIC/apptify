@@ -8,7 +8,7 @@ export const AppleButton = defineComponent({
   inject: { apple: { from: appleKey, default: null } },
   props: {
     ...motionProps,
-    variant: { type: String as PropType<'primary' | 'secondary' | 'outline' | 'danger'>, default: 'primary' },
+    variant: { type: String as PropType<'primary' | 'secondary' | 'outline' | 'borderless' | 'danger'>, default: 'primary' },
     size: { type: String as PropType<'small' | 'medium' | 'large'>, default: 'medium' },
     icon: [Object, Function] as PropType<Component>, iconOnly: Boolean, label: String,
     disabled: Boolean, loading: Boolean, ripple: { type: Boolean, default: true }, href: String,
@@ -19,7 +19,7 @@ export const AppleButton = defineComponent({
     const context = this.apple as AppleContext | null
     const motion = resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced)
     const blocked = this.disabled || this.loading
-    const content = () => h('span', { class: 'apple-button__content' }, [this.$slots.default?.(), this.loading ? h(LoaderCircle, { size: 18, class: 'apple-spin', 'aria-hidden': true }) : this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null])
+    const content = () => h('span', { class: 'apple-button__content' }, [this.iconOnly && (this.icon || this.loading) ? null : this.$slots.default?.(), this.loading ? h(LoaderCircle, { size: 18, class: 'apple-spin', 'aria-hidden': true }) : this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null])
     const tag = this.href && !blocked ? 'a' : 'button'
     const node = h(tag, {
       ...this.$attrs, class: ['apple-button', `apple-button--${this.variant}`, `apple-button--${this.size}`, { 'apple-button--icon': this.iconOnly }, this.$attrs.class],

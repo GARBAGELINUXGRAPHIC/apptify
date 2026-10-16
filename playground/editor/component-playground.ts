@@ -149,6 +149,7 @@ ${component}
 <style scoped>
 .example { display: grid; gap: 28px; padding: 28px 24px; min-width: 0; }
 .component-section { display: grid; gap: 20px; min-width: 0; }
+.component-section > :deep(.apple-button) { justify-self: start; }
 .actions { display: flex; flex-wrap: wrap; gap: 20px; }
 .events-section { border-top: 1px solid var(--apple-border); padding-top: 20px; min-width: 0; }
 .event-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
