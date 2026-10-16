@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Select and tab motion</title>
+<style>
+body { margin: 0; }
+.standalone { position: absolute; top: 20px; left: 30px; width: 280px; }
+#outside { position: absolute; top: 130px; left: 30px; }
+.sidebar { position: absolute; top: 200px; left: 30px; width: 300px; height: 500px; display: flex; }
+.sidebar > .apple-tabs { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; --apple-duration: 600ms; }
+.sidebar .apple-tabs__viewport { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.sidebar .apple-auto-size__inner, .sidebar .apple-tabs__panel, .panel-content { height: 100%; }
+.sidebar .apple-tabs__panel { padding: 0; overflow: hidden; }
+.panel-content { overflow-y: auto; }
+.content { height: 1200px; padding: 20px; box-sizing: border-box; }
+</style></head><body><div id="app"></div><script type="module">
+import { createApp, h } from 'vue'
+import { AppleProvider, AppleSelect, AppleTabs, createAppleUI } from '/src/index.ts'
+const options = [{ label: 'One', value: 1 }, { label: 'Two', value: 2 }]
+const app = createApp({
+  data: () => ({ tab: 'scene', value: 1, changes: 0 }),
+  render() {
+    const select = id => h(AppleSelect, { id, label: id, items: options, modelValue: this.value,
+      'onUpdate:modelValue': value => this.value = value, onChange: () => this.changes++ })
+    return h(AppleProvider, { motion: 'full' }, () => [
+      h('div', { class: 'standalone' }, [select('standalone-select')]),
+      h('button', { id: 'outside' }, 'Outside'),
+      h('aside', { class: 'sidebar' }, [h(AppleTabs, {
+        modelValue: this.tab, 'onUpdate:modelValue': value => this.tab = value,
+        items: [{ label: 'Scene', value: 'scene' }, { label: 'Orders', value: 'orders' }],
+      }, Object.fromEntries(['scene', 'orders'].map(value => [`panel-${value}`, () =>
+        h('div', { id: `scroll-${value}`, class: 'panel-content' }, [
+          h('div', { class: 'content' }, [value === 'scene' ? select('tab-select') : 'Orders']),
+        ])]))) ]),
+      h('output', { id: 'changes' }, String(this.changes)),
+    ])
+  },
+})
+app.use(createAppleUI()).mount('#app')
+window.unmount = () => app.unmount()
+</script></body></html>

@@ -170,7 +170,19 @@ export function attachScrollBar(target: HTMLElement, options: ScrollBarOptions =
     const both = bars.length === 2 && target.scrollWidth > target.clientWidth + 1 && target.scrollHeight > target.clientHeight + 1
     bars.forEach(entry => entry.update(bounds, style, visible, both, host, scrollBarZIndex(inherited)))
   }
-  function queue() { if (!frame && !disposed) frame = win.requestAnimationFrame(() => { frame = 0; refresh() }) }
+  function queue() {
+    if (!frame && !disposed) frame = win.requestAnimationFrame(() => {
+      frame = 0; refresh()
+      if (!target.isConnected) return
+      // Transform animations move the track without resizing or mutating its scrollport.
+      for (let ancestor: HTMLElement | null = target; ancestor; ancestor = ancestor.parentElement) {
+        if (ancestor.getAnimations?.().some(animation => animation.playState === 'running' || animation.pending)) { queue(); break }
+      }
+    })
+  }
+  function motion(event: Event) {
+    if (event.target instanceof win.Element && event.target.contains(target)) queue()
+  }
   const resize = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(queue) : undefined
   function observe() {
     resize?.disconnect(); resize?.observe(target)
@@ -185,6 +197,8 @@ export function attachScrollBar(target: HTMLElement, options: ScrollBarOptions =
   for (let ancestor = target.parentElement; ancestor; ancestor = ancestor.parentElement) mutations.observe(ancestor, { attributes: true })
   win.addEventListener('scroll', queue, { capture: true, passive: true })
   win.addEventListener('resize', queue, { passive: true })
+  doc.addEventListener('transitionrun', motion, true)
+  doc.addEventListener('animationstart', motion, true)
   doc.addEventListener('load', queue, true)
   win.visualViewport?.addEventListener('resize', queue)
   win.visualViewport?.addEventListener('scroll', queue)
@@ -197,6 +211,7 @@ export function attachScrollBar(target: HTMLElement, options: ScrollBarOptions =
       bars.forEach(entry => { entry.end(); entry.bar.remove() })
       resize?.disconnect(); mutations.disconnect()
       win.removeEventListener('scroll', queue, true); win.removeEventListener('resize', queue)
+      doc.removeEventListener('transitionrun', motion, true); doc.removeEventListener('animationstart', motion, true)
       doc.removeEventListener('load', queue, true)
       win.visualViewport?.removeEventListener('resize', queue); win.visualViewport?.removeEventListener('scroll', queue)
       if (originalNative === null) target.removeAttribute(native); else target.setAttribute(native, originalNative)
