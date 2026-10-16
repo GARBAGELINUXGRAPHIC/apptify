@@ -1,17 +1,19 @@
 <template>
   <div class="component-demo" :class="demoClass" :data-component="name">
     <apple-stack v-if="name === 'AppleButton'" direction="row" align="center">
-      <apple-button @click="notify('操作已完成')">继续</apple-button>
-      <apple-button variant="secondary" @click="notify('已选择次要操作')">稍后再说</apple-button>
-      <apple-button variant="outline" @click="notify('已加入收藏')">加入收藏</apple-button>
-      <apple-link as="button" :icon="icons.ArrowUpRight" @click="notify('正在查看详情')">了解更多</apple-link>
-      <apple-button :icon="icons.Plus" icon-only label="添加" @click="notify('已添加')" />
-      <apple-button loading>处理中</apple-button><apple-button disabled>暂不可用</apple-button>
+      <apple-tooltip text="primary"><apple-button @click="notify('操作已完成')">继续</apple-button></apple-tooltip>
+      <apple-tooltip text="secondary"><apple-button variant="secondary" @click="notify('已选择次要操作')">稍后再说</apple-button></apple-tooltip>
+      <apple-tooltip text="outline"><apple-button variant="outline" @click="notify('已加入收藏')">加入收藏</apple-button></apple-tooltip>
+      <apple-tooltip text="borderless"><apple-button variant="borderless" @click="notify('已选择无边框操作')">无边框</apple-button></apple-tooltip>
+      <apple-tooltip text='AppleLink · as="button"'><apple-link as="button" :icon="icons.ArrowUpRight" @click="notify('正在查看详情')">了解更多</apple-link></apple-tooltip>
+      <apple-tooltip text="primary · iconOnly"><apple-button :icon="icons.Plus" icon-only label="添加" @click="notify('已添加')" /></apple-tooltip>
+      <apple-tooltip text="primary · loading"><apple-button loading>处理中</apple-button></apple-tooltip>
+      <apple-tooltip text="primary · disabled"><apple-button disabled>暂不可用</apple-button></apple-tooltip>
     </apple-stack>
     <apple-stack v-else-if="name === 'AppleLink'" direction="row" align="center">
-      <apple-link href="https://www.apple.com.cn/" external>Apple 官网</apple-link>
-      <apple-link href="https://www.apple.com.cn/accessibility/" external>辅助功能</apple-link>
-      <apple-link disabled external>暂不可用</apple-link>
+      <apple-tooltip text="external"><apple-link href="https://www.apple.com.cn/" external>Apple 官网</apple-link></apple-tooltip>
+      <apple-tooltip text="external"><apple-link href="https://www.apple.com.cn/accessibility/" external>辅助功能</apple-link></apple-tooltip>
+      <apple-tooltip text="external · disabled"><apple-link disabled external>暂不可用</apple-link></apple-tooltip>
     </apple-stack>
     <apple-stack v-else-if="name === 'AppleSearch'">
       <apple-search v-model="searchText" label="搜索设置" placeholder="搜索设置" @search="notify(searchText ? `正在搜索：${searchText}` : '显示全部设置')" />
