@@ -108,7 +108,7 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `AppleAccordion` | `v-model: string/number/array`、`items`、`multiple`、`disabled` | `change(value)`；`item-${value}` 或 item slot `{item,open}`；默认内容使用 item.content；multiple 时模型为数组。 |
 | `AppleTable` | `columns: AppleColumn[]`、`rows: Record[]`、`rowKey=id`、`label`、`selectable`、`v-model:selected`、`v-model:sort-by`、`v-model:sort-direction`、`v-model:page`、`pageSize=0`、`loading`、`disabled`、`emptyText` | `sort({key,direction})`、`row-click(row)`；`cell-${key}` slot `{row,value,index}`、empty slot；本地排序/分页；pageSize=0 不分页。 |
 | `AppleTree` | `items: AppleTreeItem[]`、`v-model`、`v-model:expanded`、`disabled`、`label`、`searchable=true`、`mobileDirectory=true` | 默认顶部搜索；宽度 ≤900px 自动进入全局 SpeedDial 目录，无宿主保留原位。`select(item)`；item slot `{item,expanded,selected}`；递归 children；单选与键盘树导航，不含勾选联动。 |
-| `AppleList` | `items`、`v-model`、`selectable`、`disabled`、`label` | `select(item)`；item slot `{item,selected}`；selectable 时更新模型，否则 href 生成链接。 |
+| `AppleList` | `items`、`v-model`、`selectable`、`border=false`、`disabled`、`label` | `select(item)`；item slot `{item,selected}`；selectable 时更新模型，否则 href 生成链接；`border` 显示条目分隔线。 |
 | `AppleAvatar` | `src`、`name='用户'`、`size=40`、`square` | `error(event)`；default slot；图片失败回退到姓名前两个字符。 |
 | `AppleAvatarGroup` | `items: {name,src?,value?}[]`、`max=4`、`size=36`、`label` | default slot 可替换头像集合；超出数量显示 +N。 |
 | `AppleBadge` | `value: string/number`、`max=99`、`dot`、`showZero`、`label`、`tone=danger` | default slot 为被标记内容；无 slot 可独立显示。 |

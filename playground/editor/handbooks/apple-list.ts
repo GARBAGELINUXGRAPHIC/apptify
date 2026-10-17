@@ -29,6 +29,12 @@ export default defineHandbook({
       "description": "使用 button 单选并更新 modelValue；false 时有 href 的项渲染为链接，其余作为内容。"
     },
     {
+      "name": "border",
+      "type": "boolean",
+      "default": "false",
+      "description": "显示列表项之间的分隔线；默认不显示。"
+    },
+    {
       "name": "disabled",
       "type": "boolean",
       "default": "false",

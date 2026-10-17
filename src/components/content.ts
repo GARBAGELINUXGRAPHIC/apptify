@@ -387,9 +387,9 @@ export const AppleTree = defineComponent({
 })
 
 export const AppleList = defineComponent({
-  name: 'AppleList', props: { ...motionProps, ...itemProps, modelValue: valueProp, selectable: Boolean, disabled: Boolean, label: { type: String, default: '列表' } },
+  name: 'AppleList', props: { ...motionProps, ...itemProps, modelValue: valueProp, selectable: Boolean, border: Boolean, disabled: Boolean, label: { type: String, default: '列表' } },
   emits: ['update:modelValue', 'select'],
-  render() { return h(AppleAutoSize, { class: 'apple-list-size', motion: this.motion }, { default: () => h('ul', { class: 'apple-list', 'aria-label': this.label, 'data-motion': this.motion }, this.items.map(item => {
+  render() { return h(AppleAutoSize, { class: 'apple-list-size', motion: this.motion }, { default: () => h('ul', { class: ['apple-list', { 'apple-list--border': this.border }], 'aria-label': this.label, 'data-motion': this.motion }, this.items.map(item => {
     const disabled = this.disabled || item.disabled
     const content = this.$slots.item?.({ item, selected: this.modelValue === item.value }) ?? [h('span', { class: 'apple-list__copy' }, [h('span', { class: 'apple-list__label' }, item.label), item.description ? h('span', { class: 'apple-list__description' }, item.description) : null]), this.selectable ? this.modelValue === item.value ? icon(Check) : null : item.href ? icon(ChevronRight) : null]
     return h('li', { key: item.value }, ripple(h(this.selectable ? 'button' : item.href && !disabled ? 'a' : 'div', { type: this.selectable ? 'button' : undefined, href: !this.selectable && !disabled ? item.href : undefined, disabled: this.selectable ? disabled : undefined, 'aria-disabled': disabled || undefined, 'aria-pressed': this.selectable ? this.modelValue === item.value : undefined, class: ['apple-list__item', { 'is-selected': this.modelValue === item.value }], onClick: () => { if (!disabled) { this.$emit('select', item); if (this.selectable) this.$emit('update:modelValue', item.value) } } }, content), !disabled && (this.selectable || Boolean(item.href))))

@@ -320,6 +320,18 @@ describe('Status and utility components', () => {
     expect(card.attributes('style')).toContain('width: 320px')
   })
 
+  it('defaults to no list borders and preserves selection when borders are toggled', async () => {
+    const wrapper = keep(mount(AppleList, { props: { items, selectable: true } }))
+    expect(wrapper.get('.apple-list').classes()).not.toContain('apple-list--border')
+    await wrapper.setProps({ border: true })
+    expect(wrapper.get('.apple-list').classes()).toContain('apple-list--border')
+    await wrapper.findAll('button')[2]!.trigger('click')
+    expect(wrapper.emitted('select')?.at(-1)).toEqual([items[2]])
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['details'])
+    await wrapper.setProps({ border: false })
+    expect(wrapper.get('.apple-list').classes()).not.toContain('apple-list--border')
+  })
+
   it('retains list selection events when a filtered list changes size', async () => {
     const wrapper = keep(mount(AppleList, { props: { items, selectable: true } }))
     await wrapper.findAll('button')[2]!.trigger('click')
