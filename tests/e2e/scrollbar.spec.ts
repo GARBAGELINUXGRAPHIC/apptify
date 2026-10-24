@@ -78,12 +78,18 @@ test('dynamic overflow, clipping, opt out, modal stacking and cleanup', async ({
 test('scrollbars inherit layer bounds and remain in their owning overlay stack', async ({ page }) => {
   const bar = page.locator(vertical)
   const nav = page.locator('.apple-navibar__bar')
-  expect(Number(await bar.evaluate(element => getComputedStyle(element).zIndex))).toBeGreaterThan(Number(await nav.evaluate(element => getComputedStyle(element).zIndex)))
+  await expect(bar).toHaveCSS('z-index', '0')
+  expect(Number(await bar.evaluate(element => getComputedStyle(element).zIndex))).toBeLessThan(Number(await nav.evaluate(element => getComputedStyle(element).zIndex)))
+  await page.evaluate(() => window.scrollTo(0, 80))
+  await expect.poll(() => bar.evaluate(element => {
+    const track = element.getBoundingClientRect(), navigation = document.querySelector('.apple-navibar__bar')!
+    return navigation.contains(document.elementFromPoint(track.right - 2, track.top + 4))
+  })).toBe(true)
   await expect(bar).not.toHaveAttribute('popover')
   await page.locator('#transformed').evaluate(element => { Object.assign((element as HTMLElement).style, { position: 'relative', zIndex: '300' }) })
   await expect(bar).toHaveCSS('z-index', '300')
   await page.locator('#transformed').evaluate(element => { (element as HTMLElement).style.zIndex = '10' })
-  await expect(bar).toHaveCSS('z-index', '80')
+  await expect(bar).toHaveCSS('z-index', '10')
   await page.getByRole('button', { name: '打开浮层', exact: true }).click()
   const popup = page.locator('.apple-popover'), popupBar = popup.locator('.apple-scroll-bar--vertical')
   await expect(popupBar).toBeVisible()

@@ -1,6 +1,6 @@
 [data-apple-scrollbar-native] { scrollbar-width: none !important; scrollbar-gutter: auto !important; }
 [data-apple-scrollbar-native]::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-.apple-scroll-bar { position: fixed; box-sizing: border-box; inset: auto; margin: 0; padding: 0; max-width: none; max-height: none; border: 0; border-radius: 999px; background: transparent; overflow: hidden; z-index: 80; touch-action: none; user-select: none; outline: none; }
+.apple-scroll-bar { position: fixed; box-sizing: border-box; inset: auto; margin: 0; padding: 0; max-width: none; max-height: none; border: 0; border-radius: 999px; background: transparent; overflow: hidden; z-index: 0; touch-action: none; user-select: none; outline: none; }
 .apple-scroll-bar[hidden] { display: none !important; }
 .apple-scroll-bar__slider { position: absolute; }
 .apple-scroll-bar__thumb { display: block; border-radius: 999px; background: rgb(var(--apple-scrollbar-thumb-rgb, 0 0 0) / .32); transition: background-color 120ms ease; }
