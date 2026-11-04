@@ -1,0 +1,112 @@
+import { expect, test } from '@playwright/test'
+
+const scene = '.unavailable-scene'
+
+test('503 reveals the sleeping koala, loops without growing the scene, and supports playback controls', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.clock.install()
+  await page.goto('/503')
+  await expect(page).toHaveTitle('服务暂时不可用 · Apptify')
+  await expect(page.getByRole('heading', { name: '503 · 服务暂时不可用' })).toBeVisible()
+  await expect(page.getByRole('img', { name: /传送带、包裹山与熟睡的考拉/ })).toBeVisible()
+  await expect(page.locator(scene)).toHaveAttribute('data-camera', 'close')
+  await page.screenshot({ path: 'artifacts/503-intro.png' })
+  const nodes = await page.locator(`${scene} *`).count()
+  await page.clock.runFor(7000)
+  await expect(page.locator(scene)).toHaveAttribute('data-camera', 'wide')
+  await page.getByRole('button', { name: '暂停动画', exact: true }).click()
+  const paused = await page.locator(scene).getAttribute('data-time')
+  await page.clock.runFor(1000)
+  await expect(page.locator(scene)).toHaveAttribute('data-time', paused!)
+  await expect(page.getByRole('button', { name: '继续动画', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.screenshot({ path: 'artifacts/503-wide.png' })
+  await page.getByRole('button', { name: '继续动画', exact: true }).click()
+  await page.clock.runFor(30000)
+  expect(Number(await page.locator(scene).getAttribute('data-time'))).toBeGreaterThan(35)
+  await expect(page.locator(scene)).toHaveAttribute('data-camera', 'wide')
+  expect(await page.locator(`${scene} *`).count()).toBe(nodes)
+  await page.getByRole('button', { name: '重播开场动画', exact: true }).click()
+  await expect(page.locator(scene)).toHaveAttribute('data-camera', 'close')
+  expect(Number(await page.locator(scene).getAttribute('data-time'))).toBeLessThan(1)
+  expect(errors).toEqual([])
+})
+
+test('503 suspends when hidden or offscreen and cleans up on navigation', async ({ page }) => {
+  await page.goto('/error/503')
+  await expect(page.locator(scene)).toHaveAttribute('data-playing', 'true')
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  await expect(page.locator(scene)).toHaveAttribute('data-playing', 'false')
+  const hidden = await page.locator(scene).getAttribute('data-time')
+  await page.waitForTimeout(150)
+  await expect(page.locator(scene)).toHaveAttribute('data-time', hidden!)
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+    document.dispatchEvent(new Event('visibilitychange'))
+    document.body.style.minHeight = '3000px'
+    window.scrollTo(0, 2200)
+  })
+  await expect(page.locator(scene)).toHaveAttribute('data-playing', 'false')
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await expect(page.locator(scene)).toHaveAttribute('data-playing', 'true')
+  const old = await page.locator(scene).elementHandle()
+  await page.getByRole('link', { name: '返回首页', exact: true }).click()
+  await expect(page).toHaveURL(/\/$/)
+  const stopped = await old!.getAttribute('data-time')
+  await page.waitForTimeout(150)
+  expect(await old!.getAttribute('data-time')).toBe(stopped)
+  await page.goto('/503')
+  await page.getByRole('button', { name: '返回上一页', exact: true }).click()
+  await expect(page).toHaveURL(/\/$/)
+})
+
+for (const motion of ['none', 'reduced']) {
+  test(`503 follows the app's dark theme and ${motion} motion preference`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' })
+    await page.addInitScript(motion => localStorage.setItem('apptify:preferences', JSON.stringify({ theme: 'dark', motion })), motion)
+    await page.goto('/503')
+    await expect(page.locator(scene)).toHaveClass(/is-dark/)
+    await expect(page.locator(scene)).toHaveAttribute('data-camera', 'wide')
+    await expect(page.locator(scene)).toHaveAttribute('data-playing', 'false')
+    await expect(page.getByRole('button', { name: '暂停动画', exact: true })).toBeDisabled()
+    const still = await page.locator(scene).getAttribute('data-time')
+    await page.waitForTimeout(150)
+    await expect(page.locator(scene)).toHaveAttribute('data-time', still!)
+    await page.screenshot({ path: `artifacts/503-dark-${motion}.png` })
+    await page.getByRole('button', { name: '重播开场动画', exact: true }).click()
+    await expect(page.locator(scene)).toHaveAttribute('data-playing', 'true')
+  })
+}
+
+test('503 responds to OS motion changes and manual theme selection', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' })
+  await page.goto('/settings')
+  await page.getByRole('button', { name: '浅色', exact: true }).click()
+  await page.goto('/503')
+  await expect(page.locator(scene)).toHaveClass(/is-light/)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await expect(page.locator(scene)).toHaveAttribute('data-playing', 'false')
+  await expect(page.locator(scene)).toHaveAttribute('data-camera', 'wide')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await expect(page.locator(scene)).toHaveAttribute('data-playing', 'true')
+  await expect(page.locator(scene)).toHaveAttribute('data-camera', 'wide')
+})
+
+for (const width of [320, 390, 768, 1440]) {
+  test(`503 fits at ${width}px and returns home without browser history`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/503')
+    await expect(page.locator(scene)).toHaveAttribute('data-camera', 'wide')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
+    await expect(page.getByRole('link', { name: '返回首页', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: '返回上一页', exact: true })).toBeVisible()
+    if (width === 390) await page.screenshot({ path: 'artifacts/503-mobile.png', fullPage: true })
+    await page.getByRole('button', { name: '返回上一页', exact: true }).click()
+    await expect(page).toHaveURL(/\/$/)
+  })
+}
