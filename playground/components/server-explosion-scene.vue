@@ -105,7 +105,7 @@
           </g>
 
           <!-- Explosion, revealed only on impact -->
-          <g class="explosion">
+          <g class="explosion" transform="translate(-150 40)">
             <path d="M936 247 964 207 984 248 1024 217 1019 268 1060 271 1028 309 1062 344 1010 351 1020 403 979 379 951 423 933 379 890 402 901 355 858 343 894 310 870 271 916 270Z" fill="#d98c55" stroke="#a96e4b" stroke-width="5"/>
             <path d="m945 270 25-34 17 37 29-20-10 42 35 7-34 26 24 31-43 1-2 41-29-28-27 33-9-40-40 11 22-34-34-21 40-14-14-38 40 13Z" fill="#f0c17b"/>
             <path d="M962 282 977 263 991 290 1014 284 1004 307 1027 321 1000 332 1004 357 981 345 964 365 958 340 933 346 945 323 925 309 951 301Z" fill="#f7dfaa"/>
@@ -145,12 +145,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Pause, Play } from 'lucide-vue-next'
 import { useApple } from '../../src'
 import { resolveMotion } from '../../src/core/context'
 
-const uid = useId()
 const apple = useApple()
 const root = ref<HTMLElement>()
 const art = ref<SVGSVGElement>()
@@ -256,9 +255,9 @@ onBeforeUnmount(() => {
 .scene-window{overflow:hidden;padding:4px}
 .scene-art{display:block;width:100%;height:auto;overflow:visible}
 .server-cabinet{transform-box:fill-box;transform-origin:50% 50%;transition:transform .2s ease}
-.packet{transform:translate(430px,390px);opacity:1;transition:transform 1.1s cubic-bezier(.2,.7,.2,1),opacity .12s linear .98s}
+.packet{transform:translate(390px,350px);opacity:1;transition:transform 1.1s cubic-bezier(.2,.7,.2,1),opacity .12s linear .98s}
 .is-sent .packet{transform:translate(735px,305px) rotate(12deg) scale(.52);opacity:0}
-.explosion{opacity:0;transform:scale(.3);transform-origin:970px 320px;transition:opacity .12s ease,transform .28s cubic-bezier(.15,.8,.2,1)}
+.explosion{opacity:0;transform:scale(.3);transform-origin:820px 360px;transition:opacity .12s ease,transform .28s cubic-bezier(.15,.8,.2,1)}
 .is-exploded .explosion{opacity:1;transform:scale(1)}
 .is-exploded .server-cabinet{animation:server-rattle .48s ease-in-out 2}
 .flames{opacity:0;transform-origin:850px 560px}
