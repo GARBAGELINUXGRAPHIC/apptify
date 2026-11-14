@@ -12,6 +12,18 @@
 .apple-modal-body > :last-child { margin-bottom: 0; }
 .apple-modal-body p { color: var(--apple-secondary, #6e6e73); }
 .apple-modal-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding: 16px 24px 24px; flex-shrink: 0; }
+.apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) {
+  padding: 8px 12px 16px;
+}
+.apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) > .apple-modal-heading {
+  position: relative;
+  inset-block-start: 8px;
+  padding-inline-start: 12px;
+}
+.apple-dialog > .apple-modal-footer {
+  padding-inline: 12px;
+  padding-bottom: 12px;
+}
 .apple-overlay-button { box-sizing: border-box; display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; border: 1px solid transparent; border-radius: 999px; padding: 10px 21px; font: inherit; font-size: 14px; font-weight: 550; line-height: 1.4; text-align: center; white-space: normal; overflow-wrap: anywhere; background: var(--apple-accent, #0071e3); color: var(--apple-accent-text, #fff); cursor: pointer; transition: opacity var(--apple-duration, 220ms), background-color var(--apple-duration, 220ms); }
 .apple-overlay-button--secondary { color: var(--apple-accent, #0071e3); background: transparent; border-color: currentColor; }
 .apple-overlay-button--danger { background: var(--apple-danger, #d93025); color: #fff; }
@@ -132,6 +144,16 @@
   .apple-modal-body { padding: 10px 18px 20px; }
   .apple-modal-footer { padding: 12px 18px 20px; }
   .apple-modal-footer > .apple-button { flex: 1; }
+  .apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) {
+    padding: 6px 6px 14px;
+  }
+  .apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) > .apple-modal-heading {
+    inset-block-start: 6px;
+  }
+  .apple-dialog > .apple-modal-footer {
+    padding-inline: 18px;
+    padding-bottom: 8px;
+  }
   .apple-overlay-backdrop--drawer { padding: 0; }
   .apple-drawer { width: min(100%, var(--apple-overlay-width, 440px)); max-height: 100dvh; }
   .apple-overlay-backdrop--sheet { padding: 0; }
