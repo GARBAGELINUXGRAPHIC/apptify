@@ -15,7 +15,7 @@
         <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
-    <BadRequestPaperScene class="paper-400-illustration" :theme="scheme" :reduced-motion="reducedMotion" />
+    <ErrorScene class="paper-400-illustration" :code="400" />
   </main>
 </template>
 
@@ -24,20 +24,14 @@
 </route>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { useApple } from '../../src'
-import { resolveMotion } from '../../src/core/context'
-import BadRequestPaperScene from '../components/bad-request-paper-scene.vue'
+import ErrorScene from '../components/ErrorScene.vue'
 
 import { errorPages } from '../error-pages'
 
 const page = errorPages[400]
 const router = useRouter()
-const apple = useApple()
-const scheme = computed(() => apple.theme.value.current.scheme)
-const reducedMotion = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced) !== 'full')
 function goBack() {
   if (typeof router.options.history.state.back === 'string') router.back()
   else void router.push('/')

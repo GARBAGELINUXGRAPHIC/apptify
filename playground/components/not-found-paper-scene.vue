@@ -1,5 +1,5 @@
 <template>
-  <figure ref="scene" class="paper-scene" :class="{ 'paper-scene--dark': dark }" :data-story="story" :data-playing="canAnimate && !suspended" :data-motion="motion">
+  <figure ref="scene" class="paper-scene" :class="{ 'paper-scene--dark': dark }" :data-story="story" :data-playing="canAnimate && !suspended" :data-motion="props.motion">
     <div class="paper-scene__window">
       <svg ref="art" class="paper-scene__art" viewBox="0 0 1000 660" role="img" :aria-labelledby="`${uid}-title ${uid}-description`" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -114,24 +114,17 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
-import { Pause, Play, RotateCcw } from 'lucide-vue-next'
-import { useApple } from '../../src'
-import { resolveMotion } from '../../src/core/context'
 import { createPaperStory, type PaperStory } from './not-found-paper-story'
 
 const uid = `paper-${useId().replace(/:/g, '')}`
-const apple = useApple()
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
 const scene = ref<HTMLElement>()
 const art = ref<SVGSVGElement>()
-const media = typeof window === 'undefined' ? undefined : window.matchMedia('(prefers-reduced-motion: reduce)')
-const systemReduced = ref(media?.matches ?? false)
-const motion = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced || systemReduced.value))
-const canAnimate = computed(() => motion.value === 'full')
-const dark = computed(() => apple.theme.value.current.scheme === 'dark')
-const userPaused = ref(false)
+const canAnimate = computed(() => props.motion === 'full')
+const dark = computed(() => props.theme === 'dark')
 const hidden = ref(typeof document !== 'undefined' && document.hidden)
 const offscreen = ref(false)
-const suspended = computed(() => userPaused.value || hidden.value || offscreen.value)
+const suspended = computed(() => props.paused || hidden.value || offscreen.value)
 const story = ref<'intro' | 'settled' | 'static'>('static')
 const driftwood = [{ x: 630, y: 482, angle: 18, scale: .68 }, { x: 737, y: 508, angle: -26, scale: .82 }, { x: 838, y: 543, angle: 51, scale: .72 }, { x: 933, y: 568, angle: -13, scale: .9 }, { x: 529, y: 550, angle: -39, scale: .65 }]
 let player: PaperStory | undefined
@@ -146,10 +139,7 @@ function play(intro: boolean) {
   player = createPaperStory(art.value, scene.value, intro, () => { story.value = 'settled' })
   syncPlayback()
 }
-function replay() { userPaused.value = false; play(true) }
-function togglePause() { userPaused.value = !userPaused.value }
 function visibilityChanged() { hidden.value = document.hidden }
-function mediaChanged() { systemReduced.value = media?.matches ?? false }
 watch(suspended, syncPlayback, { flush: 'sync' })
 watch(canAnimate, enabled => {
   if (!mounted) return
@@ -160,7 +150,6 @@ watch(canAnimate, enabled => {
 onMounted(async () => {
   mounted = true
   document.addEventListener('visibilitychange', visibilityChanged)
-  media?.addEventListener('change', mediaChanged)
   if (typeof IntersectionObserver !== 'undefined' && scene.value) {
     observer = new IntersectionObserver(([entry]) => { offscreen.value = !entry.isIntersecting }, { threshold: 0 })
     observer.observe(scene.value)
@@ -173,9 +162,9 @@ onBeforeUnmount(() => {
   mounted = false
   stop()
   observer?.disconnect()
-  media?.removeEventListener('change', mediaChanged)
   document.removeEventListener('visibilitychange', visibilityChanged)
 })
+defineExpose({ replay: () => play(true) })
 </script>
 
 <style scoped>
@@ -195,16 +184,6 @@ onBeforeUnmount(() => {
 .paper-front-foot { transform: translate(9px, 0px); transform-origin: 18px 5px; }
 .paper-eyelid { opacity: 1; }
 .paper-brow { transform: rotate(12deg); transform-origin: 10px -113px; }
-.paper-scene__caption { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 46px; padding-inline: 4.5%; margin-top: 10px; }
-.paper-scene__story-label { position: relative; flex: 1; min-width: 0; height: 20px; font-size: 11px; color: var(--apple-secondary); letter-spacing: .015em; }
-.paper-caption { position: absolute; inset: 0 auto auto 0; white-space: nowrap; opacity: 0; }
-.paper-caption--last { opacity: 1; }
-.paper-scene__controls { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
-.paper-scene__controls .apple-button { color: var(--apple-secondary); font-size: 10px; min-height: 44px; }
-.paper-scene__controls .apple-button--icon { width: 36px; }
-.paper-scene__replay { padding-inline: 7px; }
-.paper-scene__controls :deep(svg) { width: 13px; height: 13px; }
-.paper-scene__still { font-size: 10px; color: var(--apple-secondary); }
-@media (max-width: 880px) { .paper-scene__window { margin-inline: -12px; } .paper-scene__caption { margin-top: 0; padding-inline: 2%; } }
-@media (max-width: 420px) { .paper-scene__story-label { font-size: 9px; letter-spacing: 0; } .paper-scene__caption { padding-inline: 0; gap: 2px; } .paper-scene__edition { font-size: 12px; } .paper-scene__controls .apple-button { font-size: 9px; } }
+@media (max-width: 880px) { .paper-scene__window { margin-inline: -12px; } }
+@media (max-width: 420px) { .paper-scene__edition { font-size: 12px; } }
 </style>

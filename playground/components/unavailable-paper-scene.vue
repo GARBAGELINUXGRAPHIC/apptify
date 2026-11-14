@@ -1,5 +1,5 @@
 <template>
-<figure ref="root" class="paper-503-shell unavailable-scene" :class="theme === 'auto' ? null : `is-${theme}`">
+<figure ref="root" class="paper-503-shell unavailable-scene" :class="`is-${theme}`">
       <div class="unavailable-scene__window"><svg class="unavailable-scene__art" data-scene viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg" role="img" :aria-labelledby="`${uid}-title ${uid}-desc`">
   <title :id="`${uid}-title`">传送带、包裹山与熟睡的考拉</title>
   <desc :id="`${uid}-desc`">包裹沿传送带移动，落到积压的包裹山上。镜头拉远后，值班的考拉正窝在椅子里熟睡，任由包裹不断堆积。</desc>
@@ -277,28 +277,18 @@
   </g>
 </svg>
 </div>
-      <figcaption class="unavailable-scene__caption">
-        <p class="unavailable-scene__label" data-story-label>包裹到了。值班员呢？</p>
-        <div class="unavailable-scene__controls" role="group" aria-label="动画控制">
-          <button class="unavailable-scene__button" type="button" data-action="pause" aria-label="暂停动画" aria-pressed="false">暂停</button>
-          <button class="unavailable-scene__button" type="button" data-action="replay" aria-label="重播开场动画">重播</button>
-        </div>
-      </figcaption>
     </figure>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 
-const props = defineProps({
-  theme: { type: String, default: 'auto' },
-  reducedMotion: { type: Boolean, default: false }
-})
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
 const root = ref<HTMLElement | null>(null)
 const uid = `paper-503-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
 let player: ReturnType<typeof createUnavailableScene> | undefined
 
-function createUnavailableScene(root: HTMLElement, options: { reducedMotion?: boolean } = {}) {
+function createUnavailableScene(root: HTMLElement, reducedMotion: boolean) {
   const svg = root.querySelector<SVGSVGElement>('[data-scene]')!;
   const part = (name: string) => svg.querySelector<SVGGraphicsElement>(`[data-part="${name}"]`)!;
   const camera = part('camera');
@@ -311,14 +301,8 @@ function createUnavailableScene(root: HTMLElement, options: { reducedMotion?: bo
   const bump = part('impact-carton');
   const dust = part('impact-dust');
   const sleepLines = [...svg.querySelectorAll('[data-sleep]')];
-  const pauseButton = root.querySelector<HTMLButtonElement>('[data-action="pause"]');
-  const replayButton = root.querySelector('[data-action="replay"]');
-  const label = root.querySelector('[data-story-label]');
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let time = 0, raf = 0, disposed = false, paused = false, offscreen = false;
   let last: number | null = null;
-  let story = '', userMotion = false, appReduced = Boolean(options.reducedMotion);
-  const prefersReduced = () => appReduced || reduced.matches;
   const interval = 2.65, count = parcels.length, cycle = count * interval;
   // The back-right bottom corner is 16 units above the front bottom edge.
   // Put that back corner on the belt at y=343 so the whole carton sits on it.
@@ -326,12 +310,6 @@ function createUnavailableScene(root: HTMLElement, options: { reducedMotion?: bo
   const clamp = (x: number) => Math.max(0, Math.min(1, x));
   const smooth = (x: number) => { x = clamp(x); return x * x * x * (x * (6 * x - 15) + 10); };
   const lerp = (a: number, b: number, t: number) => a + (b-a)*t;
-  function setStory(next: 'intro' | 'settled') {
-    if (next === story) return;
-    story = next;
-    root.dataset.story = next;
-    if (label) label.textContent = next === 'intro' ? '包裹到了。值班员呢？' : '包裹在赶路，值班员在做梦。';
-  }
   function pose(age: number) {
     if (age < 5) return { x: -160 + 126 * age, y: beltParcelY, angle: 0 };
     if (age < 5.7) {
@@ -352,7 +330,7 @@ function createUnavailableScene(root: HTMLElement, options: { reducedMotion?: bo
     const focusX = lerp(lerp(273, 510, tracking), 600, reveal);
     const focusY = lerp(lerp(311, 383, tracking), 360, reveal);
     camera.setAttribute('transform', `translate(${600 - focusX * scale} ${360 - focusY * scale}) scale(${scale})`);
-    setStory(reveal >= .999 ? 'settled' : 'intro');
+    root.dataset.story = reveal >= .999 ? 'settled' : 'intro';
     ribs.setAttribute('transform', `translate(${(t * 126) % 24} 0)`);
     bottomRibs.setAttribute('transform', `translate(${-((t * 126) % 24)} 0)`);
     roller.setAttribute('transform', `rotate(${t * 126 / 21 * 180 / Math.PI})`);
@@ -380,17 +358,7 @@ function createUnavailableScene(root: HTMLElement, options: { reducedMotion?: bo
     root.dataset.camera = reveal >= .999 ? 'wide' : 'close';
     root.dataset.time = t.toFixed(2);
   }
-  function canRun() { return !disposed && !paused && !document.hidden && !offscreen && (!prefersReduced() || userMotion); }
-  function updateButtons() {
-    const isStill = prefersReduced() && !userMotion;
-    if (pauseButton) {
-      pauseButton.disabled = isStill;
-      pauseButton.textContent = paused ? '继续' : '暂停';
-      pauseButton.setAttribute('aria-label', paused ? '继续动画' : '暂停动画');
-      pauseButton.setAttribute('aria-pressed', String(paused));
-    }
-    root.dataset.playing = String(canRun());
-  }
+  function canRun() { return !disposed && !paused && !document.hidden && !offscreen && !reducedMotion; }
   function frame(now: number) {
     raf = 0;
     if (!canRun()) { last = null; return; }
@@ -404,46 +372,45 @@ function createUnavailableScene(root: HTMLElement, options: { reducedMotion?: bo
   function sync() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0; last = null;
-    updateButtons();
+    root.dataset.playing = String(canRun());
     if (canRun()) raf = requestAnimationFrame(frame);
   }
-  function replay() { userMotion = true; paused = false; time = 0; draw(0); sync(); }
-  function togglePause() { paused = !paused; sync(); }
-  function motionChanged() {
-    userMotion = false;
-    if (prefersReduced()) draw(8, true);
-    else { time = Math.max(time, 8); draw(time); }
-    sync();
-  }
-  pauseButton?.addEventListener('click', togglePause);
-  replayButton?.addEventListener('click', replay);
-  reduced.addEventListener('change', motionChanged);
+  function replay() { time = 0; draw(0); sync(); }
   document.addEventListener('visibilitychange', sync);
   const observer = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
     offscreen = !entries[0].isIntersecting; sync();
   }, {threshold: 0}) : null;
   observer?.observe(svg);
-  draw(prefersReduced() ? 8 : 0, prefersReduced());
+  if (reducedMotion) time = 8;
+  draw(time, reducedMotion);
   sync();
   return {
     replay,
-    setReducedMotion(value: boolean) { appReduced = Boolean(value); motionChanged(); },
+    setReducedMotion(value: boolean) {
+      reducedMotion = value;
+      if (value) time = 8;
+      draw(time, value);
+      sync();
+    },
     setPaused(value: boolean) { paused = Boolean(value); sync(); },
     dispose() {
       disposed = true;
       cancelAnimationFrame(raf);
       observer?.disconnect();
-      reduced.removeEventListener('change', motionChanged);
       document.removeEventListener('visibilitychange', sync);
-      pauseButton?.removeEventListener('click', togglePause);
-      replayButton?.removeEventListener('click', replay);
     }
   };
 }
 
 
-onMounted(() => { if (root.value) player = createUnavailableScene(root.value, { reducedMotion: props.reducedMotion }) })
-watch(() => props.reducedMotion, value => player?.setReducedMotion(value))
+onMounted(() => {
+  if (!root.value) return
+  player = createUnavailableScene(root.value, props.motion !== 'full')
+  player.setPaused(props.paused)
+})
+watch(() => props.motion, motion => player?.setReducedMotion(motion !== 'full'))
+watch(() => props.paused, paused => player?.setPaused(paused))
+defineExpose({ replay: () => player?.replay() })
 onBeforeUnmount(() => { player?.dispose() })
 </script>
 
@@ -464,25 +431,13 @@ onBeforeUnmount(() => { player?.dispose() })
     --scene-wall-top: #4b5648; --scene-wall: #56614d; --scene-floor: #777d5e; --scene-floor-edge: #535f4b; --scene-floor-line: #59674f; --scene-frame-shadow: #16251f; --scene-timber: #9a896a;
   }
 }
-.unavailable-scene__button:focus-visible { outline: 2px solid var(--page-button); outline-offset: 4px; }
 .unavailable-scene { margin: 0; position: relative; min-width: 0; }
 .unavailable-scene__window { overflow: hidden; padding: 4px; }
 .unavailable-scene__art { width: 100%; height: auto; display: block; overflow: visible; }
 .unavailable-scene__art [data-part='camera'] { transform-origin: 0 0; }
-.unavailable-scene__caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 9px 0 0; padding-inline: 4.5%; min-height: 44px; }
-.unavailable-scene__label { color: var(--apple-secondary, var(--page-secondary)); font-size: 11px; line-height: 1.6; margin: 0; }
-.unavailable-scene__controls { display: flex; flex-shrink: 0; align-items: center; gap: 2px; }
-.unavailable-scene__button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 0; border-radius: 7px; background: transparent; color: var(--apple-secondary, var(--page-secondary)); font-family: inherit; font-size: 11px; padding: 0 9px; cursor: pointer; }
-.unavailable-scene__button:hover { background: #87917a14; }
-.unavailable-scene__button:disabled { opacity: .5; cursor: default; }
 @media (max-width: 880px) {
   .unavailable-scene { grid-row: 1; }
   .unavailable-scene__window { margin-inline: -10px; }
-  .unavailable-scene__caption { margin-top: 0; padding-inline: 2%; }
-}
-@media (max-width: 420px) {
-  .unavailable-scene__caption { padding-inline: 0; gap: 0; }
-  .unavailable-scene__label, .unavailable-scene__button { font-size: 10px; }
 }
 
 </style>

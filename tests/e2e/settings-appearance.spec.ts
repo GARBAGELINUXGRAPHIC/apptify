@@ -1,5 +1,28 @@
 import { expect, test } from '@playwright/test'
 
+test('mobile settings directory animates a branch without resizing the dialog', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/settings')
+  await page.getByRole('button', { name: '展开目录', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  const root = dialog.getByRole('treeitem', { name: '设置', exact: true })
+  await expect(root).toHaveAttribute('aria-expanded', 'true')
+  const collapsed = await root.evaluate(async element => {
+    const branch = element.querySelector<HTMLElement>(':scope > .apple-tree__branch')!
+    const before = branch.offsetHeight
+    const dialog = element.closest('[role="dialog"]') as HTMLElement
+    const dialogBefore = dialog.offsetHeight
+    element.querySelector<HTMLElement>(':scope > .apple-tree__row')!.click()
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+    return { before, during: branch.offsetHeight, dialogBefore, dialogDuring: dialog.offsetHeight }
+  })
+  expect(collapsed.during).toBeGreaterThan(0)
+  expect(collapsed.during).toBeLessThan(collapsed.before)
+  expect(collapsed.dialogDuring).toBe(collapsed.dialogBefore)
+  await expect(root.locator(':scope > .apple-tree__branch')).toBeHidden()
+})
+
 test('appearance has four navigable settings with responsive columns and live demonstrations', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.setViewportSize({ width: 1440, height: 1000 })

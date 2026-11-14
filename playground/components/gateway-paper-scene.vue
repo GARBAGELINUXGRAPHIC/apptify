@@ -233,40 +233,36 @@
 <path d="M42 83 40 645Q40 682 85 681" fill="none" stroke="#fff8e0" stroke-width="2" stroke-opacity=".48"/>
 </svg>
     </div>
-    <button v-if="canAnimate" class="gateway-scene__pause" type="button" :aria-label="userPaused ? '继续动画' : '暂停动画'" @click="togglePause">
-      <Play v-if="userPaused" :size="12" aria-hidden="true" /><Pause v-else :size="12" aria-hidden="true" />
-    </button>
   </figure>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
-import { Pause, Play } from 'lucide-vue-next'
-import { useApple } from '../../src'
-import { resolveMotion } from '../../src/core/context'
 import { createGatewayStory, type GatewayStory } from './gateway-paper-story'
 
 const uid = `gateway-${useId().replace(/:/g, '')}`
-const apple = useApple()
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
 const art = ref<SVGSVGElement>()
-const dark = computed(() => apple.theme.value.current.scheme === 'dark')
-const canAnimate = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced) === 'full')
-const userPaused = ref(false)
+const dark = computed(() => props.theme === 'dark')
+const canAnimate = computed(() => props.motion === 'full')
 let player: GatewayStory | undefined
 let mounted = false
 
-function togglePause() {
-  userPaused.value = !userPaused.value
-  if (userPaused.value) player?.pause()
+function syncPaused() {
+  if (props.paused) player?.pause()
   else player?.play()
 }
+watch(() => props.paused, syncPaused)
 watch(canAnimate, enabled => { player?.setReducedMotion(!enabled) }, { flush: 'post' })
 onMounted(async () => {
   mounted = true
   await nextTick()
-  if (mounted && art.value) player = createGatewayStory(art.value, !canAnimate.value)
+  if (!mounted || !art.value) return
+  player = createGatewayStory(art.value, !canAnimate.value)
+  syncPaused()
 })
 onBeforeUnmount(() => { mounted = false; player?.dispose() })
+defineExpose({ replay: () => player?.replay() })
 </script>
 
 <style scoped>
@@ -329,8 +325,5 @@ onBeforeUnmount(() => { mounted = false; player?.dispose() })
 }
 .gateway-scene__window { overflow: hidden; padding: 4px; }
 .gateway-scene__art { display: block; width: 100%; height: auto; overflow: visible; isolation: isolate; }
-.gateway-scene__pause { position: absolute; right: 1.5%; bottom: -5px; width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--apple-secondary); cursor: pointer; }
-.gateway-scene__pause:hover { background: var(--apple-hover); }
-.gateway-scene__pause:focus-visible { outline: 2px solid var(--apple-accent); outline-offset: 2px; }
-@media (max-width: 880px) { .gateway-scene__window { margin-inline: -12px; } .gateway-scene__pause { right: -1%; } }
+@media (max-width: 880px) { .gateway-scene__window { margin-inline: -12px; } }
 </style>

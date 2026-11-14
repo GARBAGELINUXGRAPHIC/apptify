@@ -62,6 +62,31 @@ test('tree row clicks expand and selection uses a static flat background like th
   await page.screenshot({ path: '/tmp/apptify-checks/content-tree-selection.png', animations: 'disabled' })
 })
 
+test('tree expands and collapses branches in place while keeping keyboard navigation on visible rows', async ({ page }) => {
+  await openComponent(page, 'apple-tree')
+  const tree = activeCard(page).getByRole('tree', { name: '树形列表', exact: true })
+  const root = tree.getByRole('treeitem', { name: '设计资源', exact: true })
+  const child = tree.getByRole('treeitem', { name: '组件', exact: true })
+  const sibling = tree.getByRole('treeitem', { name: '项目文件', exact: true })
+  const branch = root.locator(':scope > .apple-tree__branch')
+  const siblingTop = () => sibling.evaluate(element => element.getBoundingClientRect().top - element.closest('[role="tree"]')!.getBoundingClientRect().top)
+  const closedTop = await siblingTop()
+
+  await root.press('ArrowRight')
+  await expect.poll(() => branch.evaluate(element => element.getAnimations().some(animation => animation instanceof CSSTransition && animation.transitionProperty === 'grid-template-rows'))).toBe(true)
+  await expect.poll(siblingTop).toBeGreaterThan(closedTop + 80)
+  await root.press('ArrowRight')
+  await expect(child).toBeFocused()
+
+  await root.press('ArrowLeft')
+  await expect(branch).toHaveAttribute('inert', '')
+  await expect(child).toHaveCount(0)
+  await root.press('ArrowDown')
+  await expect(sibling).toBeFocused()
+  await expect.poll(siblingTop).toBeCloseTo(closedTop, 0)
+  await expect(branch.locator('[role="treeitem"]')).toHaveCount(0)
+})
+
 test('tabs translate the panel and selection indicator instead of fading', async ({ page }) => {
   await openComponent(page, 'apple-tabs')
   const tabs = activeCard(page).locator('.component-demo .apple-tabs')

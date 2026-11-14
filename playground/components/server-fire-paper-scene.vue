@@ -147,46 +147,33 @@
 </svg>
 
     </div>
-    <div class="fire-scene__controls">
-      <button class="fire-scene__control" type="button" aria-label="重新播放动画" @click="replay"><RotateCcw :size="13" aria-hidden="true" /><span>重播</span></button>
-      <button v-if="canAnimate" class="fire-scene__control" type="button" :aria-label="userPaused ? '继续动画' : '暂停动画'" :aria-pressed="userPaused" @click="userPaused = !userPaused"><Play v-if="userPaused" :size="13" aria-hidden="true" /><Pause v-else :size="13" aria-hidden="true" /></button>
-    </div>
   </figure>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
-import { Pause, Play, RotateCcw } from 'lucide-vue-next'
-import { useApple } from '../../src'
-import { resolveMotion } from '../../src/core/context'
 import { createServerFireStory, type ServerFirePhase, type ServerFireStory } from './server-fire-paper-story'
 
 const uid = `server-fire-${useId().replace(/:/g, '')}`
-const apple = useApple()
-const dark = computed(() => apple.theme.value.current.scheme === 'dark')
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
+const dark = computed(() => props.theme === 'dark')
 const scene = ref<HTMLElement>()
 const art = ref<SVGSVGElement>()
-const media = typeof window === 'undefined' ? undefined : window.matchMedia('(prefers-reduced-motion: reduce)')
-const systemReduced = ref(media?.matches ?? false)
-const canAnimate = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced || systemReduced.value) === 'full')
-const userPaused = ref(false)
+const canAnimate = computed(() => props.motion === 'full')
 const hidden = ref(typeof document !== 'undefined' && document.hidden)
 const offscreen = ref(false)
-const suspended = computed(() => userPaused.value || hidden.value || offscreen.value)
+const suspended = computed(() => props.paused || hidden.value || offscreen.value)
 const phase = ref<ServerFirePhase>('delivery')
 let player: ServerFireStory | undefined
 let observer: IntersectionObserver | undefined
 let mounted = false
 
-function replay() { userPaused.value = false; player?.replay() }
 function visibilityChanged() { hidden.value = document.hidden }
-function motionChanged() { systemReduced.value = media?.matches ?? false }
 watch(suspended, paused => player?.setPaused(paused), { flush: 'sync' })
 watch(canAnimate, enabled => player?.setReduced(!enabled), { flush: 'post' })
 onMounted(async () => {
   mounted = true
   document.addEventListener('visibilitychange', visibilityChanged)
-  media?.addEventListener('change', motionChanged)
   if (typeof IntersectionObserver !== 'undefined' && scene.value) {
     observer = new IntersectionObserver(entries => { if (entries[0]) offscreen.value = !entries[0].isIntersecting }, { threshold: 0 })
     observer.observe(scene.value)
@@ -200,9 +187,9 @@ onBeforeUnmount(() => {
   mounted = false
   player?.dispose()
   observer?.disconnect()
-  media?.removeEventListener('change', motionChanged)
   document.removeEventListener('visibilitychange', visibilityChanged)
 })
+defineExpose({ replay: () => player?.replay() })
 </script>
 
 <style scoped>
@@ -237,13 +224,6 @@ onBeforeUnmount(() => {
 }
 .fire-scene__window { overflow: hidden; padding: 4px; }
 .fire-scene__art { display: block; width: 100%; height: auto; overflow: visible; }
-.fire-scene__controls { display: flex; align-items: center; justify-content: flex-end; gap: 2px; margin: -3px 1.5% 0 0; }
-.fire-scene__control { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; min-width: 36px; padding: 6px 10px; color: var(--apple-secondary, #73796b); background: transparent; border: 0; border-radius: 18px; font: inherit; font-size: 11px; cursor: pointer; }
-.fire-scene__control:hover { background: var(--apple-hover, #71816b12); }
-.fire-scene__control:focus-visible { outline: 2px solid var(--apple-accent, #6f8e79); outline-offset: 3px; }
-.fire-scene__control svg { width: 13px; height: 13px; }
-.fire-scene__control[hidden] { display: none; }
 @media (max-width: 880px) { .fire-scene__window { margin-inline: -10px; } }
-@media (pointer: coarse) { .fire-scene__control { min-height: 44px; min-width: 44px; } }
 
 </style>

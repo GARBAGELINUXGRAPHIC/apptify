@@ -702,30 +702,25 @@
     <path d="M43 90 46 630Q46 665 91 668" stroke="#fff8df" stroke-width="2" opacity=".4" fill="none"/>
   </g>
 </svg></div>
-    <figcaption v-show="!reducedMotion" class="hp429-controls">
-      <button type="button" class="hp429-control" data-action="replay" aria-label="重新播放动画">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.7 7M4 4v6h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <button type="button" class="hp429-control" data-action="pause" aria-label="暂停动画" aria-pressed="false">
-        <svg data-icon="pause" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <svg data-icon="play" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" hidden><path d="m8 5 11 7-11 7Z" fill="currentColor"/></svg>
-      </button>
-    </figcaption>
   </figure>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 
-const props = defineProps<{ theme: 'light' | 'dark'; reducedMotion: boolean }>()
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
 const uid = `hp429-${useId()}-`
 const root = ref<HTMLElement>()
 let player: ReturnType<typeof mountHamster429> | undefined
 
 onMounted(() => {
-  if (root.value) player = mountHamster429(root.value, uid, props.reducedMotion)
+  if (!root.value) return
+  player = mountHamster429(root.value, uid, props.motion !== 'full')
+  player.setPaused(props.paused)
 })
-watch(() => props.reducedMotion, reduced => player?.setReducedMotion(reduced))
+watch(() => props.motion, motion => player?.setReducedMotion(motion !== 'full'))
+watch(() => props.paused, paused => player?.setPaused(paused))
+defineExpose({ replay: () => player?.replay() })
 onBeforeUnmount(() => {
   player?.destroy()
   player = undefined
@@ -933,19 +928,15 @@ function mountHamster429(scene: HTMLElement, unique: string, reducedMotion: bool
     scene.dataset.phase = t < 4.2 ? 'close-up' : t < 9.2 ? 'reveal' : 'wide';
     scene.dataset.time = t.toFixed(2);
   }
-  const pauseButton = findElement<HTMLButtonElement>(scene, '[data-action="pause"]')
-  const replayButton = findElement<HTMLButtonElement>(scene, '[data-action="replay"]')
   const stillFrame = 12
-  const pauseIcon = findElement<SVGElement>(pauseButton, '[data-icon="pause"]')
-  const playIcon = findElement<SVGElement>(pauseButton, '[data-icon="play"]')
   let elapsed = reducedMotion ? stillFrame : 0
-  let userPaused = false
+  let paused = false
   let offscreen = false
   let frameId = 0
   let lastFrame: number | undefined
 
   function canPlay() {
-    return !reducedMotion && !userPaused && !document.hidden && !offscreen
+    return !reducedMotion && !paused && !document.hidden && !offscreen
   }
 
   function frame(now: number) {
@@ -960,27 +951,15 @@ function mountHamster429(scene: HTMLElement, unique: string, reducedMotion: bool
   function sync() {
     cancelAnimationFrame(frameId)
     lastFrame = undefined
-    pauseButton.setAttribute('aria-label', userPaused ? '播放动画' : '暂停动画')
-    pauseButton.setAttribute('aria-pressed', String(userPaused))
-    pauseIcon.toggleAttribute('hidden', userPaused)
-    playIcon.toggleAttribute('hidden', !userPaused)
     frameId = canPlay() ? requestAnimationFrame(frame) : 0
-  }
-
-  function togglePause() {
-    userPaused = !userPaused
-    sync()
   }
 
   function replay() {
     elapsed = 0
-    userPaused = false
     render(elapsed)
     sync()
   }
 
-  pauseButton.addEventListener('click', togglePause)
-  replayButton.addEventListener('click', replay)
   document.addEventListener('visibilitychange', sync)
   const observer = typeof IntersectionObserver === 'function'
     ? new IntersectionObserver(([entry]) => {
@@ -993,6 +972,8 @@ function mountHamster429(scene: HTMLElement, unique: string, reducedMotion: bool
   sync()
 
   return {
+    replay,
+    setPaused(value: boolean) { paused = value; sync() },
     setReducedMotion(reduced: boolean) {
       reducedMotion = reduced
       if (reduced) elapsed = stillFrame
@@ -1002,8 +983,6 @@ function mountHamster429(scene: HTMLElement, unique: string, reducedMotion: bool
     destroy() {
       cancelAnimationFrame(frameId)
       observer?.disconnect()
-      pauseButton.removeEventListener('click', togglePause)
-      replayButton.removeEventListener('click', replay)
       document.removeEventListener('visibilitychange', sync)
     },
   };
@@ -1024,17 +1003,9 @@ function mountHamster429(scene: HTMLElement, unique: string, reducedMotion: bool
 .hp429-window { padding: 5px; overflow: hidden; }
 .hp429-art { display: block; width: 100%; height: auto; overflow: visible; isolation: isolate; }
 .hp429-art [data-part], .hp429-art [data-actor], .hp429-art .ham-bob, .hp429-art .ham-head, .hp429-art .ham-eye, .hp429-art .ham-cargo, .hp429-art .ham-foot-back, .hp429-art .ham-foot-front { transform-box: view-box; }
-.hp429-controls { position: absolute; right: 2.5%; bottom: -21px; display: flex; align-items: center; gap: 1px; }
-.hp429-control { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 0; padding: 0; border-radius: 50%; color: var(--apple-secondary); background: transparent; cursor: pointer; }
-.hp429-control:hover { background: var(--apple-hover); }
-.hp429-control:focus-visible { outline: 2px solid var(--apple-accent); outline-offset: 2px; }
-.hp429-control svg[hidden] { display: none; }
-@media (max-width: 880px) { .hp429-controls { bottom: -24px; } }
 @media (max-width: 420px) {
   .hp429-window { margin-inline: -9px; padding: 4px; }
-  .hp429-controls { right: 0; }
 }
-@media (pointer: coarse) { .hp429-control { width: 44px; height: 44px; } }
 .hp429-scene[data-theme="dark"] {
   --hp-sky-top: #253536; --hp-sky: #354a47; --hp-sun: #ddcd9d; --hp-paper-shadow: #15231f;
   --hp-mountain-far: #3a5149; --hp-mountain-fold: #3f5850; --hp-mountain-near: #466357; --hp-pine: #78917b;

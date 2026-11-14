@@ -7,3 +7,7 @@ export const errorPages = {
   502: { title: '网关错误', copy: ['包裹在城门口被拦住了。', '服务暂时无法响应，请稍后再试。'] },
   503: { title: '服务暂时不可用', copy: ['包裹还在来，值班员却睡着了。', '请稍后再试，让它再缓一会儿。'] },
 } as const
+
+export type ErrorCode = keyof typeof errorPages
+export const errorCodes = Object.keys(errorPages).map(Number) as ErrorCode[]
+export const errorPreviewId = (code: ErrorCode) => `error-${code}`

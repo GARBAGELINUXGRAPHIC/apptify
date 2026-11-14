@@ -135,6 +135,10 @@
 .apple-tree__toggle, .apple-tree__spacer { display: inline-flex; flex: 0 0 36px; align-items: center; justify-content: center; width: 36px; height: 40px; padding: 0; border: 0; background: transparent; color: var(--apple-secondary); }
 .apple-tree__toggle svg { transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-tree__toggle.is-open svg { transform: rotate(90deg); }
+.apple-tree__branch { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--apple-duration) var(--apple-ease); }
+.apple-tree__branch > ul { min-height: 0; }
+.apple-tree-branch-enter-from, .apple-tree-branch-leave-to { grid-template-rows: 0fr; }
+.apple-tree-branch-enter-active > ul, .apple-tree-branch-leave-active > ul { overflow: clip; }
 .apple-tree-host, .apple-tree-content { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .apple-tree-content { flex: 1; }
 .apple-tree-content > .apple-search { flex-shrink: 0; margin-bottom: 12px; }

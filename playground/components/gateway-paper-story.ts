@@ -18,6 +18,7 @@ export interface GatewayStory {
   seek(seconds: number): GatewaySnapshot
   play(): void
   pause(): void
+  replay(): void
   getState(): GatewaySnapshot
   setReducedMotion(value: boolean): void
   dispose(): void
@@ -64,7 +65,6 @@ export function createGatewayStory(svg: GatewayArt, reducedMotion = false): Gate
   const bezier = (a: number,b: number,c: number,d: number,t: number) => (1-t)**3*a+3*(1-t)**2*t*b+3*(1-t)*t*t*c+t**3*d;
   let disposed=false, raf=0, clock=0, lastNow=0, userPaused=false;
   let inView=true;
-  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)');
   let observer: IntersectionObserver | undefined;
   let snapshot: GatewaySnapshot | undefined;
 
@@ -159,11 +159,11 @@ export function createGatewayStory(svg: GatewayArt, reducedMotion = false): Gate
       focus={x:mix(focusBug.x-8,600,out),y:mix(focusBug.y-13,360,out)};
     }
     attr('camera','transform',`translate(600 360) scale(${n(zoom)}) translate(${n(-focus.x)} ${n(-focus.y)})`);
-    svg.dataset.story=reduce.matches || reducedMotion ? "static" : intro ? "intro" : "loop";
+    svg.dataset.story=reducedMotion ? "static" : intro ? "intro" : "loop";
     snapshot={seconds,phase:t,intro,zoom,bug:{...bug,scale,visible,captured},mouth,tip,tongueVisible,contact,shoot,retractEnd,period,introEnd};
     return snapshot;
   }
-  const allowed=()=>!disposed&&!userPaused&&!document.hidden&&inView&&!reduce.matches&&!reducedMotion;
+  const allowed=()=>!disposed&&!userPaused&&!document.hidden&&inView&&!reducedMotion;
   function stopRAF() { if(raf) cancelAnimationFrame(raf); raf=0; lastNow=0; }
   function tick(now: number) {
     raf=0; if(!allowed()) {lastNow=0;return;}
@@ -171,24 +171,26 @@ export function createGatewayStory(svg: GatewayArt, reducedMotion = false): Gate
     lastNow=now; render(clock); raf=requestAnimationFrame(tick);
   }
   function sync() { svg.dataset.playing=String(allowed()); if(allowed()) {if(!raf) {lastNow=0;raf=requestAnimationFrame(tick);}} else stopRAF(); }
-  function motionChanged() {
-    if(reduce.matches || reducedMotion) {stopRAF();render(introEnd+2.7);sync();}
-    else {clock=Math.max(clock,introEnd);render(clock);sync();}
-  }
   document.addEventListener('visibilitychange',sync);
-  reduce.addEventListener('change',motionChanged);
   if('IntersectionObserver' in window) {
     observer=new IntersectionObserver(entries=>{inView=entries[0]?.isIntersecting??true;sync();},{threshold:0});
     observer.observe(svg);
   }
-  if(reduce.matches || reducedMotion) render(introEnd+2.7); else render(0);
+  render(reducedMotion ? introEnd+2.7 : 0);
   const controller={
     seek(seconds: number){if(!Number.isFinite(seconds)||seconds<0) throw new RangeError('seconds must be finite and non-negative');userPaused=true;sync();clock=seconds;return render(clock);},
     play(){userPaused=false;sync();},
     pause(){userPaused=true;sync();},
+    replay(){clock=0;lastNow=0;render(clock);sync();},
     getState(){return snapshot!;},
-    setReducedMotion(value: boolean){reducedMotion=value;motionChanged();},
-    dispose(){if(disposed)return;disposed=true;stopRAF();svg.dataset.playing="false";observer?.disconnect();document.removeEventListener('visibilitychange',sync);reduce.removeEventListener('change',motionChanged);delete svg.gatewayStory;},
+    setReducedMotion(value: boolean) {
+      if (reducedMotion === value) return;
+      reducedMotion = value;
+      clock = value ? introEnd + 2.7 : Math.max(clock, introEnd);
+      render(clock);
+      sync();
+    },
+    dispose(){if(disposed)return;disposed=true;stopRAF();svg.dataset.playing="false";observer?.disconnect();document.removeEventListener('visibilitychange',sync);delete svg.gatewayStory;},
     timing:Object.freeze({contact,shoot,retractEnd,period,introEnd,initialPhase,zoomStart})
   };
   svg.gatewayStory=controller;

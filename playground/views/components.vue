@@ -12,14 +12,16 @@
       <div class="components-content">
         <div class="feed-toolbar">
           <span class="feed-count">全部组件 <small>{{ catalog.length }}</small></span>
-          <router-link v-slot="{ href, navigate }" to="#error-pages" custom>
-            <apple-link :href="href" @click="navigate">错误页面 <ArrowDown :size="14" aria-hidden="true" /></apple-link>
-          </router-link>
         </div>
         <div ref="feed" class="component-feed">
           <section v-for="(section, index) in sections" :id="section.id" :key="section.id" class="feed-group feed-anchor" :data-group="section.id" :aria-labelledby="`${section.id}-heading`">
-            <header class="feed-group-heading"><span>0{{ index + 1 }}</span><h2 :id="`${section.id}-heading`">{{ section.label }}</h2><small>{{ section.items.length }} 个组件</small></header>
-            <MasonryFeed class="feed-cards" @layout="schedulePosition">
+            <header class="feed-group-heading">
+              <span>0{{ index + 1 }}</span>
+              <h2 :id="`${section.id}-heading`">{{ section.label }}</h2>
+              <small>{{ section.id === 'error-pages' ? `${errorCodes.length} 个页面` : `${section.items.length} 个组件` }}</small>
+            </header>
+            <ErrorPagePreviews v-if="section.id === 'error-pages'" @layout="schedulePosition" />
+            <MasonryFeed v-else class="feed-cards" @layout="schedulePosition">
             <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
               <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
               <section class="detail-preview" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
@@ -28,7 +30,6 @@
             </MasonryFeed>
           </section>
         </div>
-        <ErrorPagePreviews id="error-pages" class="feed-anchor" />
       </div>
     </div>
   </apple-container>
@@ -38,8 +39,9 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowDown, Hash } from 'lucide-vue-next'
+import { Hash } from 'lucide-vue-next'
 import { catalog, sections, componentId } from '../catalog'
+import { errorCodes } from '../error-pages'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
 import ErrorPagePreviews from '../components/ErrorPagePreviews.vue'
@@ -110,7 +112,7 @@ onBeforeUnmount(() => {
 .directory-tree { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding-inline: var(--apple-focus-clearance, 6px); padding-block-start: var(--apple-focus-clearance, 6px); }
 @media (max-width: 900px) { .directory-index { display: none; } }
 .components-page > * { max-width: none; }
-.feed-anchor { scroll-margin-top: 96px; }
+.component-feed :deep(.feed-anchor) { scroll-margin-top: 96px; }
 .feed-group-heading { padding-bottom: 20px; }
 .component-card { width: 100%; padding: 0; }
 .component-card :deep(> .apple-card__body) { padding: 0; border-radius: inherit; }

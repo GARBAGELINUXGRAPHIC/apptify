@@ -1,4 +1,4 @@
-import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, useId, withDirectives, type PropType, type VNodeChild } from 'vue'
+import { defineComponent, h, inject, markRaw, provide, Teleport, Transition, useId, vShow, withDirectives, type PropType, type VNodeChild } from 'vue'
 import { AlertCircle, ArrowUp, Check, ChevronDown, ChevronLeft, ChevronRight, Inbox, Info, LoaderCircle, X } from 'lucide-vue-next'
 import { Virtualizer, elementScroll, observeElementOffset, observeElementRect, type VirtualizerOptions } from '@tanstack/virtual-core'
 import { ripple, scrollToWithMotion, type MotionScroll } from '../core/motion'
@@ -299,13 +299,39 @@ export const AppleTable = defineComponent({
   },
 })
 
+const AppleTreeBranch = defineComponent({
+  name: 'AppleTreeBranch',
+  props: { open: Boolean, animate: Boolean },
+  data() { return { renderChildren: this.open } },
+  watch: { open(open) { if (open) this.renderChildren = true } },
+  beforeUpdate() {
+    const branch = this.$el as HTMLElement
+    if (!this.open && branch.contains(branch.ownerDocument.activeElement)) {
+      branch.parentElement?.focus({ preventScroll: true })
+    }
+  },
+  render() {
+    return h(Transition, {
+      name: 'apple-tree-branch',
+      css: this.animate,
+      onAfterLeave: () => { this.renderChildren = false },
+    }, { default: () => withDirectives(h('div', {
+      class: 'apple-tree__branch',
+      inert: !this.open || undefined,
+      'aria-hidden': !this.open || undefined,
+    }, this.renderChildren ? this.$slots.default?.() : undefined), [[vShow, this.open]]) })
+  },
+})
+
 export const AppleTree = defineComponent({
   name: 'AppleTree',
   setup(props) { const directory = useSpeedDialEntry('directory', () => props.label, () => props.mobileDirectory); return { directoryTarget: directory.target, inMobileDirectory: directory.hosted, closeDirectory: directory.close } },
+  inject: { apple: { from: appleKey, default: null } },
   props: { ...motionProps, items: { type: Array as PropType<AppleTreeItem[]>, default: () => [] }, modelValue: valueProp, expanded: { type: Array as PropType<AppleValue[]>, default: undefined }, disabled: Boolean, label: { type: String, default: '树形列表' }, searchable: { type: Boolean, default: true }, mobileDirectory: { type: Boolean, default: true } },
   emits: ['update:modelValue', 'update:expanded', 'select'],
   data: () => ({ search: '', searchCollapsed: [] as AppleValue[], internalExpanded: [] as AppleValue[], internalValue: undefined as AppleValue | undefined, focusValue: undefined as AppleValue | undefined }),
   computed: {
+    motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced) },
     query(): string { return this.searchable ? this.search.trim().toLocaleLowerCase() : '' },
     filteredItems(): AppleTreeItem[] {
       if (!this.query) return this.items
@@ -349,7 +375,15 @@ export const AppleTree = defineComponent({
   methods: {
     toggle(item: AppleTreeItem) { if (this.disabled || item.disabled || !item.children?.length) return; if (this.query) { this.searchCollapsed = this.searchCollapsed.includes(item.value) ? this.searchCollapsed.filter(value => value !== item.value) : [...this.searchCollapsed, item.value]; return }; const next = this.expandedValues.includes(item.value) ? this.expandedValues.filter(value => value !== item.value) : [...this.expandedValues, item.value]; this.internalExpanded = next; this.$emit('update:expanded', next) },
     select(item: AppleTreeItem) { if (this.disabled || item.disabled) return; this.focus(item.value); if (item.children?.length) { this.toggle(item); return }; this.internalValue = item.value; this.$emit('update:modelValue', item.value); this.$emit('select', item); this.closeDirectory() },
-    focus(value: AppleValue | undefined) { if (value === undefined) return; this.focusValue = value; this.$nextTick(() => { const index = this.visibleItems.findIndex(entry => entry.item.value === value); (this.$refs.treeContent as HTMLElement | undefined)?.querySelectorAll<HTMLElement>('[role="treeitem"]')[index]?.focus() }) },
+    focus(value: AppleValue | undefined) {
+      if (value === undefined) return
+      this.focusValue = value
+      this.$nextTick(() => {
+        const index = this.visibleItems.findIndex(entry => entry.item.value === value)
+        const tree = this.$refs.tree as HTMLElement | undefined
+        tree?.querySelectorAll<HTMLElement>('[role="treeitem"]:not(.apple-tree__branch[inert] *)')[index]?.focus()
+      })
+    },
     keydown(event: KeyboardEvent, item: AppleTreeItem) {
       if (this.disabled || item.disabled) return
       const enabled = this.visibleItems.filter(entry => !entry.item.disabled)
@@ -372,15 +406,20 @@ export const AppleTree = defineComponent({
             hasChildren ? h('span', { class: ['apple-tree__toggle', { 'is-open': open }], 'aria-hidden': 'true' }, icon(ChevronRight, 16)) : h('span', { class: 'apple-tree__spacer' }),
             this.$slots.item?.({ item, expanded: open, selected: this.selectedValue === item.value }) ?? h('span', item.label),
           ]), !this.disabled && !item.disabled),
-          hasChildren && open ? h('ul', { role: 'group' }, this.renderItems(item.children!, level + 1)) : null,
+          hasChildren ? h(AppleTreeBranch, { open, animate: this.motionMode !== 'none' }, {
+            default: () => h('ul', { role: 'group' }, this.renderItems(item.children!, level + 1)),
+          }) : null,
         ])
       })
     },
   },
   render() {
-    const content = h('div', { ref: 'treeContent', class: 'apple-tree-content' }, [
+    const content = h('div', { class: 'apple-tree-content' }, [
       this.searchable ? h(AppleSearch, { modelValue: this.search, 'onUpdate:modelValue': (value: string) => { this.search = value }, label: `搜索${this.label}`, disabled: this.disabled }) : null,
-      h('div', { class: 'apple-tree-scroll' }, [h(AppleAutoSize, { motion: this.motion, class: 'apple-tree-size' }, { default: () => h('ul', { class: 'apple-tree', role: 'tree', 'aria-label': this.label, 'data-motion': this.motion }, this.renderItems(this.filteredItems)) }), this.query && !this.filteredItems.length ? h('p', { class: 'apple-tree-empty', role: 'status' }, '无匹配结果') : null]),
+      h('div', { class: 'apple-tree-scroll' }, [
+        h('ul', { ref: 'tree', class: ['apple-tree', 'apple-tree-size'], role: 'tree', 'aria-label': this.label, 'data-apple-motion': this.motionMode }, this.renderItems(this.filteredItems)),
+        this.query && !this.filteredItems.length ? h('p', { class: 'apple-tree-empty', role: 'status' }, '无匹配结果') : null,
+      ]),
     ])
     return h('div', { class: ['apple-tree-host', { 'is-mobile-directory': this.inMobileDirectory }] }, h(Teleport, { to: this.directoryTarget ?? 'body', disabled: !this.inMobileDirectory }, content))
   },

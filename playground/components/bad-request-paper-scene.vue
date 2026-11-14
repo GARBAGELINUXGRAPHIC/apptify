@@ -203,47 +203,34 @@
 </svg>
 
     </div>
-    <div v-if="canAnimate" class="bad-request-scene__controls">
-      <button type="button" :aria-label="paused ? '继续动画' : '暂停动画'" :title="paused ? '继续动画' : '暂停动画'" @click="togglePause">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path v-if="paused" d="m5 3 8 5-8 5Z"/><path v-else d="M5 3v10m6-10v10"/></svg>
-      </button>
-      <button type="button" aria-label="重播动画" title="重播动画" @click="replay">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6a5.4 5.4 0 1 1-.1 4M3 2v4h4"/></svg>
-      </button>
-    </div>
   </figure>
 </template>
 
 <script setup lang="ts">
-import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, useId, watch } from 'vue'
+import { onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, useId, watch } from 'vue'
 import { createBadRequestStory, type BadRequestStory } from './bad-request-paper-story'
 
-const props = withDefaults(defineProps<{ theme?: 'auto' | 'light' | 'dark'; reducedMotion?: boolean }>(), {
-  theme: 'auto', reducedMotion: false,
-})
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
 const uid = `bad-request-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
 const art = ref<SVGSVGElement>()
-const paused = ref(false)
-const systemReduced = ref(false)
-const canAnimate = computed(() => !props.reducedMotion && !systemReduced.value)
 let story: BadRequestStory | undefined
-let media: MediaQueryList | undefined
-const updateSystemMotion = () => { systemReduced.value = media?.matches ?? false }
-function pause() { paused.value = true; story?.pause() }
-function play() { paused.value = false; story?.play() }
-function togglePause() { if (paused.value) play(); else pause() }
-function replay() { story?.restart(); play() }
-watch(canAnimate, allowed => story?.setReducedMotion(!allowed))
+
+function syncPaused() {
+  if (props.paused) story?.pause()
+  else story?.play()
+}
+
+watch(() => props.paused, syncPaused)
+watch(() => props.motion, motion => story?.setReducedMotion(motion !== 'full'))
 onMounted(() => {
-  media = window.matchMedia('(prefers-reduced-motion: reduce)')
-  updateSystemMotion()
-  media.addEventListener('change', updateSystemMotion)
-  if (art.value) story = createBadRequestStory(art.value, !canAnimate.value)
+  if (!art.value) return
+  story = createBadRequestStory(art.value, props.motion !== 'full')
+  syncPaused()
 })
 onActivated(() => story?.setActive(true))
 onDeactivated(() => story?.setActive(false))
-onBeforeUnmount(() => { media?.removeEventListener('change', updateSystemMotion); story?.dispose() })
-defineExpose({ replay, pause, play })
+onBeforeUnmount(() => story?.dispose())
+defineExpose({ replay: () => story?.restart() })
 </script>
 
 <style scoped>
@@ -267,14 +254,5 @@ defineExpose({ replay, pause, play })
 }
 .bad-request-scene__window { padding:4px; overflow:hidden; }
 .bad-request-scene__art { display:block; width:100%; height:auto; overflow:visible; isolation:isolate; }
-.bad-request-scene__controls { position:absolute; right:1.5%; bottom:-18px; display:flex; gap:3px; }
-.bad-request-scene__controls button {
-  display:grid; place-items:center; width:30px; height:30px; padding:0;
-  border:0; border-radius:50%; background:transparent;
-  color:var(--apple-secondary,#787a68); cursor:pointer;
-}
-.bad-request-scene__controls button:hover { background:var(--apple-hover,rgba(108,117,92,.08)); }
-.bad-request-scene__controls button:focus-visible { outline:2px solid var(--apple-accent,#72856f); outline-offset:2px; }
-.bad-request-scene__controls svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
-@media(max-width:880px) { .bad-request-scene__window { margin-inline:-12px; } .bad-request-scene__controls { right:-1%; bottom:-16px; } }
+@media(max-width:880px) { .bad-request-scene__window { margin-inline:-12px; } }
 </style>

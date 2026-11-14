@@ -1,5 +1,5 @@
 <template>
-  <figure ref="scene" class="meal-scene" :class="{ 'meal-scene--dark': dark }" :data-story="story" :data-playing="canAnimate && !suspended" :data-motion="motion">
+  <figure ref="scene" class="meal-scene" :class="{ 'meal-scene--dark': dark }" :data-story="story" :data-playing="canAnimate && !suspended" :data-motion="props.motion">
     <div class="meal-scene__window">
 <svg xmlns="http://www.w3.org/2000/svg" ref="art" class="meal-scene__art" viewBox="0 0 1000 660" role="img" :aria-labelledby="`${uid}-title ${uid}-description`">
   <title :id="`${uid}-title`">小狗与够不到的鸡腿</title>
@@ -254,32 +254,22 @@
   <g class="meal-scene__edition" fill="var(--apple-secondary, #74766e)" font-size="10" letter-spacing="2"><text x="44" y="20">NOT YOURS</text><text x="942" y="650" text-anchor="end">PAPER TALES — 02</text></g>
 </svg>
     </div>
-    <button v-if="canAnimate" class="meal-scene__pause" type="button" :aria-label="userPaused ? '继续动画' : '暂停动画'" :aria-pressed="userPaused" @click="userPaused = !userPaused">
-      <Play v-if="userPaused" :size="12" aria-hidden="true" /><Pause v-else :size="12" aria-hidden="true" />
-    </button>
   </figure>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
-import { Pause, Play } from 'lucide-vue-next'
-import { useApple } from '../../src'
-import { resolveMotion } from '../../src/core/context'
 import { createForbiddenPaperStory, createForbiddenRenderer, type ForbiddenPaperStory } from './forbidden-paper-story'
 
 const uid = `meal-${useId().replace(/:/g, '')}`
-const apple = useApple()
+const props = defineProps<{ theme: 'light' | 'dark'; motion: 'full' | 'reduced' | 'none'; paused: boolean }>()
 const scene = ref<HTMLElement>()
 const art = ref<SVGSVGElement>()
-const media = typeof window === 'undefined' ? undefined : window.matchMedia('(prefers-reduced-motion: reduce)')
-const systemReduced = ref(media?.matches ?? false)
-const motion = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced || systemReduced.value))
-const canAnimate = computed(() => motion.value === 'full')
-const dark = computed(() => apple.theme.value.current.scheme === 'dark')
-const userPaused = ref(false)
+const canAnimate = computed(() => props.motion === 'full')
+const dark = computed(() => props.theme === 'dark')
 const hidden = ref(typeof document !== 'undefined' && document.hidden)
 const offscreen = ref(false)
-const suspended = computed(() => userPaused.value || hidden.value || offscreen.value)
+const suspended = computed(() => props.paused || hidden.value || offscreen.value)
 const story = ref<'intro' | 'loop' | 'static'>('static')
 let player: ForbiddenPaperStory | undefined
 let observer: IntersectionObserver | undefined
@@ -296,17 +286,11 @@ function play(intro: boolean) {
   syncPlayback()
 }
 function visibilityChanged() { hidden.value = document.hidden }
-function mediaChanged() { systemReduced.value = media?.matches ?? false }
 watch(suspended, syncPlayback, { flush: 'sync' })
-watch(canAnimate, enabled => {
-  if (!mounted) return
-  if (enabled) play(false)
-  else play(false)
-}, { flush: 'post' })
+watch(canAnimate, () => play(false), { flush: 'post' })
 onMounted(async () => {
   mounted = true
   document.addEventListener('visibilitychange', visibilityChanged)
-  media?.addEventListener('change', mediaChanged)
   if (typeof IntersectionObserver !== 'undefined' && scene.value) {
     observer = new IntersectionObserver(([entry]) => { offscreen.value = !entry.isIntersecting }, { threshold: 0 })
     observer.observe(scene.value)
@@ -318,9 +302,9 @@ onBeforeUnmount(() => {
   mounted = false
   stop()
   observer?.disconnect()
-  media?.removeEventListener('change', mediaChanged)
   document.removeEventListener('visibilitychange', visibilityChanged)
 })
+defineExpose({ replay: () => play(true) })
 </script>
 
 <style scoped>
@@ -359,9 +343,6 @@ onBeforeUnmount(() => {
 .meal-scene--dark .dinner-photo-day { display: inline; }
 .meal-scene--dark .dinner-photo-night { display: none; }
 
-.meal-scene__pause { position: absolute; right: 1.5%; bottom: -5px; width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--apple-secondary); cursor: pointer; }
-.meal-scene__pause:hover { background: var(--apple-hover); }
-.meal-scene__pause:focus-visible { outline: 2px solid var(--apple-accent); outline-offset: 2px; }
-@media (max-width: 880px) { .meal-scene__window { margin-inline: -12px; } .meal-scene__pause { right: -1%; } }
-@media (max-width: 420px) { .meal-scene__edition { font-size: 12px; } .meal-scene__pause { bottom: -8px; } }
+@media (max-width: 880px) { .meal-scene__window { margin-inline: -12px; } }
+@media (max-width: 420px) { .meal-scene__edition { font-size: 12px; } }
 </style>

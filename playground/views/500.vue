@@ -15,7 +15,7 @@
         <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
-    <ServerFirePaperScene class="paper-500-illustration" />
+    <ErrorScene class="paper-500-illustration" :code="500" />
   </main>
 </template>
 
@@ -27,7 +27,7 @@
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { errorPages } from '../error-pages'
-import ServerFirePaperScene from '../components/server-fire-paper-scene.vue'
+import ErrorScene from '../components/ErrorScene.vue'
 
 const page = errorPages[500]
 const router = useRouter()

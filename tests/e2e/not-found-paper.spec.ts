@@ -98,6 +98,7 @@ test('the story really finishes once and the ambient cast stays bounded for anot
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(route)
+  await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
   const nodeCount = await page.locator(`${paper} *`).count()
   await expect(page.locator(paper)).toHaveAttribute('data-story', 'settled', { timeout: 18_000 })
   expect((await paperAnimations(page)).map(animation => animation.id).sort()).toEqual(['paper-loop-acorn-0', 'paper-loop-acorn-1', 'paper-loop-acorn-2', 'paper-loop-acorn-3', 'paper-loop-acorn-4', 'paper-loop-breath', 'paper-loop-river'])
@@ -111,10 +112,9 @@ test('the story really finishes once and the ambient cast stays bounded for anot
   expect(errors).toEqual([])
 })
 
-test('visibility and offscreen suspension preserve the timeline without exposing playback controls', async ({ page }) => {
+test('visibility and offscreen suspension preserve the timeline', async ({ page }) => {
   await page.goto(route)
   await expect(page.locator(paper)).toHaveAttribute('data-story', 'intro')
-  await expect(page.getByRole('button', { name: /暂停动画|继续动画|重看故事/ })).toHaveCount(0)
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true })
     document.dispatchEvent(new Event('visibilitychange'))
@@ -147,7 +147,7 @@ for (const motion of ['none', 'reduced']) {
     expect((await pose(page, 'squirrel')).opacity).toBe(1)
     expect((await pose(page, 'held-acorn')).opacity).toBe(1)
     expect((await pose(page, 'camera')).scale).toBe(1)
-    await expect(page.getByRole('button', { name: '重看故事' })).toHaveCount(0)
+    await expect(page.getByRole('group', { name: '动画控制' })).toHaveCount(0)
   })
 }
 

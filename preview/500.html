@@ -67,14 +67,12 @@
 }
 .fire-scene__window { overflow: hidden; padding: 4px; }
 .fire-scene__art { display: block; width: 100%; height: auto; overflow: visible; }
-.fire-scene__controls { display: flex; align-items: center; justify-content: flex-end; gap: 2px; margin: -3px 1.5% 0 0; }
-.fire-scene__control { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; min-width: 36px; padding: 6px 10px; color: var(--apple-secondary, #73796b); background: transparent; border: 0; border-radius: 18px; font: inherit; font-size: 11px; cursor: pointer; }
+.fire-scene__controls { display: flex; justify-content: flex-end; gap: 2px; }
+.fire-scene__control { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; color: var(--apple-secondary, #73796b); background: transparent; border: 0; border-radius: 10px; cursor: pointer; }
 .fire-scene__control:hover { background: var(--apple-hover, #71816b12); }
 .fire-scene__control:focus-visible { outline: 2px solid var(--apple-accent, #6f8e79); outline-offset: 3px; }
-.fire-scene__control svg { width: 13px; height: 13px; }
-.fire-scene__control[hidden] { display: none; }
+.fire-scene__controls[hidden], .fire-scene__control svg[hidden] { display: none; }
 @media (max-width: 880px) { .fire-scene__window { margin-inline: -10px; } }
-@media (pointer: coarse) { .fire-scene__control { min-height: 44px; min-width: 44px; } }
 
 </style>
 <div id="apptify-500-preview" class="af500-preview">
@@ -240,9 +238,14 @@
 </svg>
 
       </div>
-      <div class="fire-scene__controls">
-        <button class="fire-scene__control" data-control="replay" type="button" aria-label="重新播放动画">重播</button>
-        <button class="fire-scene__control" data-control="pause" type="button" aria-label="暂停动画" aria-pressed="false">暂停</button>
+      <div class="fire-scene__controls" role="group" aria-label="动画控制">
+        <button class="fire-scene__control" data-control="pause" type="button" aria-label="暂停动画" title="暂停动画" aria-pressed="false">
+          <svg data-icon="pause" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+          <svg data-icon="play" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M6 4.75a.75.75 0 0 1 1.16-.63l12.1 7.25a.75.75 0 0 1 0 1.26l-12.1 7.25A.75.75 0 0 1 6 19.25z"/></svg>
+        </button>
+        <button class="fire-scene__control" data-control="replay" type="button" aria-label="重新播放动画" title="重新播放动画">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 15"/><path d="M3 21v-6h6"/></svg>
+        </button>
       </div>
     </figure>
   </main>
@@ -544,9 +547,11 @@
   var manualTheme = false;
   function syncPause() {
     player.setPaused(userPaused || document.hidden || offscreen);
-    pause.textContent = userPaused ? "\u7EE7\u7EED" : "\u6682\u505C";
+    pause.title = userPaused ? "继续动画" : "暂停动画";
+    pause.querySelector('[data-icon="pause"]').toggleAttribute("hidden", userPaused);
+    pause.querySelector('[data-icon="play"]').toggleAttribute("hidden", !userPaused);
     pause.setAttribute("aria-pressed", String(userPaused));
-    pause.setAttribute("aria-label", userPaused ? "\u7EE7\u7EED\u52A8\u753B" : "\u6682\u505C\u52A8\u753B");
+    pause.setAttribute("aria-label", pause.title);
   }
   function syncTheme() {
     root.classList.toggle("af500-preview--dark", dark);
@@ -556,7 +561,7 @@
   }
   function syncMotion() {
     player.setReduced(reduceMedia.matches);
-    pause.hidden = reduceMedia.matches;
+    pause.parentElement.hidden = reduceMedia.matches;
   }
   pause.addEventListener("click", () => {
     userPaused = !userPaused;

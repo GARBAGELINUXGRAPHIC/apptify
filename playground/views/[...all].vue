@@ -15,14 +15,14 @@
         <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
-    <NotFoundPaperScene class="paper-404-illustration" />
+    <ErrorScene class="paper-404-illustration" :code="404" />
   </main>
 </template>
 
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import NotFoundPaperScene from '../components/not-found-paper-scene.vue'
+import ErrorScene from '../components/ErrorScene.vue'
 
 import { errorPages } from '../error-pages'
 

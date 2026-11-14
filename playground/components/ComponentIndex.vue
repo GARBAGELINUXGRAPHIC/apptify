@@ -10,13 +10,20 @@ import { scrollToWithMotion } from '../../src/core/motion'
 import { AppleTree } from '../../src'
 import type { AppleTreeItem, AppleValue } from '../../src/components/content'
 import { sections, componentId } from '../catalog'
+import { errorCodes, errorPages, errorPreviewId } from '../error-pages'
 
 defineProps<{ activeGroup: string; activeId: string }>()
 const emit = defineEmits<{ navigate: [] }>()
 const router = useRouter()
 const route = useRoute()
 const expanded = defineModel<AppleValue[]>('expanded', { default: () => sections.map(section => section.id) })
-const treeItems: AppleTreeItem[] = sections.map(section => ({ label: section.label, value: section.id, children: section.items.map(item => ({ label: item.label, value: componentId(item.name), description: `${item.name} ${item.description}` })) }))
+const treeItems: AppleTreeItem[] = sections.map(section => ({
+  label: section.label,
+  value: section.id,
+  children: section.id === 'error-pages'
+    ? errorCodes.map(code => ({ label: `${code} · ${errorPages[code].title}`, value: errorPreviewId(code) }))
+    : section.items.map(item => ({ label: item.label, value: componentId(item.name), description: `${item.name} ${item.description}` })),
+}))
 function navigate(item: AppleTreeItem) {
   if (item.children?.length) return
   const hash = `#${item.value}`

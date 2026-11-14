@@ -29,7 +29,7 @@ async function assertReadingOrder(page: Page) {
   }
 }
 
-test('component masonry keeps reading order through card expansion and responsive resize', async ({ page }) => {
+test('component masonry keeps reading order through error preview loading and responsive resize', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 })
   await page.goto('/components')
   await page.waitForTimeout(1200)
@@ -38,7 +38,8 @@ test('component masonry keeps reading order through card expansion and responsiv
     Array.from(feed.children).map(card => (card as HTMLElement).style.left),
   ).size)).toBe(2)
 
-  await page.locator('#apple-transition .component-source > .apple-accordion__item > h3 > button').click()
+  await page.locator('#error-400').scrollIntoViewIfNeeded()
+  await expect(page.locator('#error-400').getByRole('img')).toBeVisible()
   await page.waitForTimeout(700)
   await assertReadingOrder(page)
 

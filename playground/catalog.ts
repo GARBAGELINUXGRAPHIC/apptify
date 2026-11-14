@@ -79,5 +79,6 @@ export const sections = [
   { id: 'navigation', label: '导航' },
   { id: 'data', label: '数据展示' },
   { id: 'feedback', label: '反馈' },
+  { id: 'error-pages', label: '错误页面' },
   { id: 'mobile', label: '移动交互' },
 ].map(section => ({ ...section, items: catalog.filter(item => item.group === section.label) }))

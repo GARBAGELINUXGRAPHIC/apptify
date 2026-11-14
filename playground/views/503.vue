@@ -5,7 +5,6 @@
         <div class="paper-503-heading">
           <p class="paper-503-number" aria-hidden="true">503</p>
           <h1><span class="paper-503-sr-only">503 · </span>{{ page.title }}</h1>
-          <p class="paper-503-english" lang="en">Service temporarily unavailable</p>
         </div>
       </template>
       <p class="paper-503-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
@@ -16,7 +15,7 @@
         <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
-    <UnavailablePaperScene class="paper-503-illustration" :theme="scheme" :reduced-motion="reducedMotion" />
+    <ErrorScene class="paper-503-illustration" :code="503" />
   </main>
 </template>
 
@@ -25,20 +24,14 @@
 </route>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { useApple } from '../../src'
-import { resolveMotion } from '../../src/core/context'
-import UnavailablePaperScene from '../components/unavailable-paper-scene.vue'
+import ErrorScene from '../components/ErrorScene.vue'
 
 import { errorPages } from '../error-pages'
 
 const page = errorPages[503]
 const router = useRouter()
-const apple = useApple()
-const scheme = computed(() => apple.theme.value.current.scheme)
-const reducedMotion = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced) !== 'full')
 
 function goBack() {
   if (typeof router.options.history.state.back === 'string') router.back()
@@ -53,8 +46,7 @@ function goBack() {
 .paper-503-card :deep(.apple-card__heading) { margin: 0; }
 .paper-503-heading { width: 100%; }
 .paper-503-number { color: var(--apple-text); font-family: Georgia, 'Times New Roman', serif; font-size: clamp(78px, 8.2vw, 118px); line-height: .9; letter-spacing: -.075em; margin: 0 0 28px; font-weight: 400; }
-.paper-503-heading h1 { font-size: clamp(26px, 2.7vw, 35px); line-height: 1.35; letter-spacing: -.035em; font-weight: 600; margin: 0 0 9px; }
-.paper-503-english { font-size: 11px; line-height: 1.6; letter-spacing: .015em; color: var(--apple-secondary); margin: 0 0 20px; font-weight: 400; }
+.paper-503-heading h1 { font-size: clamp(26px, 2.7vw, 35px); line-height: 1.35; letter-spacing: -.035em; font-weight: 600; margin: 0 0 17px; }
 .paper-503-copy { font-size: 13px; line-height: 1.95; color: var(--apple-secondary); margin: 0; text-wrap: pretty; }
 .paper-503-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 27px; }
 .paper-503-actions .apple-link { font-size: 12px; padding-inline: 8px; color: var(--apple-secondary); }
@@ -66,8 +58,7 @@ function goBack() {
   .paper-503-card { margin-top: 26px; }
   .paper-503-card :deep(.apple-card__body) { padding: 0; text-align: center; }
   .paper-503-number { font-size: 70px; margin-bottom: 18px; }
-  .paper-503-heading h1 { font-size: 26px; margin-bottom: 8px; }
-  .paper-503-english { margin-bottom: 15px; }
+  .paper-503-heading h1 { font-size: 26px; margin-bottom: 12px; }
   .paper-503-actions { justify-content: center; margin-top: 18px; }
 }
 @media (max-width: 420px) {

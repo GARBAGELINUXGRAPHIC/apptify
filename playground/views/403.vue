@@ -15,7 +15,7 @@
         <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
-    <ForbiddenPaperScene class="paper-403-illustration" />
+    <ErrorScene class="paper-403-illustration" :code="403" />
   </main>
 </template>
 
@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import ForbiddenPaperScene from '../components/forbidden-paper-scene.vue'
+import ErrorScene from '../components/ErrorScene.vue'
 
 import { errorPages } from '../error-pages'
 
