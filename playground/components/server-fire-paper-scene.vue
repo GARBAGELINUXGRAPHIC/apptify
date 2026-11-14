@@ -78,8 +78,8 @@
       </g>
       <g data-part="monkey-back" transform="translate(190 536)">
         <g data-part="monkey-back-upper">
-          <g data-part="arm-back"><path data-part="arm-back-main" d="M-32-128Q-48-89 31-78" fill="none" stroke="#8e6144" stroke-width="23" stroke-linecap="round" stroke-linejoin="round" /><path data-part="arm-back-fold" d="M-32-130-32-96 31-82" fill="none" stroke="#ad7951" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" /></g>
-          <g data-part="hand-back" transform="translate(31 -78) rotate(-5)"><path d="M-10-6Q-12-14-6-14L8-12Q16-10 14-3L10 5Q4 12-6 8L-12 4Z" fill="#deb280" /><path d="m-6-7 13 2m-14 3 13 2" stroke="#a57550" stroke-width="1.2" stroke-linecap="round" fill="none" /></g>
+          <g data-part="arm-front"><path data-part="arm-front-main" d="M33-128Q50-83 108-87" fill="none" stroke="#ad7951" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" /><path data-part="arm-front-fold" d="M34-133 54-95 108-91" fill="none" stroke="#c49468" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" /></g>
+          <g data-part="hand-front" transform="translate(108 -87) rotate(-12)"><path d="M-11-6Q-11-15-4-14L9-11Q16-8 13-1L9 7Q2 12-8 6L-13 2Z" fill="#e4be88" /><path d="m-6-7 13 2m-14 3 13 2" stroke="#a57550" stroke-width="1.2" stroke-linecap="round" fill="none" /></g>
         </g>
       </g>
       <g :clip-path="`url(#${uid}-packet-clip)`">
@@ -101,7 +101,7 @@
           <path d="M-10-132Q-30-120-27-94L-18-67Q1-55 22-72L27-102Q23-129 8-135Z" fill="#e4be88" /><path d="M-10-132-15-102-8-77 8-63-18-67-27-94Q-30-120-10-132Z" fill="#d0a575" />
           <path d="m-34-91 15 9-5 15m45-37 11 10" fill="none" stroke="#e0b17a" stroke-width="1.3" opacity=".65" />
           <path d="M-25-148-7-156 26-147 28-132-8-127-28-137Z" fill="#78958a" /><path d="m-27-139 18 5-13 33-11-10Z" fill="#8da89a" /><path d="m-6-139 31-7 3 14-36 5Z" fill="#5e7c70" />
-          <g data-part="arm-front"><path data-part="arm-front-main" d="M33-128Q50-83 108-87" fill="none" stroke="#ad7951" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" /><path data-part="arm-front-fold" d="M34-133 54-95 108-91" fill="none" stroke="#c49468" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" /></g>
+          <g data-part="arm-back"><path data-part="arm-back-main" d="M-32-128Q-48-89 31-78" fill="none" stroke="#8e6144" stroke-width="23" stroke-linecap="round" stroke-linejoin="round" /><path data-part="arm-back-fold" d="M-32-130-32-96 31-82" fill="none" stroke="#ad7951" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" /></g>
           <g data-part="monkey-head">
             <path d="M-44-209C-79-225-91-189-70-171L-46-169Z" fill="#ad7951" /><path d="M-52-201C-72-211-78-189-63-180L-48-179Z" fill="#deb280" />
             <path d="M44-209C77-224 88-188 67-171L45-170Z" fill="#b98559" /><path d="M52-201C71-210 76-188 62-180L48-180Z" fill="#e4be88" />
@@ -120,7 +120,7 @@
               <path d="m-33-173 6 2m54-2 6-2" fill="none" stroke="#d5ac7c" stroke-width="2" stroke-linecap="round" />
             </g>
           </g>
-          <g data-part="hand-front" transform="translate(108 -87) rotate(-12)"><path d="M-11-6Q-11-15-4-14L9-11Q16-8 13-1L9 7Q2 12-8 6L-13 2Z" fill="#e4be88" /><path d="m-6-7 13 2m-14 3 13 2" stroke="#a57550" stroke-width="1.2" stroke-linecap="round" fill="none" /></g>
+          <g data-part="hand-back" transform="translate(31 -78) rotate(-5)"><path d="M-10-6Q-12-14-6-14L8-12Q16-10 14-3L10 5Q4 12-6 8L-12 4Z" fill="#deb280" /><path d="m-6-7 13 2m-14 3 13 2" stroke="#a57550" stroke-width="1.2" stroke-linecap="round" fill="none" /></g>
           <g data-part="panic-lines" opacity="0" fill="none" stroke="#ae8154" stroke-width="2.6" stroke-linecap="round"><path d="m-69-245-9-8m22-1-4-10m132 22 8-8m-24-1 2-11" /></g>
           <g data-part="sweat" opacity="0"><path d="M0 0Q-15 16-2 20 12 21 0 0Z" fill="#8eb5b2" /><path d="m-1 9-3 6" fill="none" stroke="#d6e4d5" stroke-width="2" stroke-linecap="round" /></g>
         </g>
