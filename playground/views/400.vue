@@ -4,10 +4,10 @@
       <template #title>
         <div class="paper-400-heading">
           <p class="paper-400-number" aria-hidden="true">400</p>
-          <h1><span class="paper-400-sr-only">400 · </span>请求有误</h1>
+          <h1><span class="paper-400-sr-only">400 · </span>{{ page.title }}</h1>
         </div>
       </template>
-      <p class="paper-400-copy">这个包裹，猫实在看不懂。<br />请检查请求内容后再试。</p>
+      <p class="paper-400-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
       <div class="paper-400-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -31,6 +31,9 @@ import { useApple } from '../../src'
 import { resolveMotion } from '../../src/core/context'
 import BadRequestPaperScene from '../components/bad-request-paper-scene.vue'
 
+import { errorPages } from '../error-pages'
+
+const page = errorPages[400]
 const router = useRouter()
 const apple = useApple()
 const scheme = computed(() => apple.theme.value.current.scheme)

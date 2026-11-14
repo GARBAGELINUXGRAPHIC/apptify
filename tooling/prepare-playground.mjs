@@ -50,7 +50,7 @@ async function adapt(directory) {
         source = source.replace('to="/" aria-label="Apptify 首页"', ':to="homePath" aria-label="Apptify 首页"')
         source = source.replace(navigationEnd, "].filter(item => router.getRoutes().some(page => page.path === item.href))\nconst homePath = navigation[0]?.href ?? '/'\n\nfunction navigate")
       }
-      if (['[...all].vue', '403.vue', '502.vue', '503.vue'].some(view => path === join(output, 'src/views', view))) {
+      if (['[...all].vue', '403.vue', '500.vue', '502.vue', '503.vue'].some(view => path === join(output, 'src/views', view))) {
         source = source.replace('to="/" custom', ':to="homePath" custom')
         source = source.replace('const router = useRouter()', "const router = useRouter()\nconst homePath = router.getRoutes().some(page => page.path === '/') ? '/' : '/settings'")
         source = source.replace("else void router.push('/')", 'else void router.push(homePath)')

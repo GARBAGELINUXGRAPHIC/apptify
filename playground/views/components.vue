@@ -12,10 +12,9 @@
       <div class="components-content">
         <div class="feed-toolbar">
           <span class="feed-count">全部组件 <small>{{ catalog.length }}</small></span>
-          <div class="preview-controls" role="group" aria-label="预览尺寸">
-            <apple-link as="button" icon-only :icon="Monitor" :class="{ active: previewMode === 'desktop' }" :aria-pressed="previewMode === 'desktop'" label="桌面预览" @click="previewMode = 'desktop'" />
-            <apple-link icon-only :icon="Smartphone" :class="{ active: previewMode === 'mobile' }" :aria-pressed="previewMode === 'mobile'" label="手机预览" @click="previewMode = 'mobile'" />
-          </div>
+          <router-link v-slot="{ href, navigate }" to="#error-pages" custom>
+            <apple-link :href="href" @click="navigate">错误页面 <ArrowDown :size="14" aria-hidden="true" /></apple-link>
+          </router-link>
         </div>
         <div ref="feed" class="component-feed">
           <section v-for="(section, index) in sections" :id="section.id" :key="section.id" class="feed-group feed-anchor" :data-group="section.id" :aria-labelledby="`${section.id}-heading`">
@@ -23,12 +22,13 @@
             <MasonryFeed class="feed-cards" @layout="schedulePosition">
             <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
               <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
-              <section class="detail-preview" :class="{ 'mobile-preview': previewMode === 'mobile' }" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
+              <section class="detail-preview" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
               <ComponentDocumentLink :href="documentPaths[item.name]" label="代码与 API" />
             </apple-card>
             </MasonryFeed>
           </section>
         </div>
+        <ErrorPagePreviews id="error-pages" class="feed-anchor" />
       </div>
     </div>
   </apple-container>
@@ -38,10 +38,11 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Hash, Monitor, Smartphone } from 'lucide-vue-next'
+import { ArrowDown, Hash } from 'lucide-vue-next'
 import { catalog, sections, componentId } from '../catalog'
 import ComponentDemo from '../ComponentDemo.vue'
 import ComponentIndex from '../components/ComponentIndex.vue'
+import ErrorPagePreviews from '../components/ErrorPagePreviews.vue'
 import MasonryFeed from '../components/MasonryFeed.vue'
 import ComponentDocumentLink from '../editor/ComponentDocumentLink.vue'
 import { componentDocuments, componentDocumentPath } from '../editor/documents'
@@ -52,7 +53,6 @@ const router = useRouter()
 const feed = ref<HTMLElement>()
 const activeGroup = ref(sections[0].id)
 const activeId = ref('')
-const previewMode = ref('desktop')
 const expandedGroups = ref(sections.map(section => section.id))
 let anchors: HTMLElement[] = []
 let frame = 0
@@ -107,7 +107,7 @@ onBeforeUnmount(() => {
 .directory-index { display: flex; flex-direction: column; overflow: hidden; }
 .directory-header { flex-shrink: 0; }
 .directory-header > span { color: var(--apple-secondary); font-size: 12px; display: block; margin: 0 0 12px 8px; }
-.directory-tree { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.directory-tree { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding-inline: var(--apple-focus-clearance, 6px); padding-block-start: var(--apple-focus-clearance, 6px); }
 @media (max-width: 900px) { .directory-index { display: none; } }
 .components-page > * { max-width: none; }
 .feed-anchor { scroll-margin-top: 96px; }

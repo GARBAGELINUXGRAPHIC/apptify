@@ -131,6 +131,34 @@ describe('global ripple lifecycle', () => {
     expect(button.findAll('.v-ripple__container')).toHaveLength(0)
   })
 
+  it.each(['timer', 'touchend'])('checks inherited disabled state when a pending touch reaches %s', async (commit) => {
+    vi.useFakeTimers()
+    const { parent, button } = mountProbe()
+    const fieldset = document.createElement('fieldset')
+    parent.before(fieldset)
+    fieldset.append(parent)
+    button.element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [{ clientX: 10, clientY: 10 } as Touch] }))
+    fieldset.disabled = true
+    if (commit === 'touchend') button.element.dispatchEvent(new TouchEvent('touchend', { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(100)
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+  })
+
+  it('blocks new presses after an aria-disabled change and lets the current wave finish', async () => {
+    vi.useFakeTimers()
+    const { button } = mountProbe()
+    await button.trigger('mousedown')
+    expect(button.findAll('.v-ripple__container')).toHaveLength(1)
+    button.element.setAttribute('aria-disabled', 'true')
+    await nextTick()
+    expect(button.findAll('.v-ripple__container')).toHaveLength(1)
+    await button.trigger('mouseup')
+    await vi.advanceTimersByTimeAsync(600)
+    await button.trigger('mousedown')
+    await button.trigger('keydown', { key: 'Enter' })
+    expect(button.findAll('.v-ripple__container')).toHaveLength(0)
+  })
+
   it('shows a short touch tap and removes its wave after release', async () => {
     vi.useFakeTimers()
     const { button } = mountProbe()

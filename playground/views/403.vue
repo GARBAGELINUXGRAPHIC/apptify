@@ -4,10 +4,10 @@
       <template #title>
         <div class="paper-403-heading">
           <p class="paper-403-number" aria-hidden="true">403</p>
-          <h1>无权访问</h1>
+          <h1>{{ page.title }}</h1>
         </div>
       </template>
-      <p class="paper-403-copy">这只鸡腿，可不能随便拿。<br />你暂时没有访问此页面的权限。</p>
+      <p class="paper-403-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
       <div class="paper-403-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -28,6 +28,9 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import ForbiddenPaperScene from '../components/forbidden-paper-scene.vue'
 
+import { errorPages } from '../error-pages'
+
+const page = errorPages[403]
 const router = useRouter()
 function goBack() {
   if (typeof router.options.history.state.back === 'string') router.back()

@@ -148,7 +148,7 @@
 import { imageUrl } from './images'
 import { defineComponent, h, markRaw } from 'vue'
 import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Share2, Trash2, Menu } from 'lucide-vue-next'
-import { AppleButton, resolveMotion, scrollToWithMotion, type MotionScroll } from '../src'
+import { AppleLink, resolveMotion, scrollToWithMotion, type MotionScroll } from '../src'
 export default defineComponent({
   name: 'ComponentDemo', props: { name: { type: String, required: true } }, emits: ['navigate'],
   data() { return {
@@ -210,7 +210,7 @@ export default defineComponent({
     openDialog() { this.$apple.dialog({title:'保存更改？',message:'你的更改会同步到所有设备。',confirmText:'保存'}).result.then(result => { if (result) this.notify('你的更改已保存') }) },
     openStack() {
       const apple = this.$apple
-      const Inner = defineComponent({ props:['close','sendMessage'], render() { return h('div', {class:'demo-dialog-body'}, [h('p','第一层仍然保留在下面。'), h(AppleButton, {onClick:() => apple.dialog({title:'第二层对话框',message:'关闭这一层后，会回到第一层。'})}, () => '打开第二层')]) } })
+      const Inner = defineComponent({ props:['close','sendMessage'], render() { return h('div', {class:'demo-dialog-body'}, [h('p','第一层仍然保留在下面。'), h(AppleLink, {as:'button', onClick:() => apple.dialog({title:'第二层对话框',message:'关闭这一层后，会回到第一层。'})}, () => '打开第二层')]) } })
       apple.dialog({title:'第一层对话框',component:Inner})
     },
     refresh(done: () => void) { this.timers.push(setTimeout(() => { this.refreshText = `更新于 ${new Date().toLocaleTimeString('zh-CN')}`; done() }, 700)) },

@@ -33,6 +33,7 @@
 .apple-tabs--bar .apple-tabs__panel { padding: 20px; }
 .apple-tabs__tab:focus-visible { outline-offset: -4px; border-radius: 4px; }
 .apple-tabs__panel { min-width: 0; padding-top: 20px; }
+.apple-tabs__panel:where(:has(.apple-field, .apple-search)) { padding-inline: var(--apple-focus-clearance, 6px); padding-block-end: var(--apple-focus-clearance, 6px); }
 .apple-tabs__panel:empty { padding-top: 0; }
 .apple-tabs__viewport { overflow: hidden; }
 .apple-tabs__viewport > div { position: relative; }
@@ -86,6 +87,7 @@
 .apple-accordion h3 button:hover:not(:disabled) { background: var(--apple-hover); }
 .apple-accordion h3 button:active:not(:disabled) { background: var(--apple-pressed); }
 .apple-accordion__content { padding-left: 12px; }
+.apple-accordion__content:where(:has(.apple-field, .apple-search)) { padding-block-start: var(--apple-focus-clearance, 6px); }
 
 .apple-table { font-size: 13px; }
 .apple-table__scroll { overflow-x: auto; overscroll-behavior-inline: contain; }

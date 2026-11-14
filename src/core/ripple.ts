@@ -25,7 +25,7 @@ export const Ripple = {
       frames.add(id)
     }
     const show = (event: Event) => {
-      if (!state.enabled) return
+      if (!state.enabled || el.matches(':disabled, [aria-disabled="true"]')) return
       const centered = binding.modifiers.center || event.type === 'keydown'
       const rect = el.getBoundingClientRect()
       const point = 'touches' in event ? (event as TouchEvent).touches[(event as TouchEvent).touches.length - 1] : event as MouseEvent

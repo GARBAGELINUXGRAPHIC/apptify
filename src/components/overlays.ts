@@ -270,8 +270,8 @@ function createModal(name: string, kind: ModalKind) {
         ]) : null,
         h('div', { class: 'apple-modal-body' }, [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: (value?: unknown) => this.dismiss('close', value) }) ?? (this.message ? [h('p', this.message)] : []) })]),
         this.showFooter || this.$slots.footer ? h('footer', { class: 'apple-modal-footer' }, this.$slots.footer?.({ close: (value?: unknown) => this.dismiss('close', value), confirm: this.confirm, cancel: this.cancel }) ?? [
-          this.cancelText ? h(AppleButton, { variant: 'secondary', disabled: this.loading, motion: this.motion, onClick: this.cancel }, { default: () => this.cancelText }) : null,
-          this.confirmText ? h(AppleButton, { variant: this.tone === 'danger' ? 'danger' : 'primary', loading: this.loading, disabled: this.loading, motion: this.motion, onClick: this.confirm }, { default: () => this.confirmText }) : null,
+          this.cancelText ? h(AppleButton, { variant: kind === 'dialog' ? 'borderless' : 'secondary', disabled: this.loading, motion: this.motion, onClick: this.cancel }, { default: () => this.cancelText }) : null,
+          this.confirmText ? h(AppleButton, { variant: this.tone === 'danger' ? 'danger' : kind === 'dialog' ? 'borderless' : 'primary', loading: this.loading, disabled: this.loading, motion: this.motion, onClick: this.confirm }, { default: () => this.confirmText }) : null,
         ]) : null,
       ])
       const backdrop = this.present ? withDirectives(h('div', {

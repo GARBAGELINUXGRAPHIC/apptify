@@ -4,10 +4,10 @@
       <template #title>
         <div class="paper-502-heading">
           <p class="paper-502-number" aria-hidden="true">502</p>
-          <h1>网关错误</h1>
+          <h1>{{ page.title }}</h1>
         </div>
       </template>
-      <p class="paper-502-copy">包裹在城门口被拦住了。<br />服务暂时无法响应，请稍后再试。</p>
+      <p class="paper-502-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
       <div class="paper-502-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -28,6 +28,9 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import GatewayPaperScene from '../components/gateway-paper-scene.vue'
 
+import { errorPages } from '../error-pages'
+
+const page = errorPages[502]
 const router = useRouter()
 function goBack() {
   if (typeof router.options.history.state.back === 'string') router.back()

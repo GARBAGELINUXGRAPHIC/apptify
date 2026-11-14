@@ -4,10 +4,10 @@
       <template #title>
         <div class="paper-404-heading">
           <p class="paper-404-number" aria-hidden="true">404</p>
-          <h1>页面不存在</h1>
+          <h1>{{ page.title }}</h1>
         </div>
       </template>
-      <p class="paper-404-copy">有些东西，悄悄溜走了。<br />就像松鼠的橡果，这一页也不知漂去了哪里。</p>
+      <p class="paper-404-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
       <div class="paper-404-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -24,6 +24,9 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import NotFoundPaperScene from '../components/not-found-paper-scene.vue'
 
+import { errorPages } from '../error-pages'
+
+const page = errorPages[404]
 const router = useRouter()
 function goBack() {
   // A direct visit has no in-app predecessor; keep its escape route useful.

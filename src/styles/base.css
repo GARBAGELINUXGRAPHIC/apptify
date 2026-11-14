@@ -12,6 +12,7 @@
 .apple-provider {
   --apple-duration: 300ms;
   --apple-fast: 120ms;
+  --apple-focus-clearance: 6px;
   --apple-theme-duration: 260ms;
   --v-theme-overlay-multiplier: .4;
   --apple-hover: color-mix(in srgb, var(--apple-text) 5%, transparent);

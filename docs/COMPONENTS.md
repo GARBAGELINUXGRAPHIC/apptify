@@ -156,7 +156,7 @@ Table 另支持 `virtual=false`、`height=360`、`rowHeight=48`、`overscan=5`�
 
 | 组件 | 主要 Props | Events / Slots / 说明 |
 | --- | --- | --- |
-| `AppleDialog` | `v-model: boolean=false`；以下 Modal 公共属性 | 默认显示确认/取消 footer。 |
+| `AppleDialog` | `v-model: boolean=false`；以下 Modal 公共属性 | 默认显示 `borderless` 确认与取消按钮。`tone=danger` 时确认按钮使用 `danger`。 |
 | `AppleDrawer` | 同 Modal；`placement=right`（left/right）；`width=440` | 默认无 footer；全高侧边抽屉。 |
 | `AppleSheet` | 同 Modal；`width=440` | 默认无 footer；底部面板，移动端全宽；桌面样式最小设计宽度 540px，仍受可用宽度约束。 |
 | `AppleSnackbar` | `v-model: boolean=true`、`message`、`title`、`tone=default`（default/info/success/warning/danger/error）、`duration=4000`、`action`、`closable=true` | `close(value,reason)`、`action()`；default slot；duration 单位毫秒，0 常驻；直接使用时位置由业务布局决定。 |

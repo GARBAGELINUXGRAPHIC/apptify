@@ -4,10 +4,10 @@
       <template #title>
         <div class="paper-429-heading">
           <p class="paper-429-number" aria-hidden="true">429</p>
-          <h1><span class="paper-429-sr-only">429 · </span>慢一点，慢一点。</h1>
+          <h1><span class="paper-429-sr-only">429 · </span>{{ page.title }}</h1>
         </div>
       </template>
-      <p class="paper-429-copy">小仓鼠们已经拼尽全力，包裹却还在落下。<br />请求过于频繁，请稍后再试。</p>
+      <p class="paper-429-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
       <div class="paper-429-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -31,6 +31,9 @@ import { useApple } from '../../src'
 import { resolveMotion } from '../../src/core/context'
 import Hamster429Scene from '../components/hamster-429-scene.vue'
 
+import { errorPages } from '../error-pages'
+
+const page = errorPages[429]
 const router = useRouter()
 const apple = useApple()
 const scheme = computed(() => apple.theme.value.current.scheme)

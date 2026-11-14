@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test'
-import { catalog } from '../../playground/catalog'
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 
@@ -19,48 +18,20 @@ test('account menu retains dark theme colors at full glass opacity', async ({ pa
   await expect(popup.getByText('lin.chu@example.com', { exact: true })).toHaveCSS('color', 'rgb(170, 170, 176)')
 })
 
-for (const motion of ['auto', 'none']) {
-  test(`code disclosure preserves accessible state, content and copying with ${motion} motion`, async ({ page }) => {
-    if (motion === 'none') {
-      await page.goto('/settings')
-      await page.getByRole('radiogroup', { name: '全局动效', exact: true }).getByText('关闭', { exact: true }).click()
-    }
-    await page.goto('/components#apple-textarea')
-    const card = page.locator('#apple-textarea')
-    const disclosure = card.locator('.component-source')
-    const trigger = disclosure.getByRole('button', { name: '代码与 API', exact: true })
-    const regionId = await trigger.getAttribute('aria-controls')
-    expect(regionId).toBeTruthy()
-    const region = page.locator(`[id="${regionId}"]`)
-    await expect(disclosure).toHaveClass(/apple-accordion/)
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    await expect(region).toHaveAttribute('role', 'region')
-    await expect(region).toHaveAttribute('aria-labelledby', await trigger.getAttribute('id') as string)
-    await expect(region).toHaveAttribute('aria-hidden', 'true')
-    await expect(region).toHaveJSProperty('inert', true)
-    await expect.poll(async () => (await region.boundingBox())!.height).toBeLessThan(1)
-    await trigger.focus()
-    await page.keyboard.press('Enter')
-    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    await expect(region).toHaveAttribute('aria-hidden', 'false')
-    await expect(region).toHaveJSProperty('inert', false)
-    const item = catalog.find(item => item.name === 'AppleTextarea')!
-    await expect(region.locator('pre code')).toHaveText(item.code)
-    await expect(region.locator('.api-line')).toHaveText(item.api)
-    await expect.poll(async () => (await region.boundingBox())!.height).toBeGreaterThan(50)
-    await region.locator('.code-toolbar .apple-link').filter({ hasText: '复制代码' }).click()
-    await expect(page.getByText('已复制', { exact: true })).toBeVisible()
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(item.code)
-    await card.getByRole('textbox', { name: '个人简介', exact: true }).fill('披露切换保留输入')
-    await trigger.focus()
-    await page.keyboard.press('Space')
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    await expect(region).toHaveJSProperty('inert', true)
-    await expect.poll(async () => (await region.boundingBox())!.height).toBeLessThan(1)
-    await expect(card.getByRole('textbox', { name: '个人简介', exact: true })).toHaveValue('披露切换保留输入')
-    if (motion === 'none') await expect(region).toHaveCSS('transition-duration', '0s')
-  })
-}
+test('component documentation link opens the API and its copyable example by keyboard', async ({ page }) => {
+  await page.goto('/components#apple-textarea')
+  const link = page.locator('#apple-textarea').getByRole('link', { name: '代码与 API', exact: true })
+  await expect(link).toHaveAttribute('href', '/component-docs/apple-textarea')
+  await link.focus()
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL('/component-docs/apple-textarea')
+  const documentation = page.getByTestId('component-document')
+  await expect(documentation.getByRole('heading', { name: 'rows', exact: true })).toBeVisible()
+  const playground = page.getByTestId('component-playground')
+  await playground.getByRole('button', { name: '复制当前文件', exact: true }).click()
+  await expect(playground.getByText('已复制当前文件', { exact: true })).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('<AppleTextarea')
+})
 
 for (const width of [320, 1440]) {
   test(`library site controls retain actions and layout at ${width}px`, async ({ page }) => {
@@ -74,14 +45,7 @@ for (const width of [320, 1440]) {
       await page.keyboard.press('Escape')
       await expect(directory).toBeFocused()
     }
-    for (const [label, mobile] of [['手机预览', true], ['桌面预览', false]] as const) {
-      const button = page.locator('.preview-controls').getByLabel(label, { exact: true })
-      await expect(button).toHaveClass(/apple-link/)
-      await button.click()
-      await expect(button).toHaveAttribute('aria-pressed', 'true')
-      await expect(page.locator('.detail-preview.mobile-preview')).toHaveCount(mobile ? catalog.length : 0)
-    }
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
     await page.goto('/missing-audit-page')
     const home = page.getByRole('link', { name: '返回首页', exact: true })
     await expect(home).toHaveClass(/apple-button/)

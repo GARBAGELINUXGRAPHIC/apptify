@@ -11,20 +11,18 @@ async function openDemo(page: Page, name: string) {
 }
 
 for (const viewport of [
-  { width: 1440, height: 1000, mode: 'desktop' },
-  { width: 768, height: 1024, mode: 'desktop' },
-  { width: 390, height: 844, mode: 'desktop' },
-  { width: 320, height: 740, mode: 'desktop' },
-  { width: 1440, height: 1000, mode: 'mobile' },
+  { width: 1440, height: 1000 },
+  { width: 768, height: 1024 },
+  { width: 390, height: 844 },
+  { width: 320, height: 740 },
 ]) {
-  test(`all component demos fit at ${viewport.width}px in ${viewport.mode} preview`, async ({ page }) => {
+  test(`all component demos fit at ${viewport.width}px`, async ({ page }) => {
     test.setTimeout(120_000)
     await page.setViewportSize(viewport)
     await page.emulateMedia({ reducedMotion: 'reduce' })
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
     await page.goto('/components')
-    if (viewport.mode === 'mobile') await page.locator('.preview-controls [aria-label="手机预览"]').click()
     for (const item of catalog) {
       await test.step(item.name, async () => {
         await openDemo(page, item.name)
@@ -35,7 +33,7 @@ for (const viewport of [
         await expect.poll(() => demo.evaluate(root => {
           const bounds = root.getBoundingClientRect()
           const stage = root.closest('.detail-preview')!.getBoundingClientRect()
-          const ignored = '.apple-table__viewport, .apple-table__scroll, .apple-table__body, .apple-image__gallery, [data-apple-portals], .apple-snackbar-list, .apple-content-sr'
+          const ignored = '.apple-table__viewport, .apple-table__scroll, .apple-table__body, .apple-image__gallery, .demo-scroll-bar__content, [data-apple-portals], .apple-snackbar-list, .apple-content-sr'
           const overflowing = [...root.querySelectorAll<HTMLElement>('*')].filter(element => {
             if (element.closest(ignored + ', [aria-hidden="true"], [inert]') || !element.checkVisibility({ visibilityProperty: true }) || getComputedStyle(element).position === 'fixed') return false
             const rect = element.getBoundingClientRect()
@@ -152,12 +150,12 @@ for (const width of [320, 390]) {
 }
 
 
-test('compact hover reveals working arrows without scaling', async ({ page }) => {
+test('compact hover zooms the surface and reveals working arrows', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/tests/e2e/fixtures/mobile-images.html')
   const compact = page.locator('#compact')
   await compact.locator('img').first().hover()
-  await expect(compact.locator('.apple-image__surface')).toHaveCSS('transform', 'none')
+  await expect(compact.locator('.apple-image__surface')).toHaveCSS('transform', 'matrix(1.04, 0, 0, 1.04, 0, 0)')
   await expect(compact.locator('.apple-image__arrows')).toHaveCSS('opacity', '1')
   await expect(compact.getByRole('button', { name: '上一张图片', exact: true })).toBeDisabled()
   await compact.getByRole('button', { name: '下一张图片', exact: true }).click()

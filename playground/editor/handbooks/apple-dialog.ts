@@ -62,7 +62,7 @@ export default defineHandbook({
       "name": "showFooter",
       "type": "boolean",
       "default": "true",
-      "description": "显示默认操作区；自定义 footer 插槽始终可以显示。Dialog 默认 true，Drawer/Sheet 默认 false。"
+      "description": "显示默认操作区，确认和取消按钮默认使用 borderless；自定义 footer 插槽始终可以显示。"
     },
     {
       "name": "closable",

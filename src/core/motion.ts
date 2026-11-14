@@ -23,7 +23,7 @@ function observeRipplePolicies() {
       if (records.some(record => (record.target as Element).contains(element))) state.sync()
     }
   })
-  ripplePolicyObserver.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-apple-motion', 'data-motion', 'data-apple-ripple-enabled', 'disabled', 'aria-disabled'] })
+  ripplePolicyObserver.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['data-apple-motion', 'data-motion', 'data-apple-ripple-enabled'] })
   rippleMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : undefined
   rippleMedia?.addEventListener?.('change', syncRipplePolicies)
 }

@@ -4,11 +4,11 @@
       <template #title>
         <div class="paper-503-heading">
           <p class="paper-503-number" aria-hidden="true">503</p>
-          <h1><span class="paper-503-sr-only">503 · </span>服务暂时不可用</h1>
+          <h1><span class="paper-503-sr-only">503 · </span>{{ page.title }}</h1>
           <p class="paper-503-english" lang="en">Service temporarily unavailable</p>
         </div>
       </template>
-      <p class="paper-503-copy">包裹还在来，值班员却睡着了。<br />请稍后再试，让它再缓一会儿。</p>
+      <p class="paper-503-copy">{{ page.copy[0] }}<br />{{ page.copy[1] }}</p>
       <div class="paper-503-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -32,6 +32,9 @@ import { useApple } from '../../src'
 import { resolveMotion } from '../../src/core/context'
 import UnavailablePaperScene from '../components/unavailable-paper-scene.vue'
 
+import { errorPages } from '../error-pages'
+
+const page = errorPages[503]
 const router = useRouter()
 const apple = useApple()
 const scheme = computed(() => apple.theme.value.current.scheme)
