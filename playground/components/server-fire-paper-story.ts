@@ -72,7 +72,9 @@ export function createServerFireRenderer(svg: SVGSVGElement) {
     const jump = t < EXPLOSION ? 0 : 32 * Math.sin(Math.PI * clamp((t - EXPLOSION) / .76))
     const monkeyX = walkX - 111 * backStep + 20 * settle
     const monkeyY = 536 - walkLift - jump
-    transform('monkey', `translate(${f(monkeyX)} ${f(monkeyY)})`)
+    const monkeyPlacement = `translate(${f(monkeyX)} ${f(monkeyY)})`
+    transform('monkey', monkeyPlacement)
+    transform('monkey-back', monkeyPlacement)
     transform('monkey-shadow', `translate(${f(monkeyX - 190)} 0)`)
     set('monkey-shadow', 'ry', f(12 * (1 - jump / 95)))
     set('monkey-shadow', 'opacity', f(.17 - jump / 420))
@@ -80,7 +82,9 @@ export function createServerFireRenderer(svg: SVGSVGElement) {
     const breath = 1.1 * Math.sin(loop * TAU / 2.5) * idle
     const tremble = (Math.sin(loop * 18) * .4 + Math.sin(loop * 10.5) * .65) * idle
     const bodyAngle = Math.sin(stride) * 1.4 * walking - recoil * 10 + tremble * .55
-    transform('monkey-upper', `translate(${f(tremble)} ${f(breath)}) rotate(${f(bodyAngle)} 0 -55)`)
+    const upperPlacement = `translate(${f(tremble)} ${f(breath)}) rotate(${f(bodyAngle)} 0 -55)`
+    transform('monkey-upper', upperPlacement)
+    transform('monkey-back-upper', upperPlacement)
     transform('leg-back', `rotate(${f(Math.sin(stride) * 17 * walking - recoil * 13)} -20 -48)`)
     transform('leg-front', `rotate(${f(-Math.sin(stride) * 17 * walking + recoil * 20)} 20 -48)`)
     transform('tail', `rotate(${f(Math.sin(stride * .5) * 5 * walking + recoil * 18 + Math.sin(loop * 2.5) * 3 * idle)} -35 -68)`)
@@ -125,7 +129,7 @@ export function createServerFireRenderer(svg: SVGSVGElement) {
     transform('eye-left', `translate(-20 -194) scale(1 ${f(1 - .89 * blink)}) translate(20 194)`)
     transform('eye-right', `translate(20 -194) scale(1 ${f(1 - .89 * blink)}) translate(-20 194)`)
     set('brow-left', 'd', `M-29 ${f(-211 - 5 * shocked)}Q-20 ${f(-216 - 7 * shocked)}-12 ${f(-212 - 5 * shocked)}`)
-    set('brow-right', 'd', `M12 ${f(-212 - 5 * shocked)}Q21 ${f(-216 - 7 * shocked)}29 ${f(-210 - 5 * shocked)}`)
+    set('brow-right', 'd', `M12 ${f(-212 - 5 * shocked)}Q21 ${f(-216 - 7 * shocked)} 29 ${f(-210 - 5 * shocked)}`)
     const mouthH = 7.4 * shocked
     set('mouth', 'd', shocked < .02 ? 'M-10-165Q0-157 11-164' : `M-9-163C-9 ${f(-160 - 2 * mouthH)} 9 ${f(-160 - 2 * mouthH)} 9-163C9 ${f(-154 + .6 * mouthH)}-9 ${f(-154 + .6 * mouthH)}-9-163Z`)
     set('mouth', 'fill', shocked > .02 ? '#624533' : 'none')
