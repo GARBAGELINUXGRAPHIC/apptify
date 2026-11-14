@@ -7,7 +7,7 @@
           <h1>服务器内部错误</h1>
         </div>
       </template>
-      <p class="paper-500-copy">这个包裹好像送错了地方。<br />服务器出了点意外，请稍后再试。</p>
+      <p class="paper-500-copy">包裹刚送达，服务器就招架不住了。<br />请稍后重试，或先回到首页。</p>
       <div class="paper-500-actions">
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
@@ -15,7 +15,7 @@
         <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
-    <ServerExplosionScene class="paper-500-illustration" />
+    <ServerFirePaperScene class="paper-500-illustration" />
   </main>
 </template>
 
@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import ServerExplosionScene from '../components/server-explosion-scene.vue'
+import ServerFirePaperScene from '../components/server-fire-paper-scene.vue'
 
 const router = useRouter()
 function goBack() {
