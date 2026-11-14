@@ -29,29 +29,3 @@ test('repeated pointer activation closes selects without reopening and preserves
   await expect(page.locator('#tab-select')).toHaveAttribute('aria-expanded', 'false')
   await expect(page.locator('#changes')).toHaveText('1')
 })
-
-test('scrollbar follows each frame of a tab transition and its reversal', async ({ page }) => {
-  for (const name of ['Orders', 'Scene']) {
-    await page.getByRole('tab', { name, exact: true }).click()
-    const samples = await page.evaluate(async () => {
-      const samples: number[] = []
-      const start = performance.now()
-      while (performance.now() - start < 800) {
-        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-        const viewport = document.querySelector('.sidebar .apple-tabs__viewport')!.getBoundingClientRect()
-        for (const bar of document.querySelectorAll<HTMLElement>('.apple-scroll-bar--vertical')) {
-          const target = document.getElementById(bar.getAttribute('aria-controls')!)
-          if (bar.hidden || !target?.matches('.panel-content') || !target.parentElement?.classList.contains('apple-tab-panel-enter-active')) continue
-          const bounds = target.getBoundingClientRect()
-          const right = Math.min(bounds.right, viewport.right, innerWidth)
-          if (right > viewport.left) samples.push(Math.abs(bar.getBoundingClientRect().right - right))
-        }
-      }
-      return samples
-    })
-    expect(samples.length).toBeGreaterThan(5)
-    expect(Math.max(...samples)).toBeLessThan(2)
-  }
-  await page.evaluate(() => (window as unknown as { unmount(): void }).unmount())
-  await expect(page.locator('.apple-scroll-bar')).toHaveCount(0)
-})

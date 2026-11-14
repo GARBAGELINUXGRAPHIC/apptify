@@ -73,7 +73,7 @@ export function wheelGallery(box: HTMLElement, delta: number, animated: boolean)
 
 // Adjacent compact pages retain their painted position and velocity on retarget.
 // Distant destinations travel only one viewport instead of sweeping through all pages.
-export function scrollGallery(box: HTMLElement, left: number, animated: boolean, complete: () => void, adjacent = false, snapOverride?: string) {
+export function scrollGallery(box: HTMLElement, left: number, animated: boolean, complete: (interrupted?: boolean) => void, adjacent = false, snapOverride?: string) {
   const wheelSnap = wheels.get(box)?.snap
   const wheelVelocity = wheels.get(box)?.driver.sample('scroll')?.velocity[0]
   const wheelPainted = stopWheel(box, false, animated)
@@ -113,9 +113,9 @@ export function scrollGallery(box: HTMLElement, left: number, animated: boolean,
     },
   }
   motions.set(box, state)
-  const finish = () => {
+  const finish = (interrupted?: boolean) => {
     if (motions.get(box) !== state) return
-    state.stop(); complete()
+    state.stop(); complete(interrupted)
   }
   const compact = box.classList.contains('apple-image__gallery--compact')
   if (compact && !outgoing && (adjacent || Math.abs(left - start) <= width * 1.5)) {
@@ -145,9 +145,14 @@ export function scrollGallery(box: HTMLElement, left: number, animated: boolean,
   }
   if (!outgoing && !compact) {
     box.scrollTo({ left, behavior: 'smooth' })
-    const check = () => {
-      if (Math.abs(box.scrollLeft - left) < 1) finish()
-      else frame = requestAnimationFrame(check)
+    let lastLeft = start, lastMovement = performance.now()
+    const check = (now: number) => {
+      const current = box.scrollLeft
+      if (Math.abs(current - left) < 1) { finish(); return }
+      if (current !== lastLeft) { lastLeft = current; lastMovement = now }
+      // Native scrollbar interactions can interrupt the smooth scroll before it reaches its target.
+      if (now - lastMovement > 120) { finish(true); return }
+      frame = requestAnimationFrame(check)
     }
     frame = requestAnimationFrame(check)
     return
@@ -167,5 +172,5 @@ export function scrollGallery(box: HTMLElement, left: number, animated: boolean,
   const timing = photoPageTiming(stride, 0, width)
   animations.push(from.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-direction * stride}px)` }], { ...timing, fill: 'both' }))
   animations.push(to.animate([{ transform: `translateX(${direction * stride}px)` }, { transform: 'translateX(0)' }], { ...timing, fill: 'both' }))
-  void Promise.all(animations.map(animation => animation.finished.catch(() => undefined))).then(finish)
+  void Promise.all(animations.map(animation => animation.finished.catch(() => undefined))).then(() => finish())
 }

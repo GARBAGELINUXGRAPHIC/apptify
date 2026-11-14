@@ -105,8 +105,7 @@
 .apple-image__gallery--compact { position: absolute; inset: 0; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .apple-image__gallery--compact::-webkit-scrollbar { display: none; }
 .apple-image__gallery--compact > .apple-image__trigger { flex: 0 0 100%; scroll-snap-align: center; }
-.apple-image__gallery--tiled { display: flex; gap: 8px; height: var(--apple-image-tile-height, clamp(112px, 28vw, 180px)); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
-.apple-image__gallery--tiled::-webkit-scrollbar { display: none; }
+.apple-image__gallery--tiled { display: flex; gap: 8px; height: var(--apple-image-tile-height, clamp(112px, 28vw, 180px)); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
 .apple-image__gallery--tiled > .apple-image__trigger { flex: 0 0 auto; width: auto; height: 100%; scroll-snap-align: center; }
 .apple-image[data-gallery-layout=tiled-wrap] > .apple-image__surface { background: transparent; }
 .apple-image__gallery--tiled-wrap { column-width: var(--apple-image-tile-width, 144px); column-gap: 8px; height: auto; }

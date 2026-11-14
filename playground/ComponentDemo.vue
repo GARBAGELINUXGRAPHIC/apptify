@@ -64,7 +64,6 @@
     <apple-stack v-else-if="name === 'AppleBadge'" direction="row" align="center"><apple-badge :value="unread"><apple-link variant="secondary" :icon="icons.Bell" @click="unread++">新消息</apple-link></apple-badge><apple-link as="button" :disabled="!unread" @click="unread = 0">全部已读</apple-link></apple-stack>
     <apple-stack v-else-if="name === 'AppleTag'" class="demo-tag-row" direction="row" align="center" :gap="10"><apple-tag>默认标签</apple-tag><apple-tag tone="success">已完成</apple-tag><apple-tag tone="info">进行中</apple-tag><apple-tag tone="warning">待确认</apple-tag><apple-tag v-if="tag" label="设计系统" closable @close="tag = false">设计系统</apple-tag><apple-link as="button" v-else :icon="icons.Plus" @click="tag = true">添加标签</apple-link></apple-stack>
     <apple-stack v-else-if="name === 'AppleDivider'"><apple-switch v-model="dividerVertical" label="纵向分隔" /><apple-stack :direction="dividerVertical ? 'row' : 'column'" :gap="0" align="center"><span>配送到家</span><apple-divider :vertical="dividerVertical" :label="dividerVertical ? undefined : '更多选择'" /><span>到店取货</span></apple-stack></apple-stack>
-    <div v-else-if="name === 'AppleScrollBar'" class="demo-scroll-bar" tabindex="0" aria-label="滚动示例"><div class="demo-scroll-bar__content"><apple-card v-for="n in 12" :key="n" class="demo-layout-tile"><strong>0{{ n }}</strong></apple-card></div></div>
     <apple-input v-else-if="name === 'AppleInput'" v-model="text" label="姓名" placeholder="怎么称呼你" clearable />
     <apple-textarea v-else-if="name === 'AppleTextarea'" v-model="bio" label="个人简介" placeholder="写下你的想法" :maxlength="160" counter />
     <apple-select v-else-if="name === 'AppleSelect'" v-model="city" label="所在城市" :items="cities" />
@@ -229,8 +228,6 @@ export default defineComponent({
 .component-demo > .demo-tag-row > :deep(.apple-button) { align-self: center; max-width: 100%; }
 
 .demo-transition-stage { display: grid; min-width: 0; overflow: hidden; --demo-slide-distance: 24px; }
-.demo-scroll-bar { height: 240px; overflow: auto; border-radius: 12px; }
-.demo-scroll-bar__content { width: 720px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px; }
 .demo-transition-stage.is-backward { --demo-slide-distance: -24px; }
 .demo-transition-stage :deep(.apple-statistic) { grid-area: 1 / 1; min-width: 0; }
 .demo-transition-stage :deep(.apple-slide-x-enter-active),

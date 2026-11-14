@@ -69,7 +69,6 @@ export const catalog: CatalogItem[] = [
   item('AppleAutoSize', 'axis(height|both) · motion | default', '<apple-auto-size><div v-if="expanded">详情内容</div></apple-auto-size>'),
   item('AppleTransition', 'name(page|slide-x|slide-y|fade) · mode · appear · motion | default', '<apple-transition name="page"><router-view /></apple-transition>'),
   item('AppleInfiniteScroll', 'loading · finished · error · disabled · distance | load(done), retry(done)', '<apple-infinite-scroll :finished="finished" @load="async done => { await loadMore(); done() }">内容</apple-infinite-scroll>'),
-  item('AppleScrollBar', 'target · axis(both|horizontal|vertical) · label | interaction · refresh()', '<apple-scroll-bar target="#scroll-area" />'),
 ]
 export const groups = ['全部组件', '基础', '表单', '导航', '数据展示', '反馈', '移动交互']
 

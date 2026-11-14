@@ -1,6 +1,6 @@
 # 组件 API 参考
 
-本页按 `src/index.ts` 合并的组件注册表列出当前 **65 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
+本页按 `src/index.ts` 合并的组件注册表列出当前 **67 个导出组件**，不是未来功能清单。组件名均可换成 kebab-case 模板标签，例如 `AppleOtpInput` 对应 `<apple-otp-input>`。
 
 ## 公共约定
 
@@ -27,6 +27,10 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 
 该类只提供材质与文字颜色，间距、圆角、边框和阴影由使用方设置。Provider 外使用默认浅色材质；Provider 内跟随 `glass.opacity` 与 `glass.blur` 配置。
 
+## 滚动条
+
+滚动容器使用浏览器原生滚动条。引入 `apptify/style.css` 后，`AppleProvider` 内的滚动条按主题显示细滑块，页面滚动条按 `html` 的 `color-scheme` 配色。迁移时可删除 `<apple-scroll-bar>`，在目标容器上保留 `overflow: auto`。如需在某个容器上使用浏览器默认外观，可加 `data-apple-scrollbar-ignore`。
+
 ## 动效组件 · 2
 
 | 组件 | Props | 说明 |
@@ -46,7 +50,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleButton` | M；`variant=primary`（primary/secondary/outline/borderless/danger）、`size=medium`（small/medium/large）、`icon: Component`、`iconOnly`、`label`、`disabled`、`loading`、`ripple=true`、`href`、`type=button` | `click(event)`；default slot；borderless 默认透明无边框，悬停时显示灰色背景。图标位于文字右侧。纯图标按钮须提供 label。关闭动效时禁用 Ripple，其余模式遵循全局波纹开关。 |
 | `AppleLink` | `as=a`（a/button）、`href`、`external`、`disabled`、`icon`、`iconOnly`、`label` | default slot；文字操作使用 as=button；external 使用新窗口并设置 `noopener noreferrer`。 |
 | `AppleCard` | M；`title`、`subtitle`、`text`、`eyebrow`、`icon: Component 或图片 URL`、`iconColor`、`image`、`imageAlt`、`href`、`zoom=none`（big/small/none）、`shadow=normal`（normal/static/focused/none） | default、media、icon、title、actions slots；href 为标题链接，不会把所有嵌套控件变成一个大按钮。 |
-| `AppleImage` | M；`gallery: AppleImageItem | (string/AppleImageItem)[]`（唯一来源，默认空数组，单图可传对象）；`preview=true`、`carousel=false`、`autoplay=true`、`interval=5000`（毫秒，仅 carousel）、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、默认每 5 秒循环播放，悬停、聚焦、预览、拖动、页面隐藏或禁用时暂停，保留自由滚动；默认点击预览；统一预览交互，支持拖动、双击、捏合、平滑滚轮及键盘；连续滚轮累积目标并保持位置与速度，缩放、旋转、翻页与进退场分通道，可在动画途中继续操作；翻页按距离与速度使用 360–720ms 动画，放大图片随各自画布裁剪离场；底部单一胶囊按左旋转、缩小、可选名称、放大、右旋转排列，每次旋转 90°，旋转状态按图片保存；竖屏隐藏箭头、关闭及缩放按钮；完整渲染图片组，compact 在固定框内横滑，桌面横向滚轮或 Shift+滚轮平滑横滑，连续事件保留累计目标，停止后平滑吸附；一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 放大并使用 AppleCard 的悬停阴影，横屏多图的缩略图左右按钮仅在悬浮时淡入、移开时淡出，遵循 --apple-fast 与 --apple-ease 并对齐图片中间（单图小窗与全屏均无翻页箭头），跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时底部常显自定义滚动条，支持拖动、点击轨道与键盘，滑块比例随内容和容器尺寸同步，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
+| `AppleImage` | M；`gallery: AppleImageItem | (string/AppleImageItem)[]`（唯一来源，默认空数组，单图可传对象）；`preview=true`、`carousel=false`、`autoplay=true`、`interval=5000`（毫秒，仅 carousel）、`disabled=false`、`label`、`galleryLayout=compact`（compact/tiled/tiled-wrap，所有设备）、`galleryShape=natural`（natural/square）、`index=0`、`squared`、`aspectRatio='4/3'`、`fit=cover`（cover/contain） | caption 与 item({item,index,active}) slots；carousel 强制 compact、默认每 5 秒循环播放，悬停、聚焦、预览、拖动、页面隐藏或禁用时暂停，保留自由滚动；默认点击预览；统一预览交互，支持拖动、双击、捏合、平滑滚轮及键盘；连续滚轮累积目标并保持位置与速度，缩放、旋转、翻页与进退场分通道，可在动画途中继续操作；翻页按距离与速度使用 360–720ms 动画，放大图片随各自画布裁剪离场；底部单一胶囊按左旋转、缩小、可选名称、放大、右旋转排列，每次旋转 90°，旋转状态按图片保存；竖屏隐藏箭头、关闭及缩放按钮；完整渲染图片组，compact 在固定框内横滑，桌面横向滚轮或 Shift+滚轮平滑横滑，连续事件保留累计目标，停止后平滑吸附；一次手势可跨越多张，快速点击翻页延续当前位置和速度；hover 放大并使用 AppleCard 的悬停阴影，横屏多图的缩略图左右按钮仅在悬浮时淡入、移开时淡出，遵循 --apple-fast 与 --apple-ease 并对齐图片中间（单图小窗与全屏均无翻页箭头），跨多张点击小点时直接衔接当前画面与目标图并支持连续改选，tiled 等高横向平铺，溢出时使用浏览器原生横向滚动条，tiled-wrap 等宽保留图片比例，按列从上往下紧密堆叠，避免按行对齐产生空白；平铺 hover 只缩放当前图片；galleryShape=square 强制 1:1 并居中裁剪（覆盖 fit），squared 同样作用于图片组；`update:index`、`change(index)`；图片错误状态；squared 覆盖 aspectRatio。 |
 | `AppleSearch` | `v-model: string`、`placeholder='搜索'`、`label='搜索'`、`disabled` | `search(value)` 在 Enter 时发出；清空更新 model。 |
 | `AppleContainer` | `width=1200`（number/string） | default slot；数字宽度按 px，宽度不会超过可用空间。 |
 | `AppleStack` | `direction=column`、`gap=16`、`align=stretch`、`wrap=true` | default slot；Flex 布局；数字 gap 按 px。 |
@@ -123,7 +127,6 @@ validator 返回 `true` 才通过；字符串作为错误信息，`false` 显示
 | `AppleTimeline` | `items: AppleTimelineItem[]`、`orientation=vertical`（horizontal/vertical）、`label` | item slot `{item}`；选项增加 `time?` 和 `tone?: default/success/danger`。 |
 | `ApplePullRefresh` | `v-model: boolean`、`disabled`、`threshold=72`、`label` | `refresh(done)`；default slot `{refresh,refreshing}`；在滚动顶部下拉，也提供刷新按钮；完成必须调用 done 或将 model 设为 false。 |
 | `AppleInfiniteScroll` | `loading`、`error: boolean/string`、`finished`、`disabled`、`distance=120`、`finishedText` | `load(done)`、`retry(done)`；default slot；IntersectionObserver 及手动加载按钮；完成后调用 done，或令 loading 从 true 回到 false。 |
-| `AppleScrollBar` | `target: string/HTMLElement/()=>HTMLElement`、`axis='both'`、`label`、`controls` | `interaction()`；`refresh()`；fixed 悬浮滚动条，不占空间，支持横向/纵向、拖动、轨道点击、键盘及 RTL。AppleProvider 自动接管文档滚动容器，原本隐藏滚动条的控件除外；`data-apple-scrollbar-ignore` 可排除容器。 |
 | `AppleBackTop` | `target: CSS selector=''`、`threshold=300`、`label`、`disabled` | `click(event)`；default slot；空 target 使用 window，达到滚动阈值才显示。 |
 | `AppleFloatingGroup` | `backTop=true`、`threshold=300`、`target`、`label` | default slot 放附加操作，回顶按钮始终排最下；默认固定右下并考虑安全区，与 Navibar 同为 z-index 70；图片预览时隐藏，退出开始时执行 300ms FadeInLeft，尊重 reduced/none 动效。 |
 | `AppleSpeedDial` | `backTop=true`、`threshold=300`、`target`、`label` | App.vue 全局唯一宿主，嵌套 Provider 共享注册表；BackTop 排第一，操作按注册顺序排列，primary 目录按钮排最后。移动目录弹窗保持高高度，多目录用 AppleTabBar 切换。 |

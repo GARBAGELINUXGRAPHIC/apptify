@@ -1,7 +1,6 @@
 export interface ComponentMetadata { label: string; group: string; description: string }
 
 export const componentMetadata: Record<string, ComponentMetadata> = {
-  AppleScrollBar: { label: '滚动条', group: '基础', description: '悬浮在内容之上。' },
   AppleButton: {"label":"按钮","group":"基础","description":"清晰的操作层级。"},
   AppleLink: {"label":"链接","group":"基础","description":"让下一步清楚可见。"},
   AppleSearch: {"label":"搜索","group":"基础","description":"快速找到关心的内容。"},

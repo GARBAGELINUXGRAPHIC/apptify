@@ -15,7 +15,6 @@ const gallery = JSON.stringify([{ src: image('#0071e3', 'Apptify'), alt: '蓝色
 const scroll = '<div id="demo-scroll" class="scroll-demo" tabindex="0" aria-label="滚动示例"><div style="height: 900px">向下滚动，体验回到顶部。</div></div>'
 
 const examples: Record<string, PlaygroundExample> = {
-  AppleScrollBar: { props: { target: '"#demo-scroll"' }, before: '<div id="demo-scroll" class="scroll-demo" tabindex="0" aria-label="滚动示例"><div style="width: 760px; height: 900px; display: grid; gap: 16px"><div v-for="n in 12" :key="n" class="tile">{{ n }}</div></div></div>' },
   AppleButton: { slots: { default: { code: '继续', enabled: true } } },
   AppleLink: { props: { as: '"button"' }, slots: { default: { code: '了解更多', enabled: true } } },
   AppleProvider: { props: { theme: '"dark"' }, slots: { default: { code: '<AppleInput v-model="fieldValue" label="局部主题" /><AppleButton @click="record(\'click\')">继续</AppleButton>', enabled: true } } },

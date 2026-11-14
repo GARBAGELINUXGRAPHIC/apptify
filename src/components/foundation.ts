@@ -5,8 +5,6 @@ import { AppleOverlayHost, InternalImageViewer, type AppleViewerImage } from './
 import { clamp, type PhotoSize } from '../core/image-geometry'
 import { isVerticalScreen } from '../core/device'
 import { scrollGallery, stopGalleryScroll, wheelGallery } from '../core/image-gallery-motion'
-import { AppleScrollBar } from './scrollbar'
-import { installScrollBars } from '../core/scrollbar'
 import { AppleButton } from './button'
 import { AppleLink } from './link'
 export { AppleLink } from './link'
@@ -25,7 +23,7 @@ export const AppleProvider = defineComponent({
     const context = this.nested || this.theme || this.motion ? createApple({ theme: this.theme ?? parent?.theme.value.name, motion: this.motion ?? parent?.motion.value.mode, ripple: parent?.ripple.value.enabled, themes: parent?.theme.value.themes }) : (parent ?? createApple())
     // Glass and ripple preferences belong to the app, including local themes.
     if (parent && parent !== context) { context.glass = parent.glass; context.ripple = parent.ripple; context.speedDial = parent.speedDial }
-    return { context: ref(context), disposeScrollBars: null as (() => void) | null }
+    return { context: ref(context) }
   },
   provide() { return { [appleKey as symbol]: this.context, [providerKey]: true } },
   computed: {
@@ -49,9 +47,8 @@ export const AppleProvider = defineComponent({
   },
   mounted() {
     this.context.portalTarget.value = this.$refs.portals as HTMLElement; this.context.attach()
-    if (!this.nested) this.disposeScrollBars = installScrollBars(this.$el as HTMLElement)
   },
-  beforeUnmount() { this.disposeScrollBars?.(); this.context.detach(); this.context.overlays.clear(); this.context.portalTarget.value = undefined },
+  beforeUnmount() { this.context.detach(); this.context.overlays.clear(); this.context.portalTarget.value = undefined },
   render() {
     return h('div', {
       class: 'apple-provider', style: { ...themeStyle(this.context), colorScheme: this.context.theme.value.current.scheme },
@@ -242,7 +239,10 @@ export const AppleImage = defineComponent({
       const adjacent = Math.abs(index - this.previewIndex) <= 1
       this.galleryTarget = index
       this.changed(index)
-      scrollGallery(box, left, this.imageMotion === 'full', () => { this.galleryTarget = null }, adjacent, snap)
+      scrollGallery(box, left, this.imageMotion === 'full', interrupted => {
+        this.galleryTarget = null
+        if (interrupted) this.scrolled()
+      }, adjacent, snap)
     },
     scrolled() {
       if (this.previewing || this.disabled || this.galleryTarget !== null) return
@@ -379,11 +379,6 @@ export const AppleImage = defineComponent({
           h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || !this.carousel && index === this.images.length - 1, onClick: () => this.stepImage(1) }, h(ChevronRight, { size: 22, 'aria-hidden': true })),
         ]) : null,
       ]),
-      this.grouped && this.layout === 'tiled' ? h(AppleScrollBar, {
-        target: () => this.$refs.gallery as HTMLElement | undefined, controls: `${this.uid}-gallery`,
-        axis: 'horizontal', label: '图片组滚动条',
-        onInteraction: this.interruptGalleryScroll,
-      }) : null,
       this.grouped && this.layout === 'compact' ? h('div', { class: 'apple-image__pagination', role: 'group', 'aria-label': this.carousel ? '选择幻灯片' : '图片组分页' }, [
         h('div', { class: 'apple-image__dots' }, this.images.map((_, i) => h('button', {
           type: 'button', class: 'apple-image__dot', disabled: this.disabled, 'aria-label': this.carousel ? `查看${this.slideLabel(i)}` : `显示第 ${i + 1} 张图片`, 'aria-current': i === index ? 'true' : undefined, 'aria-controls': `${this.uid}-gallery`,
