@@ -1,19 +1,19 @@
 <template>
   <apple-popover v-model="opened" label="用户菜单" align="end" :width="280" panel-class="user-popup">
     <template #activator>
-      <apple-link as="button" class="user-trigger user-account-trigger" icon-only label="打开用户菜单" title="用户菜单"><UserRound :size="20" /></apple-link>
+      <apple-link as="button" class="user-trigger user-account-trigger" icon-only label="打开用户菜单" title="用户菜单"><IconUser :size="20" /></apple-link>
     </template>
     <div class="user-summary">
       <apple-avatar name="林初" :size="48" />
       <div><strong>林初 <small>演示账户</small></strong><span>lin.chu@example.com</span></div>
     </div>
     <div class="user-menu-list">
-      <apple-link as="button" @click="showProfile"><UserRound :size="17" /><span>个人资料</span><ArrowUpRight :size="14" aria-hidden="true" /></apple-link>
-      <router-link to="/settings" @click="opened = false"><Settings2 :size="17" /><span>偏好设置</span><ArrowUpRight :size="14" aria-hidden="true" /></router-link>
+      <apple-link as="button" @click="showProfile"><IconUser :size="17" /><span>个人资料</span><IconArrowUpRight :size="14" aria-hidden="true" /></apple-link>
+      <router-link to="/settings" @click="opened = false"><IconAdjustmentsHorizontal :size="17" /><span>偏好设置</span><IconArrowUpRight :size="14" aria-hidden="true" /></router-link>
     </div>
     <div class="user-menu-list user-menu-examples">
-      <apple-link as="button" @click="openAuth('login')"><LogIn :size="17" /><span>登录 <small>Login</small></span><em>示例</em></apple-link>
-      <apple-link as="button" @click="openAuth('register')"><UserPlus :size="17" /><span>注册 <small>Register</small></span><em>示例</em></apple-link>
+      <apple-link as="button" @click="openAuth('login')"><IconLogin :size="17" /><span>登录 <small>Login</small></span><em>示例</em></apple-link>
+      <apple-link as="button" @click="openAuth('register')"><IconUserPlus :size="17" /><span>注册 <small>Register</small></span><em>示例</em></apple-link>
     </div>
   </apple-popover>
   <apple-dialog v-model="authOpen" class="user-auth-dialog" :width="560" :title="authMode === 'login' ? '登录示例' : '注册示例'" :show-footer="false" @after-close="password = ''">
@@ -25,14 +25,14 @@
     </template>
     <apple-form :key="authMode" class="user-auth-form" @submit="submitAuth">
       <apple-input v-if="authMode === 'register'" ref="nameInput" v-model="name" label="姓名" autocomplete="name" required>
-        <template #prefix><UserRound :size="18" aria-hidden="true" /></template>
+        <template #prefix><IconUser :size="18" aria-hidden="true" /></template>
       </apple-input>
       <apple-input ref="emailInput" v-model="email" label="电子邮箱" type="email" autocomplete="email" placeholder="name@example.com" required>
-        <template #prefix><Mail :size="18" aria-hidden="true" /></template>
+        <template #prefix><IconMail :size="18" aria-hidden="true" /></template>
       </apple-input>
       <div class="user-auth-password">
         <apple-input v-model="password" label="密码" type="password" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" required>
-          <template #prefix><LockKeyhole :size="18" aria-hidden="true" /></template>
+          <template #prefix><IconLock :size="18" aria-hidden="true" /></template>
         </apple-input>
         <apple-link as="button" v-if="authMode === 'login'" class="user-auth-forgot" @click="showAuthEntry('forgot')">忘记密码？</apple-link>
       </div>
@@ -44,7 +44,7 @@
     </apple-form>
     <div class="user-auth-alternatives">
       <apple-link href="#" @click.prevent="switchAuthMode">
-        {{ authMode === 'login' ? '注册账户' : '已有账户？登录' }}<ArrowUpRight :size="14" aria-hidden="true" />
+        {{ authMode === 'login' ? '注册账户' : '已有账户？登录' }}<IconArrowUpRight :size="14" aria-hidden="true" />
       </apple-link>
     </div>
   </apple-dialog>
@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { ArrowUpRight, LockKeyhole, LogIn, Mail, Settings2, UserPlus, UserRound } from 'lucide-vue-next'
+import { IconArrowUpRight, IconLock, IconLogin, IconMail, IconAdjustmentsHorizontal, IconUserPlus, IconUser } from '@tabler/icons-vue'
 import { useApple } from '../../src'
 
 const apple = useApple()

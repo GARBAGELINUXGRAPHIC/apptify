@@ -11,7 +11,7 @@ import { File, Repl, useStore } from '@vue/repl'
 import CodeMirror from '@vue/repl/codemirror-editor'
 import ConfigurableEditor from './ConfigurableEditor.vue'
 import { AppleLink, AppleTooltip, useApple } from '../../src'
-import { Copy, RefreshCw, RotateCcw } from 'lucide-vue-next'
+import { IconCopy, IconRefresh, IconRotate } from '@tabler/icons-vue'
 const props = defineProps<{ files: Record<string, string>; activeFile?: string; resetLabel?: string; baselineFiles?: Record<string, string>; previewSurface?: boolean }>()
 const emit = defineEmits<{ close: []; save: [files: Record<string, string>]; restore: [] }>()
 const slots = useSlots()
@@ -24,9 +24,9 @@ const configuredEditor = defineComponent({
   },
 })
 const EditorActions = () => h('div', { class: 'editor-actions', role: 'group', 'aria-label': '示例操作' }, [
-  { label: '重新运行', icon: RefreshCw, click: rerun },
-  { label: props.resetLabel || '恢复示例', icon: RotateCcw, click: restore },
-  { label: '复制当前文件', icon: Copy, click: copyCode },
+  { label: '重新运行', icon: IconRefresh, click: rerun },
+  { label: props.resetLabel || '恢复示例', icon: IconRotate, click: restore },
+  { label: '复制当前文件', icon: IconCopy, click: copyCode },
 ].map(action => {
   const button = () => h(AppleLink, {
   as: 'button', iconOnly: !!slots.configuration,
@@ -42,7 +42,7 @@ const editorRoot = ref<HTMLElement>()
 const copied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | undefined
 const url = (name: string) => new URL(`${import.meta.env.BASE_URL}assets/editor/${name}`, location.origin).href
-const importMap = { imports: { vue: url('vue.js'), apptify: url('runtime.js'), 'lucide-vue-next': url('runtime.js') } }
+const importMap = { imports: { vue: url('vue.js'), apptify: url('runtime.js'), '@tabler/icons-vue': url('runtime.js') } }
 const normalize = (name: string) => name.startsWith('src/') ? name : `src/${name}`
 const initialFiles: Record<string, File> = Object.fromEntries(Object.entries(props.files)
   .filter(([name]) => name.endsWith('.vue'))

@@ -1,5 +1,5 @@
 import { defineComponent, h, markRaw, mergeProps, nextTick, ref, useId, type PropType, type CSSProperties } from 'vue'
-import { ChevronLeft, ChevronRight, ImageOff, X, Search } from 'lucide-vue-next'
+import { IconChevronLeft, IconChevronRight, IconPhotoOff, IconX, IconSearch } from '@tabler/icons-vue'
 import { appleKey, createApple, motionProps, resolveMotion, themeStyle, type AppleContext, type Motion } from '../core/context'
 import { AppleOverlayHost, InternalImageViewer, type AppleViewerImage } from './overlays'
 import { clamp, type PhotoSize } from '../core/image-geometry'
@@ -10,6 +10,8 @@ import { AppleLink } from './link'
 export { AppleLink } from './link'
 import AppleCard from './AppleCard.vue'
 export { AppleCard }
+import AppleImageCompare from './AppleImageCompare.vue'
+export { AppleImageCompare }
 export { AppleButton } from './button'
 
 const providerKey: symbol = Symbol('apple-provider-scope')
@@ -326,7 +328,7 @@ export const AppleImage = defineComponent({
       const metadata = typeof item === 'string' ? image as AppleImageItem : item
       const active = index === this.normalizeIndex(this.previewIndex)
       const content = this.carousel ? this.$slots.item?.({ item: metadata, index, active }) : undefined
-      const picture = failed ? [h(ImageOff, { size: 28 }), h('span', '图片无法加载')] : image.src ? [h('img', {
+      const picture = failed ? [h(IconPhotoOff, { size: 28 }), h('span', '图片无法加载')] : image.src ? [h('img', {
         ref: (element: unknown) => { if (element) this.thumbnails.set(index, element as HTMLImageElement); else this.thumbnails.delete(index) },
         src: image.src, alt: image.alt ?? '', loading: this.grouped ? 'eager' : 'lazy', draggable: false,
         width: image.width, height: image.height,
@@ -366,17 +368,17 @@ export const AppleImage = defineComponent({
       onFocusin: () => { this.focused = true },
       onFocusout: (event: FocusEvent) => { if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.focused = false },
     }), [
-      h('div', { ref: 'surface', class: 'apple-image__surface', style: this.grouped && this.layout === 'compact' ? { aspectRatio: ratio } : undefined, onWheel: this.grouped ? this.galleryWheel : undefined }, [
+      h('div', { ref: 'surface', class: 'apple-image__surface', style: this.grouped && this.layout === 'compact' ? { aspectRatio: ratio } : undefined, onWheel: this.images.length > 1 ? this.galleryWheel : undefined }, [
         this.grouped ? h('div', {
           ref: 'gallery', id: `${this.uid}-gallery`,
           role: 'group', tabindex: this.disabled ? -1 : 0, 'aria-label': this.carousel ? this.label : '图片组', class: ['apple-image__gallery', `apple-image__gallery--${this.layout}`, { 'is-dragging': this.galleryDrag?.moved }],
           style: this.disabled ? { overflowX: 'hidden' } : undefined,
           onScroll: this.scrolled, onKeydown: this.galleryKeydown, onPointerdown: this.galleryPointerDown, onPointermove: this.galleryPointerMove,
           onPointerup: this.galleryPointerUp, onPointercancel: this.galleryPointerUp, onLostpointercapture: this.galleryPointerUp,
-        }, this.images.map((image, i) => this.thumbnail(image, i))) : this.images[0] ? this.thumbnail(this.images[0], 0) : h('div', { class: 'apple-image__trigger apple-image__trigger--empty', role: 'img', 'aria-label': '暂无图片' }, [h(ImageOff, { size: 28, 'aria-hidden': true }), h('span', '暂无图片')]),
+        }, this.images.map((image, i) => this.thumbnail(image, i))) : this.images[0] ? this.thumbnail(this.images[0], 0) : h('div', { class: 'apple-image__trigger apple-image__trigger--empty', role: 'img', 'aria-label': '暂无图片' }, [h(IconPhotoOff, { size: 28, 'aria-hidden': true }), h('span', '暂无图片')]),
         !this.isVerticalScreen && this.images.length > 1 && this.layout === 'compact' ? h('div', { class: 'apple-image__arrows', role: 'group', 'aria-label': '图片翻页', style: { top: this.arrowCenter === null ? '50%' : `${this.arrowCenter}px` } }, [
-          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--prev', 'aria-label': '上一张图片', disabled: this.disabled || !this.carousel && index === 0, onClick: () => this.stepImage(-1) }, h(ChevronLeft, { size: 22, 'aria-hidden': true })),
-          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || !this.carousel && index === this.images.length - 1, onClick: () => this.stepImage(1) }, h(ChevronRight, { size: 22, 'aria-hidden': true })),
+          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--prev', 'aria-label': '上一张图片', disabled: this.disabled || !this.carousel && index === 0, onClick: () => this.stepImage(-1) }, h(IconChevronLeft, { size: 22, 'aria-hidden': true })),
+          h('button', { type: 'button', class: 'apple-image__arrow apple-image__arrow--next', 'aria-label': '下一张图片', disabled: this.disabled || !this.carousel && index === this.images.length - 1, onClick: () => this.stepImage(1) }, h(IconChevronRight, { size: 22, 'aria-hidden': true })),
         ]) : null,
       ]),
       this.grouped && this.layout === 'compact' ? h('div', { class: 'apple-image__pagination', role: 'group', 'aria-label': this.carousel ? '选择幻灯片' : '图片组分页' }, [
@@ -401,11 +403,11 @@ export const AppleSearch = defineComponent({
   name: 'AppleSearch', inheritAttrs: false,
   props: { modelValue: { type: String, default: '' }, placeholder: { type: String, default: '搜索' }, label: { type: String, default: '搜索' }, disabled: Boolean },
   emits: ['update:modelValue', 'search'],
-  render() { return h('div', { class: 'apple-search' }, [h(Search, { size: 18, 'aria-hidden': true }), h('input', { ...this.$attrs, type: 'search', value: this.modelValue, placeholder: this.placeholder, 'aria-label': this.label, disabled: this.disabled, onInput: (e: Event) => this.$emit('update:modelValue', (e.target as HTMLInputElement).value), onKeydown: (e: KeyboardEvent) => { if (e.key === 'Enter') this.$emit('search', this.modelValue) } }), this.modelValue ? h('button', { type: 'button', disabled: this.disabled, 'aria-label': '清除搜索', onClick: () => this.$emit('update:modelValue', '') }, h(X, { size: 16 })) : null]) },
+  render() { return h('div', { class: 'apple-search' }, [h(IconSearch, { size: 18, 'aria-hidden': true }), h('input', { ...this.$attrs, type: 'search', value: this.modelValue, placeholder: this.placeholder, 'aria-label': this.label, disabled: this.disabled, onInput: (e: Event) => this.$emit('update:modelValue', (e.target as HTMLInputElement).value), onKeydown: (e: KeyboardEvent) => { if (e.key === 'Enter') this.$emit('search', this.modelValue) } }), this.modelValue ? h('button', { type: 'button', disabled: this.disabled, 'aria-label': '清除搜索', onClick: () => this.$emit('update:modelValue', '') }, h(IconX, { size: 16 })) : null]) },
 })
 
 export const AppleContainer = defineComponent({ name: 'AppleContainer', props: { width: { type: [Number, String], default: 1200 } }, render() { return h('div', { class: 'apple-container', style: { maxWidth: typeof this.width === 'number' ? `${this.width}px` : this.width } }, this.$slots.default?.()) } })
 export const AppleStack = defineComponent({ name: 'AppleStack', props: { direction: { type: String as PropType<'row' | 'column'>, default: 'column' }, gap: { type: [String, Number], default: 16 }, align: { type: String, default: 'stretch' }, wrap: { type: Boolean, default: true } }, render() { return h('div', { class: 'apple-stack', style: { flexDirection: this.direction, gap: typeof this.gap === 'number' ? `${this.gap}px` : this.gap, alignItems: this.align, flexWrap: this.direction === 'row' && this.wrap ? 'wrap' : 'nowrap' } as CSSProperties }, this.$slots.default?.()) } })
 export const AppleGrid = defineComponent({ name: 'AppleGrid', props: { min: { type: Number, default: 240 }, gap: { type: Number, default: 20 } }, render() { return h('div', { class: 'apple-grid', style: { gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${this.min}px), 1fr))`, gap: `${this.gap}px` } }, this.$slots.default?.()) } })
 
-export const foundationComponents = { AppleProvider, AppleButton, AppleLink, AppleCard, AppleImage, AppleSearch, AppleContainer, AppleStack, AppleGrid }
+export const foundationComponents = { AppleProvider, AppleButton, AppleLink, AppleCard, AppleImage, AppleImageCompare, AppleSearch, AppleContainer, AppleStack, AppleGrid }

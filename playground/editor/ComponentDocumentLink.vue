@@ -1,12 +1,12 @@
 <template>
   <footer class="documentation-entry">
     <router-link :to="href" custom v-slot="{ href: target, navigate }">
-      <apple-link :href="target" @click="navigate"><span>{{ label || '代码与 API' }}</span><ArrowUpRight :size="16" :stroke-width="1.5" aria-hidden="true" /></apple-link>
+      <apple-link :href="target" @click="navigate"><span>{{ label || '代码与 API' }}</span><IconArrowUpRight :size="16" stroke="1.5" aria-hidden="true" /></apple-link>
     </router-link>
   </footer>
 </template>
 <script setup lang="ts">
-import { ArrowUpRight } from 'lucide-vue-next'
+import { IconArrowUpRight } from '@tabler/icons-vue'
 defineProps<{ href: string; label?: string }>()
 </script>
 <style scoped>

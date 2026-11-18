@@ -12,7 +12,7 @@
         <router-link v-slot="{ href, navigate }" to="/" custom>
           <apple-button :href="href" @click="navigate">返回首页</apple-button>
         </router-link>
-        <apple-link as="button" @click="goBack"><ArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
+        <apple-link as="button" @click="goBack"><IconArrowLeft :size="16" aria-hidden="true" /> 返回上一页</apple-link>
       </div>
     </apple-card>
     <ErrorScene class="paper-503-illustration" :code="503" />
@@ -24,7 +24,7 @@
 </route>
 
 <script setup lang="ts">
-import { ArrowLeft } from 'lucide-vue-next'
+import { IconArrowLeft } from '@tabler/icons-vue'
 import { useRouter } from 'vue-router'
 import ErrorScene from '../components/ErrorScene.vue'
 

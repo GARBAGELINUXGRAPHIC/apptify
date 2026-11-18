@@ -18,16 +18,15 @@ async function expectNoDocumentOverflow(page: Page) {
 
 async function loadOverviewImages(page: Page) {
   await expect(page.locator('.media-specimen .apple-image')).not.toHaveClass(/apple-image--mobile/)
-  const images = page.locator('.home-page .apple-image img')
-  expect(await images.count()).toBeGreaterThanOrEqual(1)
-  for (const image of await images.all()) {
-    await image.scrollIntoViewIfNeeded()
-    await expect.poll(() => image.evaluate(element => {
+  const images = page.locator('.media-specimen .apple-image img')
+  await expect(images).toHaveCount(12)
+  await images.evaluateAll(async elements => {
+    await Promise.all(elements.map(element => {
       const image = element as HTMLImageElement
-      return image.complete && image.naturalWidth > 0 && image.naturalHeight > 0
-    })).toBe(true)
-  }
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      image.loading = 'eager'
+      return image.decode()
+    }))
+  })
 }
 
 test.beforeEach(async ({ page }) => {
@@ -47,8 +46,8 @@ for (const viewport of [
     await loadOverviewImages(page)
     await expectNoDocumentOverflow(page)
     await expect(page.locator('.specimen-product')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: '继续探索', exact: true })).toBeVisible()
-    const screenshot = await page.screenshot({ path: `/tmp/apptify-checks/${viewport.name}.png`, fullPage: false, animations: 'disabled' })
+    await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible()
+    const screenshot = await page.screenshot({ path: `/tmp/apptify-checks/${viewport.name}.png`, fullPage: true, animations: 'disabled' })
     expect(screenshot.byteLength).toBeGreaterThan(30_000)
   })
 }
@@ -148,20 +147,20 @@ test('stacked dialogs close only the top layer and retain the scroll lock and fo
 
 test('image lightbox loads real images, zooms, navigates, and returns focus after Escape', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
-  const trigger = page.locator('.media-specimen').getByRole('button', { name: '放大图片：山间湖泊和木屋', exact: true })
+  const trigger = page.locator('.media-specimen').getByRole('button', { name: '放大图片：山间湖泊与小屋', exact: true })
   await trigger.scrollIntoViewIfNeeded()
   await trigger.click()
   const viewer = page.getByRole('dialog', { name: '图片预览', exact: true })
   await expect(viewer).toBeVisible()
   await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0))).toBe(true)
-  await expect(viewer.locator('.apple-viewer-count')).toHaveText('1 / 2')
+  await expect(viewer.locator('.apple-viewer-count')).toHaveText('1 / 12')
   const transforms = () => viewer.locator('.apple-viewer-canvas, .apple-viewer-image').evaluateAll(elements => elements.map(element => getComputedStyle(element).transform).join('|'))
   const beforeZoom = await transforms()
   await viewer.getByRole('button', { name: '放大', exact: true }).click()
   await expect.poll(transforms).not.toBe(beforeZoom)
   await viewer.getByRole('button', { name: '下一张', exact: true }).click()
-  await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 2')
-  await expect(viewer.locator('.apple-viewer-page')).toHaveCount(1)
+  await expect(viewer.locator('.apple-viewer-count')).toHaveText('2 / 12')
+  await expect(viewer.locator('.apple-viewer-image')).toHaveCount(1)
   await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0 && image.src.includes('airpods')))).toBe(true)
   await expect(viewer.locator('.apple-viewer-image')).toHaveAttribute('src', /airpods/)
   await expect(viewer.locator('.apple-viewer-image')).toBeVisible()
@@ -290,7 +289,7 @@ test('WebKit mobile smoke covers layout, input, layered overlays, and image view
     await expect.poll(() => viewer.locator('img').evaluateAll(images => images.some(image => image.complete && image.naturalWidth > 0))).toBe(true)
     await swipeImage(viewer)
     await expect(viewer.locator('.apple-viewer-count')).toHaveText(`2 / ${count}`)
-    await viewer.getByRole('button', { name: '关闭图片预览', exact: true }).click()
+    await page.keyboard.press('Escape')
     await expect(viewer).toHaveCount(0)
     await expectNoDocumentOverflow(page)
     await page.emulateMedia({ reducedMotion: 'reduce' })

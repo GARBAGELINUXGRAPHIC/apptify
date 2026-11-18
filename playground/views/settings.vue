@@ -13,18 +13,18 @@
     </header>
     <div class="settings-grid">
       <apple-card id="setting-theme" class="settings-section" tabindex="-1" aria-labelledby="theme-heading">
-        <div class="specimen-caption"><span>01 / 外观</span><Palette :size="18" aria-hidden="true" /></div>
+        <div class="specimen-caption"><span>01 / 外观</span><IconPalette :size="18" aria-hidden="true" /></div>
         <div class="settings-section-heading"><div><h2 id="theme-heading">主题</h2><p>选择喜欢的色彩，应用于所有页面。</p></div></div>
         <div class="theme-picker" role="group" aria-label="选择主题">
           <apple-link as="button" v-for="theme in themes" class="theme-choice" :key="theme.value" type="button" :aria-pressed="apple.theme.value.name === theme.value" :class="{ selected: apple.theme.value.name === theme.value }" @click="apple.theme.value.set(theme.value)">
             <span aria-hidden="true" class="theme-swatch" :style="{ background: theme.background, color: theme.accent }"><i /><i /><i /></span>
-            <span class="theme-label">{{ theme.label }}<Check v-if="apple.theme.value.name === theme.value" :size="15" aria-hidden="true" /></span>
+            <span class="theme-label">{{ theme.label }}<IconCheck v-if="apple.theme.value.name === theme.value" :size="15" aria-hidden="true" /></span>
           </apple-link>
         </div>
         <div class="settings-card-foot">外观偏好保存在这台设备上。</div>
       </apple-card>
       <apple-card id="setting-motion" class="settings-section" tabindex="-1" aria-labelledby="motion-heading">
-        <div class="specimen-caption"><span>02 / 动效</span><Waves :size="18" aria-hidden="true" /></div>
+        <div class="specimen-caption"><span>02 / 动效</span><IconRipple :size="18" aria-hidden="true" /></div>
         <div class="settings-section-heading"><div><h2 id="motion-heading">动效</h2><p>为页面切换和组件交互选择动效强度。</p></div></div>
         <apple-segmented-control :model-value="apple.motion.value.mode" :items="motionOptions" label="全局动效" @update:model-value="setMotion" />
         <p class="settings-note">{{ motionDescriptions[apple.motion.value.mode] }}<template v-if="apple.motion.value.reduced"> 系统已开启减少动态效果。</template></p>
@@ -34,7 +34,7 @@
         <div class="settings-card-foot">{{ previewMotion === 'none' ? '动效已关闭 · 静态展示' : '自动演示 · 跟随当前动效强度' }}</div>
       </apple-card>
       <apple-card id="setting-ripple" class="settings-section" tabindex="-1" aria-labelledby="ripple-heading">
-        <div class="specimen-caption"><span>03 / 点击反馈</span><MousePointer2 :size="18" aria-hidden="true" /></div>
+        <div class="specimen-caption"><span>03 / 点击反馈</span><IconPointer :size="18" aria-hidden="true" /></div>
         <div class="settings-section-heading"><div><h2 id="ripple-heading">点击波纹</h2><p>让每一次轻点，都有细微的回应。</p></div></div>
         <apple-switch :model-value="rippleAllowed && apple.ripple.value.enabled" :disabled="!rippleAllowed" label="点击波纹" :hint="rippleAllowed ? '减弱动效时自动关闭，可手动开启；偏好保存在这台设备上。' : '关闭动效时，无法开启点击波纹。'" @update:model-value="apple.ripple.value.set" />
         <div ref="rippleDemo" class="effect-demo ripple-sample" aria-label="波纹自动演示" @pointerenter="ripplePaused = true" @pointerleave="ripplePaused = false" @focusin="ripplePaused = true" @focusout="ripplePaused = false">
@@ -44,7 +44,7 @@
         <div class="settings-card-foot">{{ rippleAllowed && apple.ripple.value.enabled ? '自动点击 · 也可以手动试一试' : '点击波纹已关闭 · 静态展示' }}</div>
       </apple-card>
       <apple-card id="setting-glass" class="settings-section" tabindex="-1" aria-labelledby="glass-heading">
-        <div class="specimen-caption"><span>04 / 材质</span><SlidersHorizontal :size="18" aria-hidden="true" /></div>
+        <div class="specimen-caption"><span>04 / 材质</span><IconAdjustmentsHorizontal :size="18" aria-hidden="true" /></div>
         <div class="settings-section-heading"><div><h2 id="glass-heading">玻璃效果</h2><p>调整下拉浮层的底色与模糊程度。</p></div></div>
         <div class="glass-controls">
           <apple-slider :model-value="apple.glass.value.opacity" label="玻璃不透明度" :min="0" :max="100" :step="0.1" :format-value="formatOpacity" @update:model-value="setGlassOpacity" />
@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { Check, Layers, MousePointer2, Palette, SlidersHorizontal, Waves } from 'lucide-vue-next'
+import { IconCheck, IconStack, IconPointer, IconPalette, IconAdjustmentsHorizontal, IconRipple } from '@tabler/icons-vue'
 import { builtInThemes, resolveMotion, useApple, type Motion } from '../../src'
 
 const apple = useApple()

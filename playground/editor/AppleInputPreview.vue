@@ -21,10 +21,10 @@
           <div class="config-grid">
             <AppleSegmentedControl v-model="config.prefixMode" label="前缀插槽" hint="prefix" :items="affixModes" />
             <AppleInput v-if="config.prefixMode === 'text'" v-model="config.prefix" label="前缀文字" placeholder="例如 ¥" />
-            <AppleInput v-if="config.prefixMode === 'icon'" v-model="config.prefixIcon" label="前缀图标代号" placeholder="Mail" hint="Lucide 代号，例如 Mail、User、Search。" :error="iconCodeError(config.prefixIcon)" />
+            <AppleInput v-if="config.prefixMode === 'icon'" v-model="config.prefixIcon" label="前缀图标代号" placeholder="mail" :error="iconCodeError(config.prefixIcon)" />
             <AppleSegmentedControl v-model="config.suffixMode" label="后缀插槽" hint="suffix" :items="affixModes" />
             <AppleInput v-if="config.suffixMode === 'text'" v-model="config.suffix" label="后缀文字" placeholder="例如 kg" />
-            <AppleInput v-if="config.suffixMode === 'icon'" v-model="config.suffixIcon" label="后缀图标代号" placeholder="Search" hint="Lucide 代号，例如 Search、Check、ArrowRight。" :error="iconCodeError(config.suffixIcon)" />
+            <AppleInput v-if="config.suffixMode === 'icon'" v-model="config.suffixIcon" label="后缀图标代号" placeholder="search" :error="iconCodeError(config.suffixIcon)" />
             <AppleSelect v-model="config.motion" label="动效" hint="motion" :items="motions" />
             <AppleInput v-model="config.name" label="表单字段" hint="name" />
             <AppleInput v-model="config.ariaLabel" label="可访问名称" hint="aria-label" />
@@ -62,7 +62,7 @@ function applyPreset(next: string) {
   preset.value = next
   value.value = 'Apptify'
   if (next === 'password') { Object.assign(config, { type: 'password', label: '密码', placeholder: '请输入密码', hint: '点击眼睛切换密码可见性。', autocomplete: 'current-password' }); value.value = 'apple123' }
-  if (next === 'email') { Object.assign(config, { type: 'email', label: '电子邮箱', placeholder: 'name@example.com', hint: '提交时体验原生邮箱校验。', required: true, autocomplete: 'email', prefixMode: 'icon', prefixIcon: 'Mail' }); value.value = '' }
+  if (next === 'email') { Object.assign(config, { type: 'email', label: '电子邮箱', placeholder: 'name@example.com', hint: '提交时体验原生邮箱校验。', required: true, autocomplete: 'email', prefixMode: 'icon', prefixIcon: 'mail' }); value.value = '' }
   if (next === 'amount') { Object.assign(config, { type: 'number', label: '金额', placeholder: '0.00', hint: '数字输入事件仍返回字符串。', prefixMode: 'text', prefix: '¥', suffixMode: 'text', suffix: '元', min: '0', step: '0.01' }); value.value = 128 }
 }
 function reset() { applyPreset('basic') }

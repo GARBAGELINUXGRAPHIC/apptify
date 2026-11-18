@@ -8,7 +8,7 @@
           <div>
             <h3 :id="`${errorPreviewId(code)}-heading`">
               <router-link :to="`/${code}`" class="error-preview__link">
-                {{ code }} · {{ errorPages[code].title }} <ArrowUpRight :size="14" aria-hidden="true" />
+                {{ code }} · {{ errorPages[code].title }} <IconArrowUpRight :size="14" aria-hidden="true" />
               </router-link>
             </h3>
             <p>{{ errorPages[code].copy[0] }}<br />{{ errorPages[code].copy[1] }}</p>
@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { ArrowUpRight } from 'lucide-vue-next'
+import { IconArrowUpRight } from '@tabler/icons-vue'
 import { errorCodes, errorPages, errorPreviewId } from '../error-pages'
 import ComponentDocumentLink from '../editor/ComponentDocumentLink.vue'
 import ErrorScene from './ErrorScene.vue'

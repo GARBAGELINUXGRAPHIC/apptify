@@ -1,5 +1,5 @@
 import { defineComponent, h, type PropType, type Component } from 'vue'
-import { LoaderCircle } from 'lucide-vue-next'
+import { IconLoader2 } from '@tabler/icons-vue'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
 import { ripple } from '../core/motion'
 
@@ -19,7 +19,7 @@ export const AppleButton = defineComponent({
     const context = this.apple as AppleContext | null
     const motion = resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced)
     const blocked = this.disabled || this.loading
-    const content = () => h('span', { class: 'apple-button__content' }, [this.iconOnly && (this.icon || this.loading) ? null : this.$slots.default?.(), this.loading ? h(LoaderCircle, { size: 18, class: 'apple-spin', 'aria-hidden': true }) : this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null])
+    const content = () => h('span', { class: 'apple-button__content' }, [this.iconOnly && (this.icon || this.loading) ? null : this.$slots.default?.(), this.loading ? h(IconLoader2, { size: 18, class: 'apple-spin', 'aria-hidden': true }) : this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null])
     const tag = this.href && !blocked ? 'a' : 'button'
     const node = h(tag, {
       ...this.$attrs, class: ['apple-button', `apple-button--${this.variant}`, `apple-button--${this.size}`, { 'apple-button--icon': this.iconOnly }, this.$attrs.class],

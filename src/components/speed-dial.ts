@@ -1,5 +1,5 @@
 import { computed, defineComponent, getCurrentInstance, h, inject, onBeforeUnmount, onMounted, Teleport, useId, watch, type Component, type PropType, type VNodeChild } from 'vue'
-import { Menu } from 'lucide-vue-next'
+import { IconMenu2 } from '@tabler/icons-vue'
 import { appleKey } from '../core/context'
 import { useSpeedDialEntry, type SpeedDialEntry } from '../core/speed-dial'
 import { AppleButton } from './button'
@@ -56,7 +56,7 @@ export const AppleSpeedDial = defineComponent({
         h(AppleFloatingGroup, { backTop: false, label: props.label, class: 'apple-speed-dial' }, { default: () => [
           props.backTop ? h(AppleBackTop, { target: props.target, threshold: props.threshold }) : null,
           ...registry.entries.value.filter(entry => entry.kind === 'action').map(entryPanel),
-          registry.mobile.value && directories.value.length ? h(AppleButton, { class: 'apple-speed-dial-directory', variant: 'primary', iconOnly: true, icon: Menu, label: '展开目录', 'aria-haspopup': 'dialog', 'aria-expanded': registry.open.value, onClick: () => { registry.open.value = true } }) : null,
+          registry.mobile.value && directories.value.length ? h(AppleButton, { class: 'apple-speed-dial-directory', variant: 'primary', iconOnly: true, icon: IconMenu2, label: '展开目录', 'aria-haspopup': 'dialog', 'aria-expanded': registry.open.value, onClick: () => { registry.open.value = true } }) : null,
         ] }),
         h(AppleDialog, { modelValue: registry.open.value, 'onUpdate:modelValue': value => { registry.open.value = value }, title: directories.value.length > 1 ? '页面目录' : active.value?.label ?? '页面目录', showFooter: false, width: '480px', class: 'apple-directory-dialog' }, { default: () => directoryContent }),
       ]

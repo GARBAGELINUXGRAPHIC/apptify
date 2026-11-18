@@ -32,7 +32,7 @@ export default defineHandbook({
       "name": "icon",
       "type": "Component",
       "default": "undefined",
-      "description": "Vue 图标组件，例如从 lucide-vue-next 导入的 Mail；不是图标名称字符串。"
+      "description": "Vue 图标组件，例如从 @tabler/icons-vue 导入的 IconMail。"
     },
     {
       "name": "iconOnly",

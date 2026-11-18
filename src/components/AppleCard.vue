@@ -47,11 +47,11 @@ const mode = computed(() => resolveMotion(props.motion, apple?.motion.value.mode
 }
 
 .focused-shadow {
-  box-shadow: 2px 4px 16px #00000029;
+  box-shadow: var(--apple-shadow-strong);
 }
 
 .normal-shadow:hover {
-  box-shadow: 2px 4px 16px #00000029;
+  box-shadow: var(--apple-shadow-strong);
 }
 
 .none:hover {

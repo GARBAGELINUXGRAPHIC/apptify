@@ -10,7 +10,8 @@ export interface BadRequestFrame {
   camera: { scale: number; x: number; y: number }
   headAngle: number
   paw: Point
-  elbow: Point
+  armControl1: Point
+  armControl2: Point
   pawAngle: number
   scratching: boolean
   blink: number
@@ -55,7 +56,7 @@ export function sampleBadRequest(seconds: number, reduced = false): BadRequestFr
   const distance = travelled(t), packetX = 70 + distance
   const zoom = smoother((t - reveal) / (idle - reveal))
   const z = 2.65
-  const camera = { scale: mix(z, 1, zoom), x: mix(600 - z * packetX, 0, zoom), y: mix(367 - z * 323, 0, zoom) }
+  const camera = { scale: mix(z, 1, zoom), x: mix(600 - z * packetX, 0, zoom), y: mix(367 - z * 339, 0, zoom) }
   const settled = Math.max(0, t - idle), p = settled % cycle
   let headAngle = p < .75 ? mix(-4, -9, smooth(p / .75))
     : p < 3.35 ? -9 : p < 4.25 ? mix(-9, 5, smooth((p - 3.35) / .9))
@@ -68,7 +69,13 @@ export function sampleBadRequest(seconds: number, reduced = false): BadRequestFr
   // Contact is calculated in the tilted head's coordinates, so the paw cannot float away.
   const contact = rotate({ x: 91 + rub * .18, y: -278 + rub }, headAngle, { x: 0, y: -190 })
   const paw = pointMix({ x: 76, y: -68 }, contact, lift)
-  const elbow = pointMix({ x: 100, y: -108 }, { x: 122, y: -211 }, lift)
+  // Lift around the cheek instead of folding the wrist back through the shoulder.
+  paw.x += 54 * Math.sin(Math.PI * lift)
+  const dx = paw.x - 60, dy = paw.y + 153
+  const bend = mix(44, 70, lift) * dy * dy / (dx * dx + dy * dy)
+  // Linear y handles prevent a cusp; a horizontal reach becomes a straight arm.
+  const armControl1 = { x: 60 + dx / 3 + bend, y: -153 + dy / 3 }
+  const armControl2 = { x: 60 + 2 * dx / 3 + bend, y: -153 + 2 * dy / 3 }
   const blinkAt = t % 4.9
   const blink = !reduced && blinkAt > 3.55 && blinkAt < 3.77
     ? 1 - .94 * Math.sin((blinkAt - 3.55) / .22 * Math.PI) ** 2 : 1
@@ -78,7 +85,7 @@ export function sampleBadRequest(seconds: number, reduced = false): BadRequestFr
     ? 1.8 * Math.sin(afterStop / .38 * Math.PI * 2) * (1 - afterStop / .38) ** 2 : 0
   return {
     phase: t < arrival ? 'follow' : t < reveal ? 'stopped' : t < idle ? 'reveal' : 'confused',
-    distance, packetX, packetAngle, camera, headAngle, paw, elbow,
+    distance, packetX, packetAngle, camera, headAngle, paw, armControl1, armControl2,
     pawAngle: lift * (headAngle - 12), scratching: lift > .98 && rubEnvelope > .1 && rub > 0,
     blink, tailAngle: reduced ? 0 : 3 * Math.sin(t * .95),
     questionY: reduced ? 0 : 3 * Math.sin(settled * 1.7),
@@ -100,16 +107,24 @@ export function createBadRequestStory(svg: SVGSVGElement, initiallyReduced = fal
   const leftEye = part('eye-left'), rightEye = part('eye-right'), tail = part('tail')
   const question = part('question'), marks = part('scratch-marks')
   const n = (v: number) => Math.round(v * 1000) / 1000
-  const transform = (el: SVGElement, value: string) => el.setAttribute('transform', value)
+  const attributes = new WeakMap<SVGElement, Map<string, string>>()
+  function attribute(el: SVGElement, name: string, value: string) {
+    let previous = attributes.get(el)
+    if (!previous) { previous = new Map(); attributes.set(el, previous) }
+    if (previous.get(name) === value) return
+    previous.set(name, value)
+    el.setAttribute(name, value)
+  }
+  const transform = (el: SVGElement, value: string) => attribute(el, 'transform', value)
   let elapsed = initiallyReduced ? BAD_REQUEST_TIMING.idle : 0
   let reduced = initiallyReduced, paused = false, active = true, visible = true, disposed = false
-  let raf = 0, lastTick: number | undefined, lastPaint = -Infinity
+  let raf = 0, lastTick: number | undefined
   let phase = ''
 
   function paint() {
     const f = sampleBadRequest(elapsed, reduced), c = f.camera
     transform(camera, `matrix(${n(c.scale)} 0 0 ${n(c.scale)} ${n(c.x)} ${n(c.y)})`)
-    transform(packet, `translate(${n(f.packetX)} 405)`)
+    transform(packet, `translate(${n(f.packetX)} 421)`)
     transform(pitch, `rotate(${n(f.packetAngle)} 0 0)`)
     transform(normal, `translate(${n(f.distance)} 0)`)
     transform(ribs, `translate(${n(f.distance % 24)} 0)`)
@@ -119,23 +134,23 @@ export function createBadRequestStory(svg: SVGSVGElement, initiallyReduced = fal
     transform(question, `translate(0 ${n(f.questionY)}) rotate(${n(f.questionAngle)} 3 12)`)
     transform(leftEye, `scale(1 ${n(f.blink)})`)
     transform(rightEye, `scale(1 ${n(f.blink)})`)
-    const e = f.elbow, p = f.paw
-    const d = `M60 -153 Q${n((60 + e.x) / 2 + 10)} ${n((-153 + e.y) / 2)} ${n(e.x)} ${n(e.y)} Q${n((e.x + p.x) / 2 + 7)} ${n((e.y + p.y) / 2)} ${n(p.x)} ${n(p.y)}`
-    outline.setAttribute('d', d); fill.setAttribute('d', d)
+    const a = f.armControl1, b = f.armControl2, p = f.paw
+    const d = `M60 -153 C${n(a.x)} ${n(a.y)} ${n(b.x)} ${n(b.y)} ${n(p.x)} ${n(p.y)}`
+    attribute(outline, 'd', d); attribute(fill, 'd', d)
     transform(paw, `translate(${n(p.x)} ${n(p.y)}) rotate(${n(f.pawAngle)})`)
     // Marks live in cat-local space, just like the arm.
     transform(marks, `translate(${n(p.x + 23)} ${n(p.y - 13)})`)
-    marks.setAttribute('visibility', f.scratching ? 'visible' : 'hidden')
+    attribute(marks, 'visibility', f.scratching ? 'visible' : 'hidden')
     if (phase !== f.phase) { phase = f.phase; svg.setAttribute('data-phase', phase) }
   }
   function running() { return !disposed && !paused && !reduced && active && visible && !doc.hidden }
-  function stop() { if (raf) win!.cancelAnimationFrame(raf); raf = 0; lastTick = undefined; lastPaint = -Infinity }
+  function stop() { if (raf) win!.cancelAnimationFrame(raf); raf = 0; lastTick = undefined }
   function tick(now: number) {
     raf = 0
     if (!running()) { lastTick = undefined; return }
     if (lastTick !== undefined) elapsed += Math.min(.1, Math.max(0, (now - lastTick) / 1000))
     lastTick = now
-    if (now - lastPaint >= 1000 / 30 - .5) { paint(); lastPaint = now }
+    paint()
     raf = win!.requestAnimationFrame(tick)
   }
   function sync() {

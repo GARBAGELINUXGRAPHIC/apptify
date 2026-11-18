@@ -1,5 +1,9 @@
 # Demo image sources
 
+- `clash-verge-before.png`, `clash-verge-after.png`: screenshots supplied by the project owner on 2026-11-18 for the interactive before/after comparison.
+
+- `clash-verge.png`: application icon from GARBAGELINUXGRAPHIC/clash-verge-rev-fork, `src-tauri/icons/128x128@2x.png`, used for the project showcase.
+
 These images are preview fixtures, not part of the npm library output.
 
 - `airpods-max-orange.jpg`: Apple official store CDN, https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/airpods-max-select-202409-orange?wid=800&hei=800&fmt=jpeg&qlt=85 . Product imagery belongs to Apple; replace with your own licensed assets for production distribution. This project is not affiliated with Apple.

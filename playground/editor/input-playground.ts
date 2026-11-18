@@ -1,11 +1,11 @@
-import { icons } from 'lucide-vue-next'
+import iconSlugs from '@tabler/icons-vue/icons-list'
 import exampleSource from './AppleInputExample.vue?raw'
 
 export function createInputConfig() {
   return {
     type: 'text', label: '姓名', placeholder: '怎么称呼你', hint: '用于在应用中显示你的名称。', error: '',
     clearable: true, disabled: false, loading: false, required: false,
-    prefixMode: 'none', prefix: '', prefixIcon: 'Mail', suffixMode: 'none', suffix: '', suffixIcon: 'Search', motion: 'inherit' as 'inherit' | 'auto' | 'full' | 'reduced' | 'none',
+    prefixMode: 'none', prefix: '', prefixIcon: 'mail', suffixMode: 'none', suffix: '', suffixIcon: 'search', motion: 'inherit' as 'inherit' | 'auto' | 'full' | 'reduced' | 'none',
     name: 'name', ariaLabel: '', maxlength: '', autocomplete: 'off', min: '', max: '', step: '',
   }
 }
@@ -23,12 +23,16 @@ export function buildInputProps(config: InputConfig) {
     step: config.type === 'number' && Number(config.step) > 0 ? config.step : undefined,
   }
 }
-const iconNames = new Map(Object.keys(icons).map(name => [name.toLowerCase(), name]))
+const iconNames = new Map(iconSlugs.map(slug => {
+  const name = 'Icon' + slug.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('')
+  return [name.toLowerCase(), name] as const
+}))
 export function resolveIconName(code: string): string | undefined {
-  return iconNames.get(code.trim().replace(/-/g, '').toLowerCase())
+  const name = code.trim().replace(/-/g, '').toLowerCase()
+  return iconNames.get(name) ?? iconNames.get('icon' + name)
 }
 export function iconCodeError(code: string): string {
-  return resolveIconName(code) ? '' : '请输入有效图标代号，例如 Mail、Search、ArrowRight。'
+  return resolveIconName(code) ? '' : '请输入有效图标代号，例如 mail、search、arrow-right。'
 }
 // This Vue source is both the editable file and the compiled preview.
 const literal = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029')
@@ -49,8 +53,8 @@ export function generateInputCode(config: InputConfig, value: string | number) {
   const prefix = affix('prefix', config.prefixMode, config.prefix, prefixIcon)
   const suffix = affix('suffix', config.suffixMode, config.suffix, suffixIcon)
   return exampleSource
-    .replace("import { Mail } from 'lucide-vue-next'", () => usedIcons.length ? `import { ${usedIcons.join(', ')} } from 'lucide-vue-next'` : '')
-    .replace(/, Mail(?= })/, () => usedIcons.length ? ', ' + usedIcons.join(', ') : '')
+    .replace("import { IconMail } from '@tabler/icons-vue'", () => usedIcons.length ? `import { ${usedIcons.join(', ')} } from '@tabler/icons-vue'` : '')
+    .replace(/, IconMail(?= })/, () => usedIcons.length ? ', ' + usedIcons.join(', ') : '')
     .replace("value: 'Apptify'", () => `value: ${literal(value)}`)
     .replace(/(v-model="value"\n)[\s\S]*?(\n\s+@update:model-value)/, (_, start, end) => `${start}${attrs}${end}`)
     .replace('<!-- prefix -->', () => prefix)

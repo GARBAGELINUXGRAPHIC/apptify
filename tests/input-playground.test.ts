@@ -22,17 +22,17 @@ describe('input playground copyable code', () => {
     expect(code).not.toContain('<script setup>')
   })
   it('resolves icon codes, registers both icons and excludes invalid input from source', () => {
-    const config = Object.assign(createInputConfig(), { prefixMode: 'icon', prefixIcon: 'mail', suffixMode: 'icon', suffixIcon: 'arrow-right' })
+    const config = Object.assign(createInputConfig(), { prefixMode: 'icon', prefixIcon: 'IconMail', suffixMode: 'icon', suffixIcon: 'arrow-right' })
     const code = generateInputCode(config, '')
-    expect(code).toContain("import { Mail, ArrowRight } from 'lucide-vue-next'")
-    expect(code).toContain('<template #prefix><Mail')
-    expect(code).toContain('<template #suffix><ArrowRight')
+    expect(code).toContain("import { IconMail, IconArrowRight } from '@tabler/icons-vue'")
+    expect(code).toContain('<template #prefix><IconMail')
+    expect(code).toContain('<template #suffix><IconArrowRight')
     expect(parse(code).errors).toEqual([])
     expect(resolveIconName('<script>')).toBeUndefined()
     config.suffixIcon = '<script>'
     expect(generateInputCode(config, '')).not.toContain('<template #suffix>')
     config.prefixMode = 'none'
-    expect(generateInputCode(config, '')).not.toContain("from 'lucide-vue-next'")
+    expect(generateInputCode(config, '')).not.toContain("from '@tabler/icons-vue'")
   })
   it('omits inapplicable native constraints and supplies an accessible name without a label', () => {
     const config = Object.assign(createInputConfig(), { label: '', maxlength: '-1', min: '0', max: '10', step: '2' })

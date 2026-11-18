@@ -1,9 +1,9 @@
 <script>
 import { AppleInput, AppleTextarea, AppleLink } from 'apptify'
-import { Mail } from 'lucide-vue-next'
+import { IconMail } from '@tabler/icons-vue'
 
 export default {
-  components: { AppleInput, AppleTextarea, AppleLink, Mail },
+  components: { AppleInput, AppleTextarea, AppleLink, IconMail },
   data() {
     return { value: 'Apptify', events: [], eventId: 0 }
   },

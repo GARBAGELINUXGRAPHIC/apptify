@@ -11,6 +11,7 @@ export const componentMetadata: Record<string, ComponentMetadata> = {
   AppleGrid: {"label":"网格布局","group":"基础","description":"让列数随内容空间变化。"},
   AppleCard: {"label":"卡片","group":"基础","description":"来自 Apple Store 的产品表达。"},
   AppleImage: {"label":"图片与预览","group":"基础","description":"让值得细看的内容更近一步。"},
+  AppleImageCompare: { label: '图片对比', group: '基础', description: '拖动分隔线，对照前后的变化。' },
   AppleAvatar: {"label":"头像","group":"基础","description":"为每一位用户保留位置。"},
   AppleAvatarGroup: {"label":"头像组","group":"基础","description":"一起参与的人，一眼可见。"},
   AppleBadge: {"label":"徽标","group":"基础","description":"不打扰，也不遗漏。"},

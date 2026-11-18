@@ -19,7 +19,7 @@ export async function prepareInputSource() {
   const script = [
     "import { defineComponent, h, useId, type PropType, type Slots, type VNodeChild } from 'vue'",
     "import { ripple } from 'apptify'",
-    "import { Eye, EyeOff, LoaderCircle, X } from 'lucide-vue-next'",
+    "import { IconEye, IconEyeOff, IconLoader2, IconX } from '@tabler/icons-vue'",
     ...names.map(name => declarations.get(name)),
     'export default AppleInput',
   ].join('\n\n')

@@ -86,12 +86,12 @@ export function generateComponentCode(doc: ComponentDocument, config: Playground
   return `<script>
 import { ${names.join(', ')} } from 'apptify'
 import { markRaw } from 'vue'
-import { Mail, Star, Check, Search, ArrowRight } from 'lucide-vue-next'
+import { IconMail, IconStar, IconCheck, IconSearch, IconArrowRight } from '@tabler/icons-vue'
 
-;[Mail, Star, Check, Search, ArrowRight].forEach(markRaw)
+;[IconMail, IconStar, IconCheck, IconSearch, IconArrowRight].forEach(markRaw)
 
 export default {
-  components: { ${names.join(', ')}, Mail, Star, Check, Search, ArrowRight },
+  components: { ${names.join(', ')}, IconMail, IconStar, IconCheck, IconSearch, IconArrowRight },
   data() {
     return {
       props: {

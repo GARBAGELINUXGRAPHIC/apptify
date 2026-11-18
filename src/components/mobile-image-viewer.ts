@@ -1,6 +1,6 @@
 import { overlayZIndex, imageReturnZIndex } from '../core/layers'
 import { Teleport, defineComponent, h, markRaw, mergeProps, nextTick, type CSSProperties, type PropType } from 'vue'
-import { ChevronLeft, ChevronRight, CircleAlert, LoaderCircle, RotateCcw, RotateCw, X, ZoomIn, ZoomOut } from 'lucide-vue-next'
+import { IconChevronLeft, IconChevronRight, IconAlertCircle, IconLoader2, IconRotate, IconRotateClockwise, IconX, IconZoomIn, IconZoomOut } from '@tabler/icons-vue'
 import { isVerticalScreen } from '../core/device'
 import { MotionDriver } from '../core/motion-driver'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
@@ -657,20 +657,20 @@ export function createMobileImageViewer(registerLayer: (layer: PhotoLayer) => ()
         })),
         h('div', { ref: 'chrome', class: 'apple-viewer-chrome' }, [
           h('span', { class: 'apple-viewer-count', style: { opacity: this.chrome }, 'aria-live': 'polite', 'aria-atomic': 'true' }, `${this.pictures.length ? this.current + 1 : 0} / ${this.pictures.length}`),
-          !this.isVerticalScreen ? h('button', { class: 'apple-overlay-icon apple-viewer-close', style: { opacity: this.chrome }, type: 'button', 'aria-label': '关闭图片预览', onClick: this.close }, [h(X, { size: 22, 'aria-hidden': true })]) : null,
-          !this.isVerticalScreen && this.pictures.length > 1 ? h('button', { class: 'apple-overlay-icon apple-viewer-prev', style: { opacity: this.chrome }, type: 'button', 'aria-label': '上一张', disabled: !this.loop && this.current === 0, onClick: () => this.select(this.current - 1) }, [h(ChevronLeft, { size: 22, 'aria-hidden': true })]) : null,
-          !this.isVerticalScreen && this.pictures.length > 1 ? h('button', { class: 'apple-overlay-icon apple-viewer-next', style: { opacity: this.chrome }, type: 'button', 'aria-label': '下一张', disabled: !this.loop && this.current === this.pictures.length - 1, onClick: () => this.select(this.current + 1) }, [h(ChevronRight, { size: 22, 'aria-hidden': true })]) : null,
+          !this.isVerticalScreen ? h('button', { class: 'apple-overlay-icon apple-viewer-close', style: { opacity: this.chrome }, type: 'button', 'aria-label': '关闭图片预览', onClick: this.close }, [h(IconX, { size: 22, 'aria-hidden': true })]) : null,
+          !this.isVerticalScreen && this.pictures.length > 1 ? h('button', { class: 'apple-overlay-icon apple-viewer-prev', style: { opacity: this.chrome }, type: 'button', 'aria-label': '上一张', disabled: !this.loop && this.current === 0, onClick: () => this.select(this.current - 1) }, [h(IconChevronLeft, { size: 22, 'aria-hidden': true })]) : null,
+          !this.isVerticalScreen && this.pictures.length > 1 ? h('button', { class: 'apple-overlay-icon apple-viewer-next', style: { opacity: this.chrome }, type: 'button', 'aria-label': '下一张', disabled: !this.loop && this.current === this.pictures.length - 1, onClick: () => this.select(this.current + 1) }, [h(IconChevronRight, { size: 22, 'aria-hidden': true })]) : null,
           h('div', { class: 'apple-viewer-caption apple-viewer-toolbar', style: { opacity: this.chrome } }, [
-            h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '向左旋转90度', disabled: !this.loaded, onClick: () => this.rotate(-1) }, [h(RotateCcw, { size: 22, 'aria-hidden': true })]),
-            !this.isVerticalScreen ? h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '缩小', disabled: !this.loaded || this.scale <= 1, onClick: () => this.stepZoom(-1) }, [h(ZoomOut, { size: 22, 'aria-hidden': true })]) : null,
+            h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '向左旋转90度', disabled: !this.loaded, onClick: () => this.rotate(-1) }, [h(IconRotate, { size: 22, 'aria-hidden': true })]),
+            !this.isVerticalScreen ? h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '缩小', disabled: !this.loaded || this.scale <= 1, onClick: () => this.stepZoom(-1) }, [h(IconZoomOut, { size: 22, 'aria-hidden': true })]) : null,
             this.pictures[this.current]?.title ? h('span', { class: 'apple-viewer-title' }, this.pictures[this.current].title) : null,
-            !this.isVerticalScreen ? h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '放大', disabled: !this.loaded || this.scale >= 8, onClick: () => this.stepZoom(1) }, [h(ZoomIn, { size: 22, 'aria-hidden': true })]) : null,
-            h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '向右旋转90度', disabled: !this.loaded, onClick: () => this.rotate(1) }, [h(RotateCw, { size: 22, 'aria-hidden': true })]),
+            !this.isVerticalScreen ? h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '放大', disabled: !this.loaded || this.scale >= 8, onClick: () => this.stepZoom(1) }, [h(IconZoomIn, { size: 22, 'aria-hidden': true })]) : null,
+            h('button', { class: 'apple-overlay-icon', type: 'button', 'aria-label': '向右旋转90度', disabled: !this.loaded, onClick: () => this.rotate(1) }, [h(IconRotateClockwise, { size: 22, 'aria-hidden': true })]),
           ]),
         ]),
         !this.loaded && this.phase !== 'closing' ? h('div', { class: 'apple-viewer-status', role: 'status' }, !this.pictures.length ? '暂无图片' : this.failures[this.current]
-          ? [h(CircleAlert, { size: 28 }), h('p', '图片加载失败')]
-          : [h(LoaderCircle, { class: 'apple-overlay-spin', size: 32, 'aria-label': '图片加载中' })]) : null,
+          ? [h(IconAlertCircle, { size: 28 }), h('p', '图片加载失败')]
+          : [h(IconLoader2, { class: 'apple-overlay-spin', size: 32, 'aria-label': '图片加载中' })]) : null,
       ])
       const context = this.apple as unknown as AppleContext | undefined
       return context?.portalTarget.value ? h(Teleport, { to: context.portalTarget.value }, viewer) : viewer

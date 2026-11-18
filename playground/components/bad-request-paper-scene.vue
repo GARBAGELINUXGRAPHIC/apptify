@@ -97,12 +97,12 @@
       <g fill="#d1d5b9"><circle cx="85" cy="469" r="3"/><circle cx="288" cy="469" r="3"/><circle cx="490" cy="469" r="3"/><circle cx="657" cy="469" r="3"/></g>
       <g transform="translate(686 430)"><circle r="21" fill="#b4bca1"/><circle r="14" fill="#7e917c"/><g data-part="roller"><path d="M-10 0H10M0-10V10" stroke="#d4d8bc" stroke-width="3"/><circle r="4" fill="#586f5d"/></g></g>
       <g data-part="normal-parcels" transform="translate(522 0)" :filter="`url(#${uid}-soft)`">
-        <use :href="`#${uid}-box`" transform="translate(-122 405) scale(1.04)"/>
-        <use :href="`#${uid}-box`" transform="translate(-295 405) scale(1.04)"/>
-        <use :href="`#${uid}-box`" transform="translate(-465 405) scale(1.04)"/>
+        <use :href="`#${uid}-box`" transform="translate(-122 421) scale(1.04)"/>
+        <use :href="`#${uid}-box`" transform="translate(-295 421) scale(1.04)"/>
+        <use :href="`#${uid}-box`" transform="translate(-465 421) scale(1.04)"/>
       </g>
       <!-- One continuous silhouette: deliberately unlike all the regular cartons. -->
-      <g data-part="parcel" transform="translate(592 405)">
+      <g data-part="parcel" transform="translate(592 421)">
         <ellipse cy="1" rx="82" ry="5" fill="#485f57" fill-opacity=".27"/>
         <g data-part="parcel-pitch" :filter="`url(#${uid}-soft)`">
           <path d="m-69-111 50-31 68 8 36 31-10 57 8 31L22 1-56-5-86-54Z" fill="#be695b"/>
@@ -156,7 +156,8 @@
         </g>
         <path d="M-62-17Q-88-10-90 2-91 12-74 16L-37 15Q-21 12-25 0L-34-14Z" fill="#d8aa7b"/>
         <path d="M35-15Q18-2 25 10L43 17 79 16Q98 13 94 4 85-9 66-15Z" fill="#d2a172"/>
-        <path d="m-75 7 0 5m13-6 0 6m13-5 0 5m50-4 0 5m13-6 0 6m13-5 0 5" fill="none" stroke="#a77652" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M-75 7v5M-62 6v6M-49 7v5" fill="none" stroke="#a77652" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M48 8v5M61 7v6M74 8v5" fill="none" stroke="#a77652" stroke-width="1.6" stroke-linecap="round"/>
         <g data-part="head" :filter="`url(#${uid}-soft)`">
           <path d="M-77-266-87-333Q-87-346-77-340L-30-301 36-301 78-341Q87-348 88-333L83-263Z" fill="#ce9b6e"/>
           <path d="m-77-328 34 31-27 19Z" fill="#d7a394"/>
@@ -177,9 +178,9 @@
           <g fill="#ae9575"><circle cx="-27" cy="-210" r="1.3"/><circle cx="-19" cy="-206" r="1.1"/><circle cx="24" cy="-211" r="1.3"/><circle cx="17" cy="-207" r="1.1"/></g>
           <path d="m-51-212-48-7m49 14-52 2m53 4-42 13m139-24 48-9m-48 15 52 0m-51 6 42 12" fill="none" stroke="#f6e6c8" stroke-width="1.7" stroke-linecap="round"/>
         </g>
-        <!-- The entire arm is redrawn to its paw; it never detaches from the shoulder. -->
-        <path data-part="arm-outline" d="M60-153Q93-137 92-107T76-68" fill="none" stroke="#b9855c" stroke-width="26" stroke-linecap="round"/>
-        <path data-part="arm-fill" d="M60-153Q93-137 92-107T76-68" fill="none" stroke="#dcae7d" stroke-width="21" stroke-linecap="round"/>
+        <!-- One smooth curve keeps the arm attached without a reversing elbow join. -->
+        <path data-part="arm-outline" d="M60-153C107.828-124.667 113.161-96.333 76-68" fill="none" stroke="#b9855c" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+        <path data-part="arm-fill" d="M60-153C107.828-124.667 113.161-96.333 76-68" fill="none" stroke="#dcae7d" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/>
         <g data-part="paw" transform="translate(76 -68)">
           <path d="M-13-10Q-15-19-7-20L1-18Q8-22 13-16L16-3Q17 12 4 15-10 16-14 7Z" fill="#dfb484"/>
           <path d="m-9-9 0 8m7-11 0 8m7-9 0 7" fill="none" stroke="#ad805b" stroke-width="1.5" stroke-linecap="round"/>

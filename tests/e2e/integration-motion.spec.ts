@@ -1,14 +1,14 @@
-import { directoryItem, waitForPageLayout } from './component-navigation'
+import { activeCard, directoryItem, openComponent, waitForPageLayout } from './component-navigation'
 import { expect, test } from '@playwright/test'
 
-test('home search only animates container height and rapidly reverses without moving rows', async ({ page }) => {
-  await page.goto('/')
+test('catalog search only animates container height and rapidly reverses without moving rows', async ({ page }) => {
+  await openComponent(page, 'apple-search')
   await expect.poll(() => page.locator('main').evaluate(el => el.getAnimations().length)).toBe(0)
-  const search = page.getByRole('searchbox', { name: '搜索设置', exact: true })
-  const list = page.locator('.home-page .apple-list-size')
+  const search = activeCard(page).getByRole('searchbox', { name: '搜索设置', exact: true })
+  const list = activeCard(page).locator('.apple-list-size')
   const sample = await search.evaluate(async element => {
     const input = element as HTMLInputElement
-    const outer = document.querySelector<HTMLElement>('.home-page .apple-list-size')!
+    const outer = input.closest('.component-demo')!.querySelector<HTMLElement>('.apple-list-size')!
     const before = outer.getBoundingClientRect().height
     input.value = '通知'; input.dispatchEvent(new Event('input', { bubbles:true }))
     await new Promise(resolve => setTimeout(resolve, 60))

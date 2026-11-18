@@ -5,8 +5,8 @@
       <apple-tooltip text="secondary"><apple-button variant="secondary" @click="notify('已选择次要操作')">稍后再说</apple-button></apple-tooltip>
       <apple-tooltip text="outline"><apple-button variant="outline" @click="notify('已加入收藏')">加入收藏</apple-button></apple-tooltip>
       <apple-tooltip text="borderless"><apple-button variant="borderless" @click="notify('已选择无边框操作')">无边框</apple-button></apple-tooltip>
-      <apple-tooltip text='AppleLink · as="button"'><apple-link as="button" :icon="icons.ArrowUpRight" @click="notify('正在查看详情')">了解更多</apple-link></apple-tooltip>
-      <apple-tooltip text="primary · iconOnly"><apple-button :icon="icons.Plus" icon-only label="添加" @click="notify('已添加')" /></apple-tooltip>
+      <apple-tooltip text='AppleLink · as="button"'><apple-link as="button" :icon="icons.IconArrowUpRight" @click="notify('正在查看详情')">了解更多</apple-link></apple-tooltip>
+      <apple-tooltip text="primary · iconOnly"><apple-button :icon="icons.IconPlus" icon-only label="添加" @click="notify('已添加')" /></apple-tooltip>
       <apple-tooltip text="primary · loading"><apple-button loading>处理中</apple-button></apple-tooltip>
       <apple-tooltip text="primary · disabled"><apple-button disabled>暂不可用</apple-button></apple-tooltip>
     </apple-stack>
@@ -51,18 +51,14 @@
     </apple-stack>
     <apple-card v-else-if="name === 'AppleCard'" class="demo-product" title="AirPods Max" subtitle="每个音符，都更动听。" eyebrow="声音，出类拔萃。">
       <apple-image :gallery="{ src: imageUrl('airpods-max-orange.jpg'), alt: '橙色 AirPods Max 耳机' }" aspect-ratio="1" fit="contain" />
-      <template #actions><apple-button @click="notify('已加入购物袋')">加入购物袋</apple-button><apple-link as="button" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></template>
+      <template #actions><apple-button @click="notify('已加入购物袋')">加入购物袋</apple-button><apple-link as="button" :icon="icons.IconHeart" icon-only label="收藏" @click="notify('已收藏')" /></template>
     </apple-card>
-    <apple-stack v-else-if="name === 'AppleImage'" class="demo-image">
-      <apple-segmented-control v-model="imageLayout" :items="[{label:'省空间',value:'compact'},{label:'平铺',value:'tiled'},{label:'换行平铺',value:'tiled-wrap'}]" label="图片组布局" />
-      <apple-switch v-model="imageCarousel" label="轮播模式" />
-      <apple-switch v-model="imageSquare" label="强制 1:1（裁剪）" />
-      <apple-image :carousel="imageCarousel" :gallery="imageCarousel ? slides : galleryImages" :gallery-layout="imageLayout" :gallery-shape="imageSquare ? 'square' : 'natural'" />
-    </apple-stack>
+    <ImageDemo v-else-if="name === 'AppleImage'" />
+    <ImageCompareDemo v-else-if="name === 'AppleImageCompare'" />
     <apple-stack v-else-if="name === 'AppleAvatar'"><apple-slider v-model="avatarSize" label="头像尺寸" :min="24" :max="72" :step="8" /><apple-stack direction="row" align="center"><apple-avatar name="林初" :size="avatarSize" /><apple-avatar name="Alex" :size="avatarSize" /><apple-avatar name="Taylor" :size="avatarSize" square /></apple-stack></apple-stack>
     <apple-stack v-else-if="name === 'AppleAvatarGroup'"><apple-stepper v-model="avatarMax" label="显示人数" :min="1" :max="5" /><apple-avatar-group :items="people" :max="avatarMax" :size="44" label="设计团队" /></apple-stack>
-    <apple-stack v-else-if="name === 'AppleBadge'" direction="row" align="center"><apple-badge :value="unread"><apple-link variant="secondary" :icon="icons.Bell" @click="unread++">新消息</apple-link></apple-badge><apple-link as="button" :disabled="!unread" @click="unread = 0">全部已读</apple-link></apple-stack>
-    <apple-stack v-else-if="name === 'AppleTag'" class="demo-tag-row" direction="row" align="center" :gap="10"><apple-tag>默认标签</apple-tag><apple-tag tone="success">已完成</apple-tag><apple-tag tone="info">进行中</apple-tag><apple-tag tone="warning">待确认</apple-tag><apple-tag v-if="tag" label="设计系统" closable @close="tag = false">设计系统</apple-tag><apple-link as="button" v-else :icon="icons.Plus" @click="tag = true">添加标签</apple-link></apple-stack>
+    <apple-stack v-else-if="name === 'AppleBadge'" direction="row" align="center"><apple-badge :value="unread"><apple-link variant="secondary" :icon="icons.IconBell" @click="unread++">新消息</apple-link></apple-badge><apple-link as="button" :disabled="!unread" @click="unread = 0">全部已读</apple-link></apple-stack>
+    <apple-stack v-else-if="name === 'AppleTag'" class="demo-tag-row" direction="row" align="center" :gap="10"><apple-tag>默认标签</apple-tag><apple-tag tone="success">已完成</apple-tag><apple-tag tone="info">进行中</apple-tag><apple-tag tone="warning">待确认</apple-tag><apple-tag v-if="tag" label="设计系统" closable @close="tag = false">设计系统</apple-tag><apple-link as="button" v-else :icon="icons.IconPlus" @click="tag = true">添加标签</apple-link></apple-stack>
     <apple-stack v-else-if="name === 'AppleDivider'"><apple-switch v-model="dividerVertical" label="纵向分隔" /><apple-stack :direction="dividerVertical ? 'row' : 'column'" :gap="0" align="center"><span>配送到家</span><apple-divider :vertical="dividerVertical" :label="dividerVertical ? undefined : '更多选择'" /><span>到店取货</span></apple-stack></apple-stack>
     <apple-input v-else-if="name === 'AppleInput'" v-model="text" label="姓名" placeholder="怎么称呼你" clearable />
     <apple-textarea v-else-if="name === 'AppleTextarea'" v-model="bio" label="个人简介" placeholder="写下你的想法" :maxlength="160" counter />
@@ -88,7 +84,7 @@
     <apple-form-field v-else-if="name === 'AppleFormField'" label="个人网站" :error="website && !website.startsWith('https://') ? '请输入以 https:// 开头的网址' : ''" hint="你的公开主页">
       <template #default="field"><input v-bind="field" v-model="website" class="apple-control" type="url" placeholder="https://example.com" /></template>
     </apple-form-field>
-    <apple-navibar v-else-if="name === 'AppleNavibar'" v-model="tab" brand="Apptify" :fixed="false" :items="tabs" label="示例导航"><template #actions><apple-link as="button" :icon="icons.Bell" icon-only label="通知" @click="notify('暂无新通知')" /></template></apple-navibar>
+    <apple-navibar v-else-if="name === 'AppleNavibar'" v-model="tab" brand="Apptify" :fixed="false" :items="tabs" label="示例导航"><template #actions><apple-link as="button" :icon="icons.IconBell" icon-only label="通知" @click="notify('暂无新通知')" /></template></apple-navibar>
     <apple-aside v-else-if="name === 'AppleAside'" :hide-on-preview="false" aria-label="示例侧栏"><apple-list v-model="setting" :items="settings" selectable /></apple-aside>
     <apple-tabs v-else-if="name === 'AppleTabs'" v-model="tab" :items="tabs"><template #default="{ value }"><p class="demo-copy">{{ value === 'overview' ? '这里是产品概览。' : value === 'spec' ? '这里是技术规格。' : '你的服务与支持。' }}</p></template></apple-tabs>
     <apple-tab-bar v-else-if="name === 'AppleTabBar'" v-model="tab" :items="tabs"><template #default="{ value }"><p class="demo-copy">{{ value === 'overview' ? '这里是产品概览。' : value === 'spec' ? '这里是技术规格。' : '你的服务与支持。' }}</p></template></apple-tab-bar>
@@ -110,8 +106,8 @@
     <apple-stack v-else-if="name === 'AppleSpinner'"><apple-switch v-model="demoLoading" label="同步内容" /><apple-spinner v-if="demoLoading" label="正在同步">正在同步</apple-spinner><apple-tag v-else tone="success">已同步</apple-tag></apple-stack>
     <apple-stack v-else-if="name === 'AppleSkeleton'"><apple-select v-model="skeletonVariant" :items="skeletonVariants" label="骨架类型" /><apple-switch v-model="demoLoading" label="加载内容" /><apple-skeleton v-if="demoLoading" :variant="skeletonVariant" :lines="3" avatar /><apple-list v-else :items="settings" /></apple-stack>
     <apple-empty v-else-if="name === 'AppleEmpty'" title="还没有收藏" description="喜欢的内容，会出现在这里。"><apple-button variant="secondary" @click="notify('开始浏览')">开始探索</apple-button></apple-empty>
-    <apple-popover v-else-if="name === 'ApplePopover'" label="更多选项"><template #activator><apple-button variant="secondary" :icon="icons.MoreHorizontal">更多选项</apple-button></template><p>已同步到 iCloud</p><apple-switch v-model="checked" label="自动同步" /></apple-popover>
-    <apple-tooltip v-else-if="name === 'AppleTooltip'" text="添加到收藏"><apple-button variant="secondary" :icon="icons.Heart" icon-only label="收藏" @click="notify('已收藏')" /></apple-tooltip>
+    <apple-popover v-else-if="name === 'ApplePopover'" label="更多选项"><template #activator><apple-button variant="secondary" :icon="icons.IconDots">更多选项</apple-button></template><p>已同步到 iCloud</p><apple-switch v-model="checked" label="自动同步" /></apple-popover>
+    <apple-tooltip v-else-if="name === 'AppleTooltip'" text="添加到收藏"><apple-button variant="secondary" :icon="icons.IconHeart" icon-only label="收藏" @click="notify('已收藏')" /></apple-tooltip>
     <apple-menu v-else-if="name === 'AppleMenu'" :items="actions" label="更多操作" @select="notify('操作已完成')" />
     <template v-else-if="name === 'AppleActionSheet'">
       <apple-button @click="actionSheet = true">选择操作</apple-button>
@@ -126,10 +122,10 @@
       </apple-action-sheet>
     </template>
     <apple-pull-refresh v-else-if="name === 'ApplePullRefresh'" @refresh="refresh"><apple-list :items="[{label:'最新内容',value:'latest',description:refreshText},{label:'最近更新',value:'recent',description:'所有内容已同步'}]" /></apple-pull-refresh>
-    <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.ArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" :fixed="false" /></template>
+    <template v-else-if="name === 'AppleBackTop'"><apple-button :icon="icons.IconArrowUp" variant="secondary" @click="toTop">回到顶部</apple-button><apple-back-top :threshold="0" :fixed="false" /></template>
     <template v-else-if="name === 'AppleFloatingGroup'"><apple-button variant="secondary" @click="notify('快捷操作已就绪')">快捷操作</apple-button><apple-card class="demo-floating-preview"><apple-provider><apple-floating-group :threshold="0" /></apple-provider></apple-card></template>
-    <apple-card v-else-if="name === 'AppleSpeedDial'" class="demo-floating-preview"><apple-provider><apple-floating-group :back-top="false" label="全局快捷操作预览"><apple-back-top :threshold="0" :fixed="false" /><apple-button :icon="icons.Plus" icon-only label="新增" @click="notify('已新增')" /><apple-button :icon="icons.Menu" icon-only label="目录" :disabled="!$apple.speedDial.mobile.value" @click="$apple.speedDial.open.value = true" /></apple-floating-group></apple-provider></apple-card>
-    <apple-button v-else-if="name === 'AppleSpeedDialItem'" :icon="icons.Plus" icon-only label="新增" @click="notify('已新增')" />
+    <apple-card v-else-if="name === 'AppleSpeedDial'" class="demo-floating-preview"><apple-provider><apple-floating-group :back-top="false" label="全局快捷操作预览"><apple-back-top :threshold="0" :fixed="false" /><apple-button :icon="icons.IconPlus" icon-only label="新增" @click="notify('已新增')" /><apple-button :icon="icons.IconMenu2" icon-only label="目录" :disabled="!$apple.speedDial.mobile.value" @click="$apple.speedDial.open.value = true" /></apple-floating-group></apple-provider></apple-card>
+    <apple-button v-else-if="name === 'AppleSpeedDialItem'" :icon="icons.IconPlus" icon-only label="新增" @click="notify('已新增')" />
     <apple-stack v-else-if="name === 'AppleAutoSize'"><apple-switch v-model="checked" label="显示详情" /><apple-auto-size><apple-list :items="checked ? settings : settings.slice(0,1)" selectable /></apple-auto-size></apple-stack>
     <apple-stack v-else-if="name === 'AppleTransition'">
       <apple-segmented-control v-model="period" :items="periods" label="统计周期" />
@@ -145,32 +141,21 @@
 
 <script lang="ts">
 import { imageUrl } from './images'
+import ImageDemo from './components/ImageDemo.vue'
+import ImageCompareDemo from './components/ImageCompareDemo.vue'
 import { defineComponent, h, markRaw } from 'vue'
-import { Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Share2, Trash2, Menu } from 'lucide-vue-next'
+import { IconPlus, IconHeart, IconBell, IconArrowUpRight, IconArrowUp, IconDots, IconZoomIn, IconShare, IconTrash, IconMenu2 } from '@tabler/icons-vue'
 import { AppleLink, resolveMotion, scrollToWithMotion, type MotionScroll } from '../src'
 export default defineComponent({
   name: 'ComponentDemo', props: { name: { type: String, required: true } }, emits: ['navigate'],
+  components: { ImageDemo, ImageCompareDemo },
   data() { return {
-    icons: markRaw({ Plus, Heart, Bell, ArrowUpRight, ArrowUp, MoreHorizontal, ZoomIn, Menu }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
-    searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true, imageLayout: 'compact' as 'compact' | 'tiled' | 'tiled-wrap', imageSquare: false, imageCarousel: false,
+    icons: markRaw({ IconPlus, IconHeart, IconBell, IconArrowUpRight, IconArrowUp, IconDots, IconZoomIn, IconMenu2 }), text: '', bio: '', email: '', city: 'beijing', device: null, checked: true, delivery: 'express', volume: 68, quantity: 1, period: 'month', date: '', time: '10:30', color: '#0071e3', files: [], otp: '', region: [], rating: 4, tab: 'overview', page: 1, step: 1, tree: '', drawer: false, sheet: false, actionSheet: false, tag: true, refreshText: '今天 09:41', itemsCount: 3,
+    searchText: '', setting: 'profile', website: '', previewTheme: 'dark', stackDirection: 'row' as 'row' | 'column', containerWidth: 480, gridMin: 160, avatarSize: 48, avatarMax: 3, unread: 8, dividerVertical: false, delivered: false, alertVisible: true, demoLoading: true,
     virtualTable: false, transitionBackward: false,
     timelineDirection:'vertical' as 'vertical'|'horizontal', skeletonVariant:'text' as 'text'|'avatar'|'card'|'list'|'table'|'image', skeletonVariants:[{label:'文本',value:'text'},{label:'头像',value:'avatar'},{label:'卡片',value:'card'},{label:'列表',value:'list'},{label:'表格',value:'table'},{label:'图片',value:'image'}],
     dateFormat:'YYYY/MM/DD HH:mm', dateFormats:[{label:'年 / 月',value:'YYYY/MM'},{label:'年 / 月 / 日',value:'YYYY/MM/DD'},{label:'日期与时分',value:'YYYY/MM/DD HH:mm'},{label:'日期与时分秒',value:'YYYY/MM/DD HH:mm:ss'},{label:'时分',value:'HH:mm'},{label:'时分秒',value:'HH:mm:ss'}],
     previewThemes: [{label:'浅色',value:'light'},{label:'深色',value:'dark'},{label:'石墨',value:'graphite'},{label:'玫瑰',value:'rose'}], layoutItems: ['概览', '设计', '支持'],
-    galleryImages: [
-      { src: imageUrl('lake.jpg'), alt: '山间湖泊与小屋' },
-      { src: imageUrl('airpods-max-orange.jpg'), alt: '橙色 AirPods Max 耳机' },
-      { src: imageUrl('city.jpg'), alt: '城市天际线' },
-      { src: imageUrl('mountains.jpg'), alt: '群山与山峰' },
-      { src: imageUrl('forest.jpg'), alt: '阳光下的森林' },
-      { src: imageUrl('architecture.jpg'), alt: '建筑细节' },
-      { src: imageUrl('coast.jpg'), alt: '海岸风景' },
-      { src: imageUrl('food.jpg'), alt: '餐桌上的美食' },
-      { src: imageUrl('desert.jpg'), alt: '沙漠沙丘' },
-      { src: imageUrl('waterfall.jpg'), alt: '山间瀑布' },
-      { src: imageUrl('sunset.jpg'), alt: '夕阳风景' },
-      { src: imageUrl('snow.jpg'), alt: '雪地风景' },
-    ],
     images: [imageUrl('lake.jpg'), imageUrl('airpods-max-orange.jpg')], people: [{name:'林初'},{name:'Alex'},{name:'Taylor'},{name:'Quinn'},{name:'Sam'}],
     cities: [{label:'北京',value:'beijing'},{label:'上海',value:'shanghai'},{label:'杭州',value:'hangzhou'}], devices: [{label:'MacBook Air',value:'mac'},{label:'iPad Pro',value:'ipad'},{label:'AirPods Max',value:'airpods'}],
     deliveryItems: [{label:'快递送达',value:'express'},{label:'到店取货',value:'pickup'}], periods: [{label:'日',value:'day'},{label:'周',value:'week'},{label:'月',value:'month'}],
@@ -181,8 +166,8 @@ export default defineComponent({
     folders: [{label:'设计资源',value:'design',children:[{label:'组件',value:'components',children:[{label:'按钮',value:'buttons'},{label:'输入框',value:'inputs'}]},{label:'图标',value:'icons'}]},{label:'项目文件',value:'project'}],
     settings: [{label:'个人资料',value:'profile',description:'姓名、头像和联系方式'},{label:'通知',value:'notifications',description:'推送和邮件偏好'},{label:'隐私与安全',value:'security',description:'管理账户的安全设置'}],
     events: [{label:'订单已确认',value:'confirmed',description:'我们正在准备你的订单',time:'09:41'},{label:'正在配送',value:'shipping',description:'你的包裹已出发',time:'12:00'},{label:'即将送达',value:'arrival',description:'留意配送通知',time:'预计明天'}],
-    actions: [{label:'收藏',value:'favorite'},{label:'分享',value:'share'},{label:'删除',value:'delete',danger:true}], slides: [{label:'山间清晨',value:0,src:imageUrl('lake.jpg')},{label:'一场聆听',value:1,src:imageUrl('airpods-max-orange.jpg')}],
-    photoActions: [{label:'加入收藏',value:'favorite',description:'将这张照片保存到你的灵感收藏',icon:markRaw(Heart),danger:false},{label:'分享照片',value:'share',description:'与朋友分享山间的这一刻',icon:markRaw(Share2),danger:false},{label:'删除照片',value:'delete',description:'从当前相册中移除',icon:markRaw(Trash2),danger:true}],
+    actions: [{label:'收藏',value:'favorite'},{label:'分享',value:'share'},{label:'删除',value:'delete',danger:true}],
+    photoActions: [{label:'加入收藏',value:'favorite',description:'将这张照片保存到你的灵感收藏',icon:markRaw(IconHeart),danger:false},{label:'分享照片',value:'share',description:'与朋友分享山间的这一刻',icon:markRaw(IconShare),danger:false},{label:'删除照片',value:'delete',description:'从当前相册中移除',icon:markRaw(IconTrash),danger:true}],
     topScroll: undefined as MotionScroll | undefined,
     timers: [] as ReturnType<typeof setTimeout>[],
   } },
@@ -190,7 +175,7 @@ export default defineComponent({
     virtualRows() { return this.virtualTable ? Array.from({length:5000},(_,i)=>({id:i+1,name:`组件 ${String(i+1).padStart(4,'0')}`,category:i%2?'基础':'表单',status:'已发布',updated:'09-26'})) : [] },
     demoClass(): string {
       const compact = ['AppleSearch', 'AppleProvider', 'AppleAvatar', 'AppleAvatarGroup', 'AppleInput', 'AppleTextarea', 'AppleSelect', 'AppleAutocomplete', 'AppleCheckbox', 'AppleRadioGroup', 'AppleSwitch', 'AppleSlider', 'AppleStepper', 'AppleSegmentedControl', 'AppleDatePicker', 'AppleColorPicker', 'AppleUpload', 'AppleOtpInput', 'AppleCascader', 'AppleRate', 'AppleForm', 'AppleFormField', 'AppleProgress', 'AppleSpinner', 'AppleStatistic', 'AppleTransition']
-      const media = ['AppleImage']
+      const media = ['AppleImage', 'AppleImageCompare']
       return compact.includes(this.name) ? 'component-demo--compact' : media.includes(this.name) ? 'component-demo--media' : 'component-demo--wide'
     },
     searchResults() { return this.settings.filter(item => `${item.label} ${item.description}`.includes(this.searchText.trim())) },

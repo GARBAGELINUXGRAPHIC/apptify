@@ -5,7 +5,7 @@ test('home navigation uses library controls and preserves link semantics', async
   const browse = page.getByRole('link', { name: '浏览全部组件', exact: true })
   await expect(browse).toHaveClass(/apple-button--primary/)
   await expect(browse).toHaveAttribute('href', '/components')
-  const preferences = page.getByRole('link', { name: '调整外观与动效', exact: true })
+  const preferences = page.locator('.home-actions').getByRole('link', { name: '设置', exact: true })
   await expect(preferences).toHaveClass(/apple-link/)
   await preferences.click()
   await expect(page).toHaveURL(/\/settings$/)
@@ -20,28 +20,33 @@ test('home navigation uses library controls and preserves link semantics', async
   await expect(page).toHaveURL(/\/components$/)
 })
 
-test('home search, pressed favorite, valid form and feedback are interactive', async ({ page }) => {
+test('the six home features use live controls and link to their resources', async ({ page }) => {
   await page.goto('/')
-  const list = page.getByRole('list', { name: '设置导航示例', exact: true })
-  await expect(list.getByRole('listitem')).toHaveCount(3)
-  await page.getByRole('searchbox', { name: '搜索设置', exact: true }).fill('安全')
-  await expect(list.getByRole('listitem')).toHaveCount(1)
-  await page.getByRole('searchbox', { name: '搜索设置', exact: true }).fill('联系方式')
-  await expect(list.getByRole('listitem')).toHaveCount(1)
-  await expect(list).toContainText('个人资料')
-  await page.getByRole('searchbox', { name: '搜索设置', exact: true }).fill('找不到')
-  await expect(page.getByRole('status').filter({ hasText: '没有匹配的设置' })).toBeVisible()
-  await page.getByRole('searchbox', { name: '搜索设置', exact: true }).fill('  ')
-  await expect(list.getByRole('listitem')).toHaveCount(3)
-  await page.getByRole('button', { name: '收藏', exact: true }).click()
-  await expect(page.getByRole('button', { name: '取消收藏', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await page.getByRole('textbox', { name: '你的名字', exact: true }).fill('测试朋友')
-  await page.getByRole('textbox', { name: '电子邮箱', exact: true }).fill('friend@example.com')
-  await page.getByRole('button', { name: '加入我们', exact: true }).click()
-  await expect(page.getByText('你好，测试朋友！', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '打开对话框', exact: true }).click()
-  await expect(page.getByRole('dialog', { name: '一切，就从这里开始。' })).toBeVisible()
-  await page.getByRole('button', { name: '好的', exact: true }).click()
+  await expect(page.locator('.specimen h3')).toHaveText([
+    '美观简洁，灵动易用', '跨端复杂组件，不只基础', '界面风格，随你设定',
+    '启动框架，一应俱全', '低代码示例，易学易用', '看看实例',
+  ])
+  const player = page.locator('.mini-player')
+  await player.getByRole('button', { name: '播放', exact: true }).click()
+  await expect(player.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await expect.poll(() => player.getByRole('slider', { name: '播放进度' }).inputValue()).not.toBe('42')
+  await player.getByRole('button', { name: '暂停', exact: true }).click()
+  await player.getByRole('button', { name: '下一首', exact: true }).click()
+  await expect(player.getByRole('heading')).toHaveText('山间回声')
+  await player.getByRole('button', { name: '上一首', exact: true }).click()
+  await expect(player.getByRole('heading')).toHaveText('海岸来信')
+  await player.getByRole('button', { name: '喜欢', exact: true }).click()
+  await expect(player.getByRole('button', { name: '取消喜欢', exact: true })).toHaveAttribute('aria-pressed', 'true')
+
+  const showcase = page.locator('.showcase-carousel')
+  await expect(showcase.getByRole('heading', { name: 'Clash Verge Rev Fork' })).toBeVisible()
+  await expect(showcase.getByRole('link', { name: '查看项目' })).toHaveAttribute('href', 'https://github.com/GARBAGELINUXGRAPHIC/clash-verge-rev-fork')
+  await expect(showcase.getByRole('group', { name: '选择幻灯片' })).toBeHidden()
+
+  await page.getByRole('link', { name: 'API 文档与低代码编辑器' }).click()
+  await expect(page).toHaveURL(/\/component-docs\/apple-container$/)
+  await expect(page.getByRole('tab', { name: '低代码', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '复制当前文件', exact: true })).toBeVisible()
 })
 
 test('theme library buttons persist and follow motion preferences', async ({ page }) => {
@@ -65,7 +70,7 @@ test('theme library buttons persist and follow motion preferences', async ({ pag
 
 test('library links hover by color alone and follow global motion timing', async ({ page }) => {
   await page.goto('/')
-  const link = page.getByRole('link', { name: '调整外观与动效', exact: true })
+  const link = page.locator('.home-actions').getByRole('link', { name: '设置', exact: true })
   await page.locator('main').evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {}))) })
   const before = await link.evaluate(el => ({ color: getComputedStyle(el).color, background: getComputedStyle(el).backgroundColor, rect: el.getBoundingClientRect().toJSON() }))
   await expect(link).toHaveCSS('transition-property', 'color')
@@ -77,7 +82,7 @@ test('library links hover by color alone and follow global motion timing', async
   await link.click()
   await page.getByRole('radiogroup', { name: '全局动效', exact: true }).getByText('关闭', { exact: true }).click()
   await page.goto('/')
-  await expect(page.getByRole('link', { name: '调整外观与动效', exact: true })).toHaveCSS('transition-duration', '0s')
+  await expect(link).toHaveCSS('transition-duration', '0s')
 })
 
 for (const width of [320, 390, 768, 1440]) {

@@ -7,8 +7,8 @@ import {
   type Component, type PropType, type VNode,
 } from 'vue'
 import {
-  Check, CheckCircle2, CircleAlert, Info, X,
-} from 'lucide-vue-next'
+  IconCheck, IconCircleCheck, IconAlertCircle, IconInfoCircle, IconX,
+} from '@tabler/icons-vue'
 import { appleKey, resolveMotion, type AppleContext, type OverlayEntry } from '../core/context'
 import { ripple } from '../core/motion'
 import { AppleButton } from './button'
@@ -266,7 +266,7 @@ function createModal(name: string, kind: ModalKind) {
       }), [
         heading || this.closable ? h('header', { class: 'apple-modal-header' }, [
           h('div', { class: 'apple-modal-heading' }, heading ? [h('h2', heading)] : []),
-          this.closable ? iconButton('关闭', X, () => this.dismiss(), { disabled: this.loading }) : null,
+          this.closable ? iconButton('关闭', IconX, () => this.dismiss(), { disabled: this.loading }) : null,
         ]) : null,
         h('div', { class: 'apple-modal-body' }, [h(AppleAutoSize, { motion: this.motion }, { default: () => this.$slots.default?.({ close: (value?: unknown) => this.dismiss('close', value) }) ?? (this.message ? [h('p', this.message)] : []) })]),
         this.showFooter || this.$slots.footer ? h('footer', { class: 'apple-modal-footer' }, this.$slots.footer?.({ close: (value?: unknown) => this.dismiss('close', value), confirm: this.confirm, cancel: this.cancel }) ?? [
@@ -357,7 +357,7 @@ export const AppleSnackbar = defineComponent({
   },
   render() {
     const motion = motionOf(this, this.motion)
-    const glyph = this.tone === 'success' ? CheckCircle2 : ['error', 'danger', 'warning'].includes(this.tone) ? CircleAlert : Info
+    const glyph = this.tone === 'success' ? IconCircleCheck : ['error', 'danger', 'warning'].includes(this.tone) ? IconAlertCircle : IconInfoCircle
     const notification = this.modelValue ? h('div', mergeProps(this.$attrs, {
       class: ['apple-snackbar', `apple-snackbar--${this.tone}`],
       role: ['error', 'danger'].includes(this.tone) ? 'alert' : 'status',
@@ -373,7 +373,7 @@ export const AppleSnackbar = defineComponent({
       h(glyph, { class: 'apple-snackbar-symbol', size: 21, 'aria-hidden': true }),
       h('div', { class: 'apple-snackbar-content' }, this.$slots.default?.() ?? [this.title ? h('strong', this.title) : null, h('span', this.message)]),
       this.action ? h(AppleLink, { as: 'button', class: 'apple-snackbar-action', onClick: () => this.$emit('action') }, { default: () => this.action }) : null,
-      this.closable ? iconButton('关闭通知', X, () => this.close()) : null,
+      this.closable ? iconButton('关闭通知', IconX, () => this.close()) : null,
     ]) : null
     return presence('apple-toast', motion, notification, () => this.$emit('after-close'))
   },
@@ -662,7 +662,7 @@ export const AppleMenu = defineComponent({
       }, this.$slots.item?.({ item }) ?? [
         item.icon ? h(item.icon, { size: 18, 'aria-hidden': true }) : null,
         h('span', { class: 'apple-menu-copy' }, [h('span', item.label), item.description ? h('small', item.description) : null]),
-        this.selected === item.value ? h(Check, { size: 17, 'aria-hidden': true }) : null,
+        this.selected === item.value ? h(IconCheck, { size: 17, 'aria-hidden': true }) : null,
       ]), !item.disabled)),
     })
   },

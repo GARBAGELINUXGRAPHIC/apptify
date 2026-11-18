@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Button behavior</title></head>
 <body><div id="app"></div><script type="module">
 import { createApp, h } from 'vue'
-import { ArrowRight } from 'lucide-vue-next'
+import { IconArrowRight } from '@tabler/icons-vue'
 import { AppleProvider, AppleButton, createAppleUI } from '/src/index.ts'
 createApp({
   data: () => ({ submits: 0, resets: 0 }),
@@ -10,7 +10,7 @@ createApp({
     return h(AppleProvider, null, () => [
       h('div', { style: 'display:flex;gap:16px;align-items:center' }, ['small', 'medium', 'large'].flatMap(size => [
         h(AppleButton, { id: size, size }, () => 'Continue'),
-        h(AppleButton, { id: `${size}-icon`, size, icon: ArrowRight, iconOnly: true, label: 'Continue' }, () => 'Hidden label'),
+        h(AppleButton, { id: `${size}-icon`, size, icon: IconArrowRight, iconOnly: true, label: 'Continue' }, () => 'Hidden label'),
       ])),
       h('form', { onSubmit: event => { event.preventDefault(); this.submits++ }, onReset: () => this.resets++ }, [
         h('input', { name: 'name', value: 'Initial', 'aria-label': 'Name' }),

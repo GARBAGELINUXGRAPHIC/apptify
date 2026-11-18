@@ -13,7 +13,7 @@ npm create apptify
 
 安装后会自带所有组件说明的样例站。Bundle 包含以下组件之外的内容：
 - 自动根据 src/views 生成 routes
-- lucide icons
+- [Tabler Icons](https://tabler.io/icons)
 - 全局广播通道 `sendMessage`
 - 错误页
 - 外观设置页

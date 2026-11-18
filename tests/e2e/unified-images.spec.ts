@@ -61,15 +61,29 @@ test('one capsule orders rotation, zoom and optional name; rotations belong to e
   await expect(viewer).toHaveCount(0)
 })
 
-test('carousel arrows align with the picture and hover uses the card shadow', async ({ page }) => {
+test('carousel hover is confined to the picture and its arrows', async ({ page }) => {
   await page.goto('/tests/e2e/fixtures/image-carousel.html')
   const photos = page.locator('#photos')
-  await photos.hover()
-  await expect(photos.locator('.apple-image__surface')).toHaveCSS('transform', 'matrix(1.04, 0, 0, 1.04, 0, 0)')
-  await expect(photos.locator('.apple-image__surface')).toHaveCSS('box-shadow', 'rgba(0, 0, 0, 0.16) 2px 4px 16px 0px')
-  const picture = await photos.locator('.apple-image__slide-picture').first().boundingBox()
-  const arrow = await photos.getByRole('button', { name: '下一张图片', exact: true }).boundingBox()
+  const surface = photos.locator('.apple-image__surface')
+  const image = photos.locator('.apple-image__slide-picture img').first()
+  const arrows = photos.locator('.apple-image__arrows')
+  const next = photos.getByRole('button', { name: '下一张图片', exact: true })
+
+  await image.hover()
+  await expect(surface).toHaveCSS('transform', 'matrix(1.04, 0, 0, 1.04, 0, 0)')
+  await expect(surface).toHaveCSS('box-shadow', 'rgba(0, 0, 0, 0.16) 2px 4px 16px 0px')
+  await next.hover()
+  await expect(arrows).toHaveCSS('opacity', '1')
+  const picture = await image.boundingBox()
+  const arrow = await next.boundingBox()
   expect(Math.abs(picture!.y + picture!.height / 2 - arrow!.y - arrow!.height / 2)).toBeLessThan(1)
+
+  for (const selector of ['.apple-image__slide-caption', '.apple-image__pagination']) {
+    await photos.locator(selector).first().hover()
+    await expect(surface).toHaveCSS('transform', 'none')
+    await expect(surface).toHaveCSS('box-shadow', 'none')
+    await expect(arrows).toHaveCSS('opacity', '0')
+  }
 })
 
 test('carousel starts automatically every five seconds and loops', async ({ page }) => {

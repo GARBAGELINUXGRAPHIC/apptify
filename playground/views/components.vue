@@ -23,7 +23,7 @@
             <ErrorPagePreviews v-if="section.id === 'error-pages'" @layout="schedulePosition" />
             <MasonryFeed v-else class="feed-cards" @layout="schedulePosition">
             <apple-card v-for="item in section.items" :id="componentId(item.name)" :key="item.name" class="component-card feed-anchor" :data-group="section.id" :aria-labelledby="`${componentId(item.name)}-heading`">
-              <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<Hash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
+              <header class="component-card-heading"><div><h3 :id="`${componentId(item.name)}-heading`"><router-link :to="`#${componentId(item.name)}`">{{ item.label }}<IconHash :size="14" /></router-link></h3><p>{{ item.description }}</p></div><code>{{ componentId(item.name) }}</code></header>
               <section class="detail-preview" :aria-label="`${item.label}预览`"><ComponentDemo :name="item.name" @navigate="navigateGroup" /></section>
               <ComponentDocumentLink :href="documentPaths[item.name]" label="代码与 API" />
             </apple-card>
@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Hash } from 'lucide-vue-next'
+import { IconHash } from '@tabler/icons-vue'
 import { catalog, sections, componentId } from '../catalog'
 import { errorCodes } from '../error-pages'
 import ComponentDemo from '../ComponentDemo.vue'

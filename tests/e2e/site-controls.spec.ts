@@ -59,7 +59,7 @@ for (const width of [320, 1440]) {
     await expect(popup).toHaveCSS('border-radius', '24px')
     await expect(popup).toHaveCSS('backdrop-filter', 'none')
     await expect(popup.locator('.user-menu-list button.apple-link')).toHaveCount(3)
-    await expect(popup.locator('.user-menu-list').first().locator('.lucide-arrow-up-right-icon')).toHaveCount(2)
+    await expect(popup.locator('.user-menu-list').first().locator('.tabler-icon-arrow-up-right')).toHaveCount(2)
     await popup.getByRole('button', { name: '个人资料', exact: true }).click()
     await expect(page.getByRole('dialog', { name: '个人资料', exact: true })).toBeVisible()
   })

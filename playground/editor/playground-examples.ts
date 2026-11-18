@@ -23,6 +23,7 @@ const examples: Record<string, PlaygroundExample> = {
   AppleGrid: { props: { min: '120' }, slots: { default: { code: blocks, enabled: true } } },
   AppleCard: { props: { title: '"Apptify"', subtitle: '"组件文档"', text: '"修改配置，体验卡片。"', image: JSON.stringify(image('#0071e3', 'Apptify')), imageAlt: '"蓝色示例图片"' } },
   AppleImage: { props: { gallery, index: '0' }, slots: { item: { scope: '{ item, index, active }', code: '<div class="tile">{{ index + 1 }} · {{ item.label }} · {{ active }}</div>' } } },
+  AppleImageCompare: { props: { before: JSON.stringify(image('#8f9ca9', 'Before')), after: JSON.stringify(image('#007aff', 'After')) } },
   AppleSearch: { props: { modelValue: '"Apptify"' } },
   AppleTextarea: { props: { label: '"个人简介"', modelValue: '"写下你的想法。"', maxlength: '160', counter: 'true' } },
   AppleSelect: { props: { label: '"选择项目"', items: options, modelValue: '"first"' } },
@@ -95,7 +96,7 @@ export function slotExample(component: string, name: string): SlotExample {
     const scope = component === 'AppleTree' ? '{ item, expanded, selected }' : component === 'AppleList' ? '{ item, selected }' : component === 'AppleAccordion' ? '{ item, open }' : '{ item }'
     return { scope, code: '<strong>{{ item.label }}</strong>' }
   }
-  if (name === 'icon') return { code: '<Star :size="32" />' }
+  if (name === 'icon') return { code: '<IconStar :size="32" />' }
   if (name === 'media') return { code: '<div class="tile">自定义媒体</div>' }
   if (name === 'actions') return { scope: component === 'AppleNavibar' ? '{ close }' : undefined, code: '<AppleButton @click="record(\'action\')">操作</AppleButton>' }
   if (name === 'default' && ['AppleDialog', 'AppleDrawer', 'AppleSheet'].includes(component)) return { scope: '{ close }', code: '<p>自定义正文</p><AppleButton @click="close(\'done\')">完成</AppleButton>' }

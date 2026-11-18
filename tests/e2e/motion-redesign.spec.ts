@@ -72,7 +72,7 @@ test('component locator uses a static active highlight and does not filter', asy
 })
 
 test('Ripple stays translucent and action links never create it', async ({ page }) => {
-  const button = page.getByRole('button', { name: '继续探索', exact: true })
+  const button = page.getByRole('button', { name: '播放', exact: true })
   await button.hover(); await page.mouse.down()
   const wave = button.locator('.v-ripple__animation')
   await expect(wave).toHaveCount(1)
@@ -100,7 +100,8 @@ test('Ripple stays translucent and action links never create it', async ({ page 
 })
 
 test('search has a single animated focus ring and theme colors interpolate', async ({ page }) => {
-  const search = page.getByRole('searchbox', { name: '搜索设置' })
+  await openComponent(page, 'apple-search')
+  const search = activeCard(page).getByRole('searchbox', { name: '搜索设置' })
   await search.focus()
   expect(await search.evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none')
   expect(await search.evaluate(el => getComputedStyle(el.parentElement!).transitionProperty)).toContain('box-shadow')

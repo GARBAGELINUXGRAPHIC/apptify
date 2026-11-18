@@ -66,7 +66,7 @@ const manifest = {
   dependencies: {
     apptify: '^' + library.version, vue: library.peerDependencies.vue,
     'vue-router': library.devDependencies['vue-router'],
-    'lucide-vue-next': library.dependencies['lucide-vue-next'],
+    '@tabler/icons-vue': library.dependencies['@tabler/icons-vue'],
   },
   devDependencies: Object.fromEntries(['@vitejs/plugin-vue', 'typescript', 'vite', 'vite-plugin-pages', 'vue-tsc', '@vue/repl', 'es-module-shims', 'esbuild', 'postcss'].map(name => [name, library.devDependencies[name]])),
 }

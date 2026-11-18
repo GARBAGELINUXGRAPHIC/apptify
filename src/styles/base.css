@@ -9,6 +9,7 @@
 @property --apple-danger { syntax: '<color>'; inherits: true; initial-value: #c93830; }
 @property --apple-success { syntax: '<color>'; inherits: true; initial-value: #34c759; }
 @property --apple-warning { syntax: '<color>'; inherits: true; initial-value: #ffaa00; }
+:root { --apple-shadow-strong: 2px 4px 16px #00000029; }
 .apple-provider {
   --apple-duration: 300ms;
   --apple-fast: 120ms;
@@ -91,11 +92,10 @@
 .apple-image { margin: 0; position: relative; width: 100%; min-width: 0; flex-shrink: 0; border-radius: var(--apple-radius); }
 .apple-image__surface { position: relative; width: 100%; height: 100%; background: var(--apple-surface-alt); overflow: hidden; border-radius: inherit; transition: transform var(--apple-duration) var(--apple-ease), box-shadow var(--apple-duration) var(--apple-ease); }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .apple-image--loaded[data-apple-motion=full]:hover { z-index: 1; }
-  .apple-image--loaded[data-apple-motion=full]:hover > .apple-image__surface { box-shadow: 2px 4px 16px #00000029; }
-  .apple-image--loaded:not(.apple-image--group)[data-apple-motion=full]:hover > .apple-image__surface,
-  .apple-image--loaded[data-gallery-layout=compact][data-apple-motion=full]:hover > .apple-image__surface { transform: scale(1.04); }
-  .apple-image--loaded[data-gallery-layout^=tiled][data-apple-motion=full] .apple-image__trigger:hover > img { transform: scale(1.04); }
+  .apple-image--loaded[data-apple-motion=full]:has(> .apple-image__surface :is(img, .apple-image__arrow):hover) { z-index: 1; }
+  .apple-image--loaded[data-apple-motion=full] > .apple-image__surface:has(:is(img, .apple-image__arrow):hover) { box-shadow: var(--apple-shadow-strong); }
+  .apple-image--loaded[data-apple-motion=full]:is(:not(.apple-image--group), [data-gallery-layout=compact]) > .apple-image__surface:has(:is(img, .apple-image__arrow):hover) { transform: scale(1.04); }
+  .apple-image--loaded[data-gallery-layout^=tiled][data-apple-motion=full] .apple-image__trigger > img:hover { transform: scale(1.04); }
 }
 .apple-image__trigger { display: flex; width: 100%; height: 100%; padding: 0; border: 0; align-items: center; justify-content: center; flex-direction: column; gap: 10px; background: transparent; color: var(--apple-secondary); }
 .apple-image img { display: block; width: 100%; height: 100%; }
@@ -105,6 +105,7 @@
 .apple-image__gallery--compact { position: absolute; inset: 0; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .apple-image__gallery--compact::-webkit-scrollbar { display: none; }
 .apple-image__gallery--compact > .apple-image__trigger { flex: 0 0 100%; scroll-snap-align: center; }
+.apple-image__gallery--compact:has(> .apple-image__slide:only-child) { overflow: clip; overscroll-behavior-x: auto; }
 .apple-image__gallery--tiled { display: flex; gap: 8px; height: var(--apple-image-tile-height, clamp(112px, 28vw, 180px)); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
 .apple-image__gallery--tiled > .apple-image__trigger { flex: 0 0 auto; width: auto; height: 100%; scroll-snap-align: center; }
 .apple-image[data-gallery-layout=tiled-wrap] > .apple-image__surface { background: transparent; }
@@ -122,8 +123,8 @@
 .apple-image__count { color: var(--apple-secondary); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .apple-image__arrows { position: absolute; inset-inline: 0; top: 50%; height: 44px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; padding-inline: 12px; opacity: 0; pointer-events: none; transition: opacity var(--apple-fast) var(--apple-ease); }
 .apple-image__arrow { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; color: white; background: #00000055; -webkit-backdrop-filter: blur(2px) saturate(2); backdrop-filter: blur(2px) saturate(2); pointer-events: none; transition: opacity var(--apple-fast); }
-.apple-image__surface:hover .apple-image__arrows { opacity: 1; }
-.apple-image__surface:hover .apple-image__arrow { pointer-events: auto; }
+.apple-image__surface:is(:has(:is(img, .apple-image__arrow):hover), :not(:has(img)):hover) .apple-image__arrows { opacity: 1; }
+.apple-image__surface:is(:has(:is(img, .apple-image__arrow):hover), :not(:has(img)):hover) .apple-image__arrow { pointer-events: auto; }
 .apple-image__arrow:disabled { opacity: .3; cursor: default; }
 .apple-image[data-carousel] .apple-image__gallery--compact { gap: 0; }
 .apple-image[data-carousel] .apple-image__gallery > .apple-image__slide { gap: 0; border-radius: 0; }

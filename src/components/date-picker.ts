@@ -1,6 +1,6 @@
 import { popupTransition } from '../core/popup-motion'
 import { defineComponent, h, useId, type PropType, type VNodeChild } from 'vue'
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from 'lucide-vue-next'
+import { IconCalendarWeek, IconChevronLeft, IconChevronRight, IconClockHour3 } from '@tabler/icons-vue'
 import { addDays, addMonths, format as formatDate, getDaysInMonth, startOfMonth, startOfWeek } from 'date-fns'
 import { motionDuration, ripple } from '../core/motion'
 import { appleKey, motionProps, resolveMotion, type AppleContext } from '../core/context'
@@ -360,9 +360,9 @@ export const AppleDatePicker = defineComponent({
         : h('div', { class: 'apple-calendar__choices', role: 'group', 'aria-label': this.view === 'months' ? '选择月份' : '选择年份' }, (this.view === 'months' ? Array.from({ length: 12 }, (_, index) => index) : this.years).map(value => { const selected = this.view === 'months' ? year === Number(this.draft.year) && value + 1 === Number(this.draft.month) : value === Number(this.draft.year); return ripple(h('button', { type: 'button', class: ['apple-calendar__choice', { 'is-selected': selected }], 'aria-pressed': selected, onPointerleave: (event: PointerEvent) => hoverTrail(event, selected), onClick: () => this.view === 'months' ? this.chooseMonth(value) : this.chooseYear(value) }, this.view === 'months' ? `${value + 1}月` : String(value))) }))
       return h('div', { class: 'apple-calendar' }, [
         h('div', { class: 'apple-calendar__header' }, [
-          ripple(h('button', { type: 'button', class: 'apple-field__icon', 'aria-label': this.view === 'days' ? '上个月' : '上一页', onClick: () => this.move(-1) }, h(ChevronLeft, { size: 18 }))),
+          ripple(h('button', { type: 'button', class: 'apple-field__icon', 'aria-label': this.view === 'days' ? '上个月' : '上一页', onClick: () => this.move(-1) }, h(IconChevronLeft, { size: 18 }))),
           ripple(h('button', { type: 'button', class: 'apple-calendar__heading', onClick: () => { this.direction = this.view === 'years' ? 1 : -1; this.view = this.view === 'days' ? 'months' : this.view === 'months' ? 'years' : 'days' } }, this.view === 'days' ? `${year}年${month + 1}月` : this.view === 'months' ? `${year}年` : `${this.years[0]} – ${this.years.at(-1)}`)),
-          ripple(h('button', { type: 'button', class: 'apple-field__icon', 'aria-label': this.view === 'days' ? '下个月' : '下一页', onClick: () => this.move(1) }, h(ChevronRight, { size: 18 }))),
+          ripple(h('button', { type: 'button', class: 'apple-field__icon', 'aria-label': this.view === 'days' ? '下个月' : '下一页', onClick: () => this.move(1) }, h(IconChevronRight, { size: 18 }))),
         ]),
         h(CalendarPages, { pageKey: `${this.view}-${year}-${month}`, direction: this.direction, motion: this.motion }, { default: () => grid }),
       ])
@@ -390,7 +390,7 @@ export const AppleDatePicker = defineComponent({
       h('div', { class: 'apple-date-anchor' }, [
         h('div', { class: 'apple-date-input apple-input-wrap', role: 'group', 'aria-label': this.$attrs['aria-label'] || this.label || '日期与时间', 'aria-labelledby': this.$attrs['aria-labelledby'] || (!this.$attrs['aria-label'] && this.label ? `${this.id}-label` : undefined) }, [
           h('div', { class: 'apple-date-segments' }, this.segments.flatMap(({ part, separator, width }, index) => [h('input', { ...this.$attrs, class: 'apple-date-segment', id: index === 0 ? this.id : `${this.id}-${part}`, ref: `input-${part}`, name: undefined, type: 'text', inputmode: 'numeric', autocomplete: 'off', maxlength: width, size: width, value: this.draft[part], placeholder: this.placeholderParts[part], disabled: inactive, required: this.required, 'data-part': part, 'aria-label': `${this.label || this.$attrs['aria-label'] || ''}${labels[part]}`, 'aria-invalid': this.error ? true : undefined, 'aria-describedby': message ? `${this.id}-message` : undefined, onFocus: (event: FocusEvent) => (event.target as HTMLInputElement).select(), onInput: (event: Event) => this.input(part, event), onBlur: () => this.commitPart(part), onKeydown: (event: KeyboardEvent) => this.inputKey(part, event) }), separator ? h('span', { class: 'apple-date-separator', 'aria-hidden': true }, separator) : null])),
-          ripple(h('button', { type: 'button', class: 'apple-field__icon', disabled: inactive, 'aria-label': this.hasDate ? '打开日历' : '选择时间', 'aria-expanded': this.opened, 'aria-controls': `${this.id}-calendar`, onClick: () => this.opened ? this.close() : this.open() }, h(this.hasDate ? CalendarDays : Clock3, { size: 19 }))),
+          ripple(h('button', { type: 'button', class: 'apple-field__icon', disabled: inactive, 'aria-label': this.hasDate ? '打开日历' : '选择时间', 'aria-expanded': this.opened, 'aria-controls': `${this.id}-calendar`, onClick: () => this.opened ? this.close() : this.open() }, h(this.hasDate ? IconCalendarWeek : IconClockHour3, { size: 19 }))),
         ]),
         popupTransition(panel, 'apple-date-pop'),
       ]),

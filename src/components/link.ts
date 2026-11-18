@@ -1,5 +1,5 @@
 import { defineComponent, h, type Component, type PropType } from 'vue'
-import { ArrowUpRight } from 'lucide-vue-next'
+import { IconArrowUpRight } from '@tabler/icons-vue'
 
 export const AppleLink = defineComponent({
   name: 'AppleLink', inheritAttrs: false,
@@ -22,6 +22,6 @@ export const AppleLink = defineComponent({
       rel: this.as === 'a' ? this.external ? 'noopener noreferrer' : this.$attrs.rel : undefined,
       'aria-disabled': this.disabled || undefined,
       onClick: (event: MouseEvent) => { if (this.disabled) event.preventDefault(); else this.$emit('click', event) },
-    }, [h('span', { class: 'apple-link__content' }, [this.$slots.default?.(), this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null, this.external ? h(ArrowUpRight, { size: 14, 'aria-hidden': true }) : null])])
+    }, [h('span', { class: 'apple-link__content' }, [this.$slots.default?.(), this.icon ? h(this.icon, { size: 18, 'aria-hidden': true }) : null, this.external ? h(IconArrowUpRight, { size: 14, 'aria-hidden': true }) : null])])
   },
 })

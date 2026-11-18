@@ -263,12 +263,13 @@ button.apple-list__item:hover, a.apple-list__item:hover { background: color-mix(
 .apple-floating-group[data-preview-hidden] { opacity: 0; transform: translateX(12px); visibility: hidden; pointer-events: none; transition: opacity 100ms linear, transform 100ms ease-out, visibility 0s 100ms; }
 .apple-floating-group[data-motion=none], .apple-floating-group[data-motion=reduced] { transition: none; }
 @media (prefers-reduced-motion: reduce) { .apple-floating-group { transition: none; } }
-.apple-back-top { position: relative; order: 1000; display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--apple-border); border-radius: 50%; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); color: var(--apple-text); box-shadow: var(--apple-shadow); transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
+.apple-back-top { position: relative; order: 1000; display: inline-flex; flex: 0 0 44px; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); color: var(--apple-text); box-shadow: var(--apple-shadow); transition: color var(--apple-fast), background-color var(--apple-fast), border-color var(--apple-fast); }
 .apple-back-top--fixed { position: fixed; z-index: 25; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); }
 .apple-floating-group .apple-back-top { background: var(--apple-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .apple-speed-dial > .apple-back-top { order: -1; }
 .apple-speed-dial-directory { order: 1001; }
 .apple-speed-dial-directory, .apple-speed-dial-item.apple-button--icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; box-shadow: var(--apple-shadow); }
+.apple-floating-group :is(button, .apple-button), .apple-back-top--fixed { box-shadow: var(--apple-shadow-strong); }
 .apple-directory-dialog { height: calc(100dvh - 40px); }
 .apple-directory-dialog .apple-modal-body { display: flex; flex: 1; overflow: hidden; }
 .apple-directory-dialog .apple-modal-body > .apple-auto-size,
