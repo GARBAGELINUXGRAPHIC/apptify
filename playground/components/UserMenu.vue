@@ -106,8 +106,17 @@ function showProfile() {
 .user-trigger.user-account-trigger { width: 44px; height: 44px; border: 0; background: transparent; }
 .user-trigger.user-account-trigger:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }
 .user-auth-dialog.apple-modal { border-radius: 24px; background: var(--apple-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
-.user-auth-dialog .apple-modal-header { position: relative; justify-content: center; padding: 40px 44px 32px; }
-.user-auth-dialog .apple-modal-heading { width: 100%; text-align: center; }
+.user-auth-dialog.apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) {
+  position: relative;
+  justify-content: center;
+  padding: 40px 44px 32px;
+}
+.user-auth-dialog.apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) > .apple-modal-heading {
+  position: static;
+  width: 100%;
+  padding-inline-start: 0;
+  text-align: center;
+}
 .user-auth-dialog .apple-modal-heading h2 { font-size: 30px; line-height: 1.35; }
 .user-auth-dialog .apple-modal-header > .apple-overlay-icon { position: absolute; top: 8px; right: 8px; }
 .user-auth-heading { display: flex; flex-direction: column; align-items: center; gap: 22px; }
@@ -122,7 +131,7 @@ function showProfile() {
 .user-auth-actions .apple-button { width: 100%; padding-inline: 12px; border-radius: var(--apple-radius, 8px); font-size: 14px; }
 .user-auth-alternatives { display: flex; justify-content: center; margin-top: 24px; font-size: 13px; }
 @media (max-width: 480px) {
-  .user-auth-dialog .apple-modal-header { padding: 28px 24px 22px; }
+  .user-auth-dialog.apple-dialog > .apple-modal-header:has(> .apple-overlay-icon) { padding: 28px 24px 22px; }
   .user-auth-dialog .apple-modal-body { padding: 0 20px 22px; }
   .user-auth-dialog .apple-modal-heading h2 { font-size: 22px; }
   .user-auth-actions { gap: 8px; }
