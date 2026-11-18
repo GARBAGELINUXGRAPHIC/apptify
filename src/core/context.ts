@@ -152,6 +152,14 @@ export function createApple(options: AppleOptions = {}) {
       readTokenOverrides({ ...tokenOverrides.value, [name]: { ...tokenOverrides.value[name], ...tokens } })
       persist()
     },
+    resetToken(token: string, name?: string): void {
+      name ??= theme.value.resolved
+      if (!Object.prototype.hasOwnProperty.call(themes.value, name)) throw new Error(`Unknown Apple theme: ${name}`)
+      const remaining = { ...tokenOverrides.value[name] }
+      delete remaining[token]
+      readTokenOverrides({ ...tokenOverrides.value, [name]: remaining })
+      persist()
+    },
     resetTokens(name?: string) {
       const remaining = { ...tokenOverrides.value }
       if (name !== undefined) delete remaining[name]

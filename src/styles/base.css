@@ -12,9 +12,9 @@
 @property --apple-warning { syntax: '<color>'; inherits: true; initial-value: #ffaa00; }
 :root {
   --apple-shadow-2: 2px 4px 16px #00000029;
-  --apple-shadow-3: 3px 8px 24px rgb(0 0 0 / 22%);
-  --apple-shadow-4: 4px 12px 32px rgb(0 0 0 / 28%);
-  --apple-shadow-5: 6px 20px 48px rgb(0 0 0 / 34%);
+  --apple-shadow-3: 0 4px 12px rgb(0 0 0 / 18%), 0 1px 4px rgb(0 0 0 / 10%);
+  --apple-shadow-4: 0 4px 12px rgb(0 0 0 / 24%), 0 1px 4px rgb(0 0 0 / 14%);
+  --apple-shadow-5: 0 4px 12px rgb(0 0 0 / 30%), 0 1px 4px rgb(0 0 0 / 18%);
 }
 .apple-provider {
   --apple-duration: 300ms;

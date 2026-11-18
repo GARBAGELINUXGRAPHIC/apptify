@@ -32,7 +32,7 @@ async function pressDescription(page: Page, locator: Locator, description: strin
 
 for (const width of [390, 1280]) {
   for (const errors of [false, true]) {
-    test(`labels, ${errors ? 'errors' : 'hints'}, choice text and row gaps never activate fields at ${width}px`, async ({ page }) => {
+    test(`labels, ${errors ? 'errors' : 'hints'}, non-radio choice text and row gaps never activate fields at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 })
       let fileChoosers = 0
       page.on('filechooser', () => { fileChoosers++ })
@@ -42,6 +42,7 @@ for (const width of [390, 1280]) {
       expect(await texts.count()).toBeGreaterThan(30)
       for (let index = 0; index < await texts.count(); index++) {
         const text = texts.nth(index)
+        if (await text.evaluate(element => !!element.closest('.apple-radio-group'))) continue
         await pressDescription(page, text, (await text.textContent())!)
         await expectNoActivation(page, () => text.evaluate(element => (element as HTMLElement).click()), `programmatic click: ${await text.textContent()}`)
       }
@@ -95,7 +96,7 @@ test('controls keep accessible names, direct clicks and keyboard operation', asy
   await expect(radio.getByRole('radiogroup', { name: 'radio 名称', exact: true })).toHaveCount(1)
   const first = radio.getByRole('radio', { name: '选项一', exact: true })
   const second = radio.getByRole('radio', { name: '选项二', exact: true })
-  await second.click()
+  await radio.locator('.apple-choice__label').nth(1).click()
   await expect(second).toBeChecked()
   await second.press('ArrowUp')
   await expect(first).toBeChecked()

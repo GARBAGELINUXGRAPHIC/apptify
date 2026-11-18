@@ -79,10 +79,10 @@
 .apple-slider { appearance: none; flex: 1; min-width: 0; height: 44px; margin: 0; background: transparent; cursor: pointer; }
 .apple-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; background: linear-gradient(to right, var(--apple-accent) var(--apple-slider-progress), var(--apple-surface-alt) var(--apple-slider-progress)); }
 .apple-slider::-moz-range-track { height: 6px; border-radius: 4px; background: linear-gradient(to right, var(--apple-accent) var(--apple-slider-progress), var(--apple-surface-alt) var(--apple-slider-progress)); }
-.apple-slider::-webkit-slider-thumb { appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--apple-shadow-2); transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
-.apple-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--apple-shadow-2); transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
-.apple-slider:hover:not(:disabled)::-webkit-slider-thumb { background: #f0f0f2; }
-.apple-slider:hover:not(:disabled)::-moz-range-thumb { background: #f0f0f2; }
+.apple-slider::-webkit-slider-thumb { appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--apple-shadow-3); transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
+.apple-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--apple-shadow-3); transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
+.apple-slider:hover:not(:disabled)::-webkit-slider-thumb { box-shadow: var(--apple-shadow-4); }
+.apple-slider:hover:not(:disabled)::-moz-range-thumb { box-shadow: var(--apple-shadow-4); }
 .apple-slider:active:not(:disabled)::-webkit-slider-thumb { background: #d2d2d7; }
 .apple-slider:active:not(:disabled)::-moz-range-thumb { background: #d2d2d7; }
 .apple-slider:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 9px; }
@@ -108,12 +108,12 @@
 .apple-segmented > .apple-selection-indicator { border-radius: 6px; background: var(--apple-segmented-selected, var(--apple-surface)); box-shadow: 0 1px 5px #0002; }
 .apple-segmented__item:has(input:focus-visible) { outline: 3px solid var(--apple-accent); outline-offset: 1px; }
 .apple-date-input { min-width: 0; max-width: 100%; }
-.apple-color-row { position: relative; display: flex; align-items: center; gap: 12px; }
+.apple-color-row { position: relative; display: flex; align-items: center; gap: 16px; width: fit-content; max-width: 100%; }
 .apple-color-picker { box-sizing: border-box; width: 56px; height: 44px; padding: 4px; border: 1px solid var(--apple-border); border-radius: 8px; background: var(--apple-surface); cursor: pointer; }
 .apple-color-picker > span { display: block; width: 100%; height: 100%; border-radius: 5px; background: linear-gradient(var(--apple-picked-color), var(--apple-picked-color)), repeating-conic-gradient(#c5c5ca 0% 25%, #fff 0% 50%) 0 / 10px 10px; }
 .apple-color-picker:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }
 .apple-color-picker:disabled { opacity: .5; cursor: not-allowed; }
-.apple-color__value { font-size: 14px; font-variant-numeric: tabular-nums; }
+.apple-color__value { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .apple-color-menu { width: 280px; inset-inline-end: auto; overflow-y: auto; overscroll-behavior: contain; }
 .apple-color-menu__content { padding: 14px; }
 .apple-color-plane { position: relative; height: 170px; border-radius: 8px; background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent); touch-action: none; cursor: crosshair; }

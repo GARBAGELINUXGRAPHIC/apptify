@@ -44,12 +44,18 @@
               <div class="ripple-controls">
                 <apple-switch :model-value="rippleAllowed && apple.ripple.value.enabled" :disabled="!rippleAllowed"
                   label="点击波纹" @update:model-value="apple.ripple.value.set" />
-                <apple-button size="small" variant="borderless" label="测试点击波纹">测试</apple-button>
+                <apple-button size="small" variant="borderless" label="测试点击波纹" style="width: 50%">测试</apple-button>
               </div>
-              <apple-slider :model-value="apple.glass.value.blur" label="玻璃模糊" :min="2" :max="22"
-                :format-value="value => `${value}px`" @update:model-value="blur => apple.glass.value.set({ blur })" />
-              <apple-slider :model-value="apple.glass.value.opacity" label="不透明度" :max="100"
-                :format-value="value => `${value}%`" @update:model-value="opacity => apple.glass.value.set({ opacity })" />
+	            <div class="glass-sliders">
+		            <apple-slider :model-value="apple.glass.value.blur" label="玻璃模糊" :min="2" :max="22"
+		                          :format-value="value => `${value}px`" @update:model-value="blur => apple.glass.value.set({ blur })" />
+		            <apple-slider :model-value="apple.glass.value.opacity" label="不透明度" :max="100"
+		                          :format-value="value => `${value}%`" @update:model-value="opacity => apple.glass.value.set({ opacity })" />
+	            </div>
+              <div class="glass-preview" :data-motion="resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced)" aria-label="玻璃效果预览">
+                <div class="glass-preview-shapes" aria-hidden="true"><span /><span /><span /></div>
+                <div class="glass-preview-pane" aria-hidden="true">glass</div>
+              </div>
             </div>
           </div>
           <router-link to="/settings" custom v-slot="{ href, navigate }">
@@ -63,7 +69,7 @@
             <div class="feature-panel starter-preview">
               <div class="terminal-command"><span aria-hidden="true">$</span><code>npm create apptify</code></div>
               <ul class="starter-features">
-                <li v-for="feature in starterFeatures" :key="feature"><IconCheck :size="15" aria-hidden="true" />{{ feature }}</li>
+                <li v-for="feature in starterFeatures" :key="feature"><IconCheck :size="15" :stroke-width="3" aria-hidden="true" />{{ feature }}</li>
               </ul>
             </div>
           </div>
@@ -154,7 +160,7 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 
 <style scoped>
 .home-link { min-height: 44px; gap: 9px; font-size: 13px; font-weight: 500; }
-.specimen-grid { --feature-stage-height: 300px; gap: 22px; }
+.specimen-grid { --feature-stage-height: 340px; gap: 22px; }
 .specimen { padding: 0; border-radius: 24px; box-shadow: 0 3px 14px rgb(0 0 0 / 4%); }
 .specimen:hover { box-shadow: 0 6px 22px rgb(0 0 0 / 7%); }
 .specimen > :deep(.apple-card__body) { display: flex; flex-direction: column; gap: 0; height: 100%; padding: 0; }
@@ -162,7 +168,7 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .specimen h3 { margin: 0; font-size: 27px; line-height: 1.28; font-weight: 650; }
 .specimen h3 span { color: var(--apple-secondary); }
 .feature-heading p { margin: 12px 0 0; color: var(--apple-secondary); font-size: 13px; line-height: 1.6; }
-.feature-stage { display: grid; align-items: center; min-width: 0; height: var(--feature-stage-height); margin: 0 20px; padding: 22px; border-radius: 14px; background-color: var(--feature-tint); background-size: cover; background-position: center; }
+.feature-stage { display: grid; align-items: center; min-width: 0; height: var(--feature-stage-height); flex-shrink: 0; margin: 0 20px; padding: 22px; border-radius: 14px; background-color: var(--feature-tint); background-size: cover; background-position: center; }
 .feature-panel { width: 100%; min-width: 0; max-width: 320px; max-height: 100%; margin: auto; border: 1px solid color-mix(in srgb, var(--apple-border) 45%, transparent); border-radius: 20px; background: var(--apple-surface); box-shadow: 0 2px 5px rgb(0 0 0 / 3%), 0 12px 28px -10px rgb(0 0 0 / 18%); }
 .feature-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; min-height: 64px; margin: 0; padding: 16px 28px 20px; color: var(--apple-secondary); font-size: 12px; line-height: 1.6; }
 .feature-foot code { color: var(--apple-text); font-size: 12px; }
@@ -178,29 +184,39 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .photo-stage :deep(.apple-image) { display: flex; flex-direction: column; height: 100%; border-radius: 12px; }
 .photo-stage :deep(.apple-image__surface) { flex: 1; min-height: 0; }
 .photo-stage :deep(.apple-image__pagination) { flex: none; padding: 4px 6px; }
-.glass-panel { display: grid; gap: 5px; padding: 20px; background: rgb(var(--apple-glass-rgb) / var(--apple-glass-opacity)); -webkit-backdrop-filter: blur(var(--apple-glass-blur)) saturate(1.4); backdrop-filter: blur(var(--apple-glass-blur)) saturate(1.4); }
+.glass-panel { max-height: none; display: grid; gap: 14px; padding: 20px; background: var(--apple-surface); }
+.glass-preview { position: relative; height: 68px; overflow: hidden; isolation: isolate; border-radius: 10px; }
+.glass-preview-shapes { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 20px; animation: home-glass-drift 5s ease-in-out infinite alternate; }
+.glass-preview-shapes span { flex-shrink: 0; width: 48px; height: 48px; border-radius: 14px; background: #82b6ef; transform: rotate(-20deg); }
+.glass-preview-shapes span:nth-child(2) { width: 38px; height: 62px; background: #e9aa99; transform: rotate(25deg); }
+.glass-preview-shapes span:nth-child(3) { border-radius: 50%; background: #ada1e2; }
+.glass-preview-pane { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 100px; height: 40px; font-size: 13px; font-weight: 500; border-radius: 999px; background: rgb(var(--apple-glass-rgb) / var(--apple-glass-opacity)); -webkit-backdrop-filter: blur(var(--apple-glass-blur)) saturate(1.4); backdrop-filter: blur(var(--apple-glass-blur)) saturate(1.4); }
+.glass-sliders { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@keyframes home-glass-drift { from { transform: translateX(-25px); } to { transform: translateX(25px); } }
+.glass-preview[data-motion=none] .glass-preview-shapes, .glass-preview[data-motion=reduced] .glass-preview-shapes { animation: none; }
+@media (prefers-reduced-motion: reduce) { .glass-preview-shapes { animation: none; } }
 .ripple-controls { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .ripple-controls > :deep(.apple-switch-field) { flex: 1; min-width: 0; }
 .ripple-controls > :deep(.apple-button) { flex-shrink: 0; }
-.glass-panel :deep(.apple-field__label), .glass-panel :deep(.apple-choice__label) { font-size: 12px; }
-.glass-panel :deep(.apple-field) { gap: 0; }
+.glass-panel :deep(.apple-field__label), .glass-panel :deep(.apple-choice__label) { font-size: 12px; font-weight: 500; }
+.glass-panel :deep(.apple-field) { position: relative; gap: 0; }
+.glass-panel :deep(.apple-field:has(.apple-slider) > .apple-field__label) { padding-right: 32px; }
 .glass-panel :deep(.apple-slider-row) { min-height: 32px; }
 .glass-panel :deep(.apple-slider) { height: 32px; }
-.glass-panel :deep(.apple-slider__value) { font-size: 11px; }
-.glass-panel :deep(.apple-segmented) { background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); }
+.glass-panel :deep(.apple-slider__value) { position: absolute; top: 0; right: 0; font-size: 12px; line-height: 1.4; color: var(--apple-secondary); }
 .glass-panel :deep(.apple-segmented__item) { flex-basis: 0; min-height: 32px; padding-inline: 4px; font-size: 11px; }
 .starter-preview { display: flex; flex-direction: column; justify-content: center; padding: 20px; }
 .terminal-command { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--apple-border); font-size: 14px; }
 .terminal-command > span { color: var(--apple-secondary); }
 .starter-features { display: grid; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; color: var(--apple-secondary); font-size: 11px; }
-.starter-features li { display: flex; align-items: center; gap: 10px; }
+.starter-features li { display: flex; align-items: center; gap: 10px; line-height: 1.8; }
 .starter-features svg { color: var(--apple-success); flex-shrink: 0; }
 .editor-panel { display: flex; flex-direction: column; overflow: hidden; }
 .editor-toolbar { display: flex; align-items: center; padding: 12px 20px 4px; }
 .editor-toolbar > :deep(.apple-field) { flex: 1; min-width: 0; }
 .editor-toolbar :deep(.apple-segmented__item) { flex-basis: 0; padding-inline: 8px; font-size: 12px; }
-.editor-preview { display: flex; align-items: center; padding: 0 20px 14px; }
-.container-preview { display: grid; place-items: center; min-height: 56px; border: 1px dashed color-mix(in srgb, var(--apple-accent) 55%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--apple-accent) 8%, var(--apple-surface)); color: var(--apple-accent); font-size: 12px; }
+.editor-preview { display: flex; align-items: center; padding: 8px 14px 22px 14px; }
+.container-preview { display: grid; place-items: center; min-height: 56px; border-radius: 8px; background: var(--apple-accent); color: var(--apple-accent-text); font-size: 12px; }
 .editor-code { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: start; gap: 6px; padding: 12px 14px 16px 20px; border-top: 1px solid color-mix(in srgb, var(--apple-border) 50%, transparent); background: var(--apple-surface-alt); }
 .editor-example { min-width: 0; margin: 0; padding: 0; font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
 .editor-copy { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 6px; }
@@ -213,8 +229,8 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .project-preview { display: flex; flex-direction: column; justify-content: center; gap: 12px; width: 100%; height: 100%; color: var(--apple-text); }
 .project-preview > .project-comparison { flex: none; min-height: 0; }
 @media (min-width: 1600px) {
-  .specimen-grid { --feature-stage-height: 320px; }
-}
+  .specimen-grid { --feature-stage-height: 340px; }
+}`
 @media (max-width: 1200px) and (min-width: 1101px) {
   .feature-heading { padding-inline: 22px; }
   .feature-stage { margin-inline: 14px; padding: 14px; }

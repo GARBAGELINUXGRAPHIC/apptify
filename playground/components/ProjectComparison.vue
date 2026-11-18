@@ -29,7 +29,7 @@ const expanded = ref(false)
 </script>
 
 <style scoped>
-.project-comparison { width: 100%; max-width: 320px; min-width: 0; margin-inline: auto; }
+.project-comparison { width: 100%; max-width: 320px; min-width: 0; margin-inline: auto; border-radius: 12px; background: #fff; }
 .comparison-image { border-radius: 12px 12px 0 0; }
 .project-comparison :deep(.apple-image-compare__label) { display: none; }
 .comparison-footer { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 44px; margin-inline: 28px; padding-inline: 10px; border-radius: 0 0 12px 12px; background: #fff; color: #303034; font-size: 11px; line-height: 1.4; }

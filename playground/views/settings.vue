@@ -14,7 +14,7 @@
     <div class="settings-grid">
       <apple-card id="setting-theme" class="settings-section" tabindex="-1" aria-labelledby="theme-heading">
         <div class="specimen-caption"><span>01 / 外观</span><IconPalette :size="18" aria-hidden="true" /></div>
-        <div class="settings-section-heading"><div><h2 id="theme-heading">主题</h2><p>选择喜欢的色彩，应用于所有页面。</p></div></div>
+        <div class="settings-section-heading"><div><h2 id="theme-heading">主题</h2><p>选择喜欢的色彩，应用于所有页面。</p></div><apple-button variant="borderless" size="small" icon-only :icon="IconRestore" label="恢复默认主题" @click="apple.theme.value.set('light')" /></div>
         <div class="theme-picker" role="group" aria-label="选择主题">
           <apple-link as="button" v-for="theme in themes" class="theme-choice" :key="theme.value" type="button" :aria-pressed="apple.theme.value.name === theme.value" :class="{ selected: apple.theme.value.name === theme.value }" @click="apple.theme.value.set(theme.value)">
             <span aria-hidden="true" class="theme-swatch" :style="{ background: theme.background, color: theme.accent }"><i /><i /><i /></span>
@@ -22,14 +22,16 @@
           </apple-link>
         </div>
         <div class="theme-colors" role="group" aria-label="主题颜色">
-          <apple-color-picker v-for="color in themeColors" :key="`${apple.theme.value.resolved}:${color.token}`"
-            :label="color.label" :model-value="apple.theme.value.current.tokens[color.token]" allow-transparency
-            @update:model-value="value => apple.theme.value.setTokens({ [color.token]: value })" />
+          <div v-for="color in themeColors" :key="`${apple.theme.value.resolved}:${color.token}`" class="setting-control-row">
+            <apple-color-picker :label="color.label" :model-value="apple.theme.value.current.tokens[color.token]" allow-transparency
+              @update:model-value="value => apple.theme.value.setTokens({ [color.token]: value })" />
+            <apple-button variant="borderless" size="small" icon-only :icon="IconRestore" :label="`恢复默认${color.label}`" @click="apple.theme.value.resetToken(color.token)" />
+          </div>
         </div>
       </apple-card>
       <apple-card id="setting-motion" class="settings-section" tabindex="-1" aria-labelledby="motion-heading">
         <div class="specimen-caption"><span>02 / 动效</span><IconRipple :size="18" aria-hidden="true" /></div>
-        <div class="settings-section-heading"><div><h2 id="motion-heading">动效</h2><p>为页面切换和组件交互选择动效强度。</p></div></div>
+        <div class="settings-section-heading"><div><h2 id="motion-heading">动效</h2><p>为页面切换和组件交互选择动效强度。</p></div><apple-button variant="borderless" size="small" icon-only :icon="IconRestore" label="恢复默认动效" @click="setMotion('auto')" /></div>
         <apple-segmented-control :model-value="apple.motion.value.mode" :items="motionOptions" label="全局动效" @update:model-value="setMotion" />
         <p class="settings-note">{{ motionDescriptions[apple.motion.value.mode] }}<template v-if="apple.motion.value.reduced"> 系统已开启减少动态效果。</template></p>
         <div ref="motionDemo" class="effect-demo motion-sample" aria-label="动效自动演示" @pointerenter="motionPaused = true" @pointerleave="motionPaused = false" @focusin="motionPaused = true" @focusout="motionPaused = false">
@@ -38,19 +40,22 @@
       </apple-card>
       <apple-card id="setting-ripple" class="settings-section" tabindex="-1" aria-labelledby="ripple-heading">
         <div class="specimen-caption"><span>03 / 点击反馈</span><IconPointer :size="18" aria-hidden="true" /></div>
-        <div class="settings-section-heading"><div><h2 id="ripple-heading">点击波纹</h2><p>让每一次轻点，都有细微的回应。</p></div></div>
-        <apple-switch :model-value="rippleAllowed && apple.ripple.value.enabled" :disabled="!rippleAllowed" label="点击波纹" :hint="rippleAllowed ? '减弱动效时自动关闭，可手动开启；偏好保存在这台设备上。' : '关闭动效时，无法开启点击波纹。'" @update:model-value="apple.ripple.value.set" />
-        <div ref="rippleDemo" class="effect-demo ripple-sample" aria-label="波纹自动演示" @pointerenter="ripplePaused = true" @pointerleave="ripplePaused = false" @focusin="ripplePaused = true" @focusout="ripplePaused = false">
-          <apple-list :items="rippleDemoItems" selectable label="点击波纹演示" @select="rippleDemoClicks++" />
-          <span class="ripple-click-count">已点击 {{ rippleDemoClicks }} 次</span>
-        </div>
+        <div class="settings-section-heading"><div><h2 id="ripple-heading">点击波纹</h2><p>让每一次轻点，都有细微的回应。</p></div><apple-button variant="borderless" size="small" icon-only :icon="IconRestore" label="恢复默认点击波纹" @click="apple.ripple.value.set(true)" /></div>
+        <apple-switch :model-value="rippleAllowed && apple.ripple.value.enabled" :disabled="!rippleAllowed" label="点击波纹" :hint="'减弱动效时自动关闭，可手动开启。\n关闭动效时，无法开启点击波纹。'" @update:model-value="apple.ripple.value.set" />
+	      <apple-button style="margin-top: 20px; /*border: 1px solid var(--apple-secondary)*/" variant="borderless">点击测试波纹</apple-button>
       </apple-card>
       <apple-card id="setting-glass" class="settings-section" tabindex="-1" aria-labelledby="glass-heading">
         <div class="specimen-caption"><span>04 / 材质</span><IconAdjustmentsHorizontal :size="18" aria-hidden="true" /></div>
-        <div class="settings-section-heading"><div><h2 id="glass-heading">玻璃效果</h2><p>调整下拉浮层的底色与模糊程度。</p></div></div>
+        <div class="settings-section-heading"><div><h2 id="glass-heading">玻璃效果</h2><p>调整下拉浮层的底色与模糊程度。</p></div><apple-button variant="borderless" size="small" icon-only :icon="IconRestore" label="恢复默认玻璃效果" @click="resetGlass" /></div>
         <div class="glass-controls">
-          <apple-slider :model-value="apple.glass.value.opacity" label="玻璃不透明度" :min="0" :max="100" :step="0.1" :format-value="formatOpacity" @update:model-value="setGlassOpacity" />
-          <apple-slider :model-value="apple.glass.value.blur" label="玻璃模糊" :min="2" :max="22" :step="1" :format-value="formatBlur" @update:model-value="setGlassBlur" />
+          <div class="setting-control-row">
+            <apple-slider :model-value="apple.glass.value.opacity" label="玻璃不透明度" :min="0" :max="100" :step="0.1" :format-value="formatOpacity" @update:model-value="setGlassOpacity" />
+            <apple-button variant="borderless" size="small" icon-only :icon="IconRestore" label="恢复默认玻璃不透明度" @click="apple.glass.value.set({ opacity: defaultGlassSettings.opacity })" />
+          </div>
+          <div class="setting-control-row">
+            <apple-slider :model-value="apple.glass.value.blur" label="玻璃模糊" :min="2" :max="22" :step="1" :format-value="formatBlur" @update:model-value="setGlassBlur" />
+            <apple-button variant="borderless" size="small" icon-only :icon="IconRestore" label="恢复默认玻璃模糊" @click="apple.glass.value.set({ blur: defaultGlassSettings.blur })" />
+          </div>
         </div>
 	      <div style="margin-bottom: 16px;">
 		      <apple-select v-model="glassPreviewChoice" label="点击查看效果" :items="glassPreviewItems"/>
@@ -58,7 +63,6 @@
         <div class="effect-demo glass-sample" aria-label="玻璃效果自动演示">
           <div class="glass-sample-colors" aria-hidden="true"><span /><span /><span /></div>
         </div>
-        <apple-link as="button" class="glass-reset" @click="resetGlass">恢复默认玻璃效果</apple-link>
       </apple-card>
     </div>
     </div>
@@ -68,8 +72,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { IconCheck, IconStack, IconPointer, IconPalette, IconAdjustmentsHorizontal, IconRipple } from '@tabler/icons-vue'
-import { resolveMotion, useApple, type Motion } from '../../src'
+import { IconCheck, IconRestore, IconPointer, IconPalette, IconAdjustmentsHorizontal, IconRipple } from '@tabler/icons-vue'
+import { defaultGlassSettings, resolveMotion, useApple, type Motion } from '../../src'
 
 const apple = useApple()
 const selectedSetting = ref('theme')
@@ -184,7 +188,10 @@ function reset() {
 .settings-section:focus-visible { outline: 2px solid var(--apple-accent); outline-offset: 4px; }
 .settings-section :deep(> .apple-card__body) { height: 100%; display: flex; flex-direction: column; padding: 12px; }
 .specimen-caption { margin-bottom: 20px; font-size: 10px; }
-.settings-section-heading { margin-bottom: 24px; }
+.settings-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+.setting-control-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.setting-control-row > .apple-field { flex: 1; min-width: 0; }
+.setting-control-row > .apple-button, .settings-section-heading > .apple-button { flex-shrink: 0; }
 .settings-section h2 { font-size: 21px; line-height: 1.3; }
 .settings-section-heading p { margin-top: 9px; }
 .settings-card-foot { margin-top: auto; padding-top: 24px; color: var(--apple-secondary); font-size: 11px; line-height: 1.7; }
@@ -192,7 +199,7 @@ function reset() {
 #setting-theme:has([data-apple-popup-open]) { z-index: 2; }
 .theme-colors { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px 28px; margin-top: 24px; }
 .theme-colors :deep(.apple-field) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-.theme-colors :deep(.apple-color__value) { width: 94px; font-size: 12px; }
+.theme-colors :deep(.apple-color__value) { font-size: 12px; }
 .theme-colors :deep(.apple-color-menu) { inset-inline-start: auto; inset-inline-end: 0; }
 .theme-picker { display: flex; flex-wrap: wrap; gap: 10px; }
 .theme-choice { flex: 0 0 112px; max-width: 100%; min-width: 0; padding: 6px; border: 1px solid var(--apple-border); border-radius: 10px; }
@@ -203,11 +210,11 @@ function reset() {
 .theme-label { color: var(--apple-text); font-size: 11px; }
 .settings-note { margin: 16px 0 0; }
 .effect-demo { position: relative; min-height: 144px; border-radius: 12px; overflow: hidden; background: transparent; margin-top: 20px; }
-.motion-sample { display: flex; align-items: flex-start; flex: 1; min-height: 180px; padding: 16px; }
+.motion-sample { display: flex; align-items: flex-start; flex: 1; min-height: 140px; }
 .motion-sample :deep(.apple-accordion) { width: 100%; }
 .motion-sample :deep(.apple-accordion h3) { font-size: 14px; }
 .motion-sample :deep(.apple-accordion__content) { font-size: 12px; }
-.ripple-sample { flex: 1; max-height: 180px; margin-block: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 20px; }
+.ripple-sample { flex: 1; margin-block: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 20px; }
 .ripple-sample :deep(.apple-list-size) { width: 100%; border-radius: 12px; background: var(--apple-surface); }
 .ripple-sample :deep(.apple-list__item) { padding-inline: 16px; }
 .ripple-click-count { color: var(--apple-secondary); font-size: 11px; }
@@ -223,8 +230,8 @@ function reset() {
 @keyframes sample-reduced { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
 .settings-page[data-preview-motion=reduced] .glass-sample-colors { animation-name: sample-reduced; }
 .settings-page[data-preview-motion=none] .glass-sample-colors { animation: none; }
-.glass-reset { align-self: flex-start; margin-top: 12px; }
 .glass-controls { display: grid; gap: 24px; margin-bottom: 24px; }
+.glass-controls .setting-control-row > .apple-button { align-self: flex-end; height: 44px; }
 .glass-controls :deep(.apple-slider__value) { min-width: 58px; }
 
 @media (max-width: 900px) { .settings-page { grid-template-columns: 144px minmax(0, 1fr); gap: 24px; } }

@@ -203,7 +203,7 @@ export const AppleRadioGroup = defineComponent({
   emits: ['update:modelValue', 'change'],
   data() { return { inputId: useId() } },
   render() {
-    return field(this, h('div', { ...controlAttrs(this), role: 'radiogroup', class: ['apple-radio-group', this.$attrs.class, { 'is-inline': this.inline }] }, this.items.map((item, index) => h('div', { class: ['apple-choice', { 'is-disabled': item.disabled }] }, [h('input', { type: 'radio', class: 'apple-radio', name: this.name || this.inputId, 'aria-labelledby': `${fieldId(this)}-option-${index}-label`, value: item.value, checked: item.value === this.modelValue, disabled: this.disabled || this.loading || item.disabled, required: this.required, onChange: () => { this.$emit('update:modelValue', item.value); this.$emit('change', item.value) } }), h('span', { class: 'apple-choice__label', id: `${fieldId(this)}-option-${index}-label` }, item.label)]))))
+    return field(this, h('div', { ...controlAttrs(this), role: 'radiogroup', class: ['apple-radio-group', this.$attrs.class, { 'is-inline': this.inline }] }, this.items.map((item, index) => h('div', { class: ['apple-choice', { 'is-disabled': item.disabled }] }, [h('input', { type: 'radio', id: `${fieldId(this)}-option-${index}`, class: 'apple-radio', name: this.name || this.inputId, 'aria-labelledby': `${fieldId(this)}-option-${index}-label`, value: item.value, checked: item.value === this.modelValue, disabled: this.disabled || this.loading || item.disabled, required: this.required, onChange: () => { this.$emit('update:modelValue', item.value); this.$emit('change', item.value) } }), h('label', { class: 'apple-choice__label', for: `${fieldId(this)}-option-${index}`, id: `${fieldId(this)}-option-${index}-label` }, item.label)]))))
   },
 })
 

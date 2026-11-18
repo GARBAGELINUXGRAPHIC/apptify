@@ -54,7 +54,7 @@ test('home appearance controls update and persist the shared settings', async ({
   await page.mouse.up()
   await card.getByRole('slider', { name: '玻璃模糊' }).fill('18')
   await card.getByRole('slider', { name: '不透明度' }).fill('65')
-  await expect(card.locator('.glass-panel')).toHaveCSS('backdrop-filter', 'blur(18px) saturate(1.4)')
+  await expect(card.locator('.glass-preview-pane')).toHaveCSS('backdrop-filter', 'blur(18px) saturate(1.4)')
   await expect(page).toHaveURL(/\/$/)
   await page.reload()
   await expect(theme.getByRole('radio', { name: '深色' })).toBeChecked()
