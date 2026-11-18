@@ -2,17 +2,17 @@
   <div class="error-scene">
     <component :is="scenes[code]" ref="scene" :theme="theme" :motion="motion" :paused="paused" />
     <div v-if="motion === 'full' && scene" class="error-scene__controls" role="group" aria-label="动画控制">
+	    <apple-button variant="borderless" icon-only :icon="IconReload"
+	                  label="重新播放动画" @click="replay" />
       <apple-button variant="borderless" icon-only :icon="paused ? IconPlayerPlay : IconPlayerPause"
         :label="paused ? '继续动画' : '暂停动画'" :aria-pressed="paused" @click="paused = !paused" />
-      <apple-button variant="borderless" icon-only :icon="IconRotate"
-        label="重新播放动画" @click="replay" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref } from 'vue'
-import { IconPlayerPause, IconPlayerPlay, IconRotate } from '@tabler/icons-vue'
+import {IconCirclePause, IconPlayerPause, IconPlayerPlay, IconReload, IconRotate} from '@tabler/icons-vue'
 import { useApple } from '../../src'
 import { resolveMotion } from '../../src/core/context'
 import type { ErrorCode } from '../error-pages'

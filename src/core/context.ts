@@ -18,15 +18,15 @@ function glassSettings(value: unknown, fallback: AppleGlassSettings): AppleGlass
 }
 
 const light: ThemeTokens = {
-  bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', text: '#1d1d1f', secondary: '#6e6e73',
+  bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', footer: '#e2e2e6', text: '#1d1d1f', secondary: '#6e6e73',
   border: '#d2d2d7', accent: '#0071e3', 'accent-text': '#ffffff', danger: '#c93830', success: '#34c759',
-  warning: '#ffaa00', shadow: '0 8px 28px rgb(0 0 0 / 0.07)', radius: '8px',
+  warning: '#ffaa00', 'shadow-1': '0 8px 28px rgb(0 0 0 / 0.07)', radius: '8px',
 }
 export const builtInThemes: Record<string, AppleTheme> = {
   light: { scheme: 'light', tokens: light },
-  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', shadow: '0 8px 28px rgb(0 0 0 / 0.22)' } },
-  graphite: { scheme: 'light', tokens: { ...light, bg: '#f3f4f4', 'surface-alt': '#e9eceb', accent: '#3f5152', 'accent-text': '#ffffff' } },
-  rose: { scheme: 'light', tokens: { ...light, bg: '#faf7f8', 'surface-alt': '#f4edf0', accent: '#a83b65', 'accent-text': '#ffffff' } },
+  dark: { scheme: 'dark', tokens: { ...light, bg: '#161617', surface: '#222224', 'surface-alt': '#2b2b2e', footer: '#303034', text: '#eeeeef', secondary: '#aaaab0', border: '#424246', 'shadow-1': '0 8px 28px rgb(0 0 0 / 0.22)' } },
+  graphite: { scheme: 'light', tokens: { ...light, bg: '#f3f4f4', 'surface-alt': '#e9eceb', footer: '#dce2df', accent: '#3f5152', 'accent-text': '#ffffff' } },
+  rose: { scheme: 'light', tokens: { ...light, bg: '#faf7f8', 'surface-alt': '#f4edf0', footer: '#eadde3', accent: '#a83b65', 'accent-text': '#ffffff' } },
 }
 
 export function resolveMotion(value: ComponentMotion = 'inherit', global: Motion = 'auto', reduced = false): Exclude<Motion, 'auto'> {
@@ -118,11 +118,24 @@ export function createApple(options: AppleOptions = {}) {
   const themes = ref<Record<string, AppleTheme>>(Object.fromEntries(
     Object.entries({ ...builtInThemes, ...options.themes }).map(([name, theme]) => [name, { ...theme, tokens: { ...theme.tokens } }]),
   ))
+  const themeDefaults = new Map(Object.entries(themes.value).map(([name, theme]) => [name, { ...theme, tokens: { ...theme.tokens } }]))
+  const tokenOverrides = ref<Record<string, ThemeTokens>>({})
+  function readTokenOverrides(value: unknown) {
+    const result: Record<string, ThemeTokens> = {}
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const [name, tokens] of Object.entries(value)) {
+        if (!Object.prototype.hasOwnProperty.call(themes.value, name) || !tokens || typeof tokens !== 'object' || Array.isArray(tokens)) continue
+        result[name] = Object.fromEntries(Object.entries(tokens).filter((entry): entry is [string, string] => Object.prototype.hasOwnProperty.call(themes.value[name].tokens, entry[0]) && typeof entry[1] === 'string'))
+      }
+    }
+    tokenOverrides.value = result
+    for (const [name, theme] of themeDefaults) themes.value[name] = { ...theme, tokens: { ...theme.tokens, ...result[name] } }
+  }
   const systemDark = ref(false)
   const storageKey = options.storageKey ?? 'apptify:preferences'
   const persist = () => {
     if (!options.persist || typeof window === 'undefined') return
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, motion: motion.value.mode, ripple: ripple.value.enabled, glass: { opacity: glass.value.opacity, blur: glass.value.blur } })) } catch { /* Storage may be disabled. */ }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ theme: theme.value.name, themeTokens: tokenOverrides.value, motion: motion.value.mode, ripple: ripple.value.enabled, glass: { opacity: glass.value.opacity, blur: glass.value.blur } })) } catch { /* Storage may be disabled. */ }
   }
   const theme = ref({
     name: options.theme ?? 'system',
@@ -134,9 +147,22 @@ export function createApple(options: AppleOptions = {}) {
       theme.value.name = name
       persist()
     },
+    setTokens(tokens: ThemeTokens, name = theme.value.resolved) {
+      if (!Object.prototype.hasOwnProperty.call(themes.value, name)) throw new Error(`Unknown Apple theme: ${name}`)
+      readTokenOverrides({ ...tokenOverrides.value, [name]: { ...tokenOverrides.value[name], ...tokens } })
+      persist()
+    },
+    resetTokens(name?: string) {
+      const remaining = { ...tokenOverrides.value }
+      if (name !== undefined) delete remaining[name]
+      readTokenOverrides(name === undefined ? {} : remaining)
+      persist()
+    },
     register(name: string, tokens: ThemeTokens, scheme: 'light' | 'dark' = 'light') {
       if (name === 'system') throw new Error('The theme name "system" is reserved')
-      themes.value[name] = { scheme, tokens: { ...builtInThemes[scheme].tokens, ...tokens } }
+      const theme = { scheme, tokens: { ...builtInThemes[scheme].tokens, ...tokens } }
+      themeDefaults.set(name, theme)
+      themes.value[name] = { ...theme, tokens: { ...theme.tokens, ...tokenOverrides.value[name] } }
     },
   })
   if (theme.value.name !== 'system' && !themes.value[theme.value.name]) throw new Error(`Unknown Apple theme: ${theme.value.name}`)
@@ -162,6 +188,7 @@ export function createApple(options: AppleOptions = {}) {
     if (options.persist) {
       try {
         const stored = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')
+        readTokenOverrides(stored?.themeTokens)
         if (stored.theme === 'system' || themes.value[stored.theme]) theme.value.name = stored.theme
         if (['auto', 'full', 'reduced', 'none'].includes(stored.motion)) motion.value.mode = stored.motion
         if (typeof stored.ripple === 'boolean') { ripple.value.enabled = stored.ripple; hasRipplePreference = true }
@@ -207,6 +234,7 @@ export function createApple(options: AppleOptions = {}) {
         if (!options.persist || event.key !== storageKey || !event.newValue) return
         try {
           const value = JSON.parse(event.newValue)
+          readTokenOverrides(value?.themeTokens)
           if (value.theme === 'system' || themes.value[value.theme]) theme.value.name = value.theme
           if (['auto', 'full', 'reduced', 'none'].includes(value.motion)) motion.value.mode = value.motion
           if (typeof value.ripple === 'boolean') ripple.value.enabled = value.ripple

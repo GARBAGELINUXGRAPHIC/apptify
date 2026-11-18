@@ -263,12 +263,12 @@ export const AppleSegmentedControl = defineComponent({
 export const AppleColorPicker = defineComponent({
   name: 'AppleColorPicker', inheritAttrs: false,
   inject: { apple: { from: appleKey, default: null } },
-  props: { ...fieldProps, modelValue: { type: String, default: '#0071e3' }, showValue: { type: Boolean, default: true } },
+  props: { ...fieldProps, modelValue: { type: String, default: '#0071e3' }, allowTransparency: Boolean, showValue: { type: Boolean, default: true } },
   emits: ['update:modelValue', 'change'],
-  data() { return { inputId: useId(), opened: false, draft: this.modelValue, draftDirty: false, hexError: '', composing: false, hsv: hexToHsv(this.modelValue), dragging: false, pointerId: null as number | null, outside: null as ((event: PointerEvent) => void) | null } },
+  data() { return { inputId: useId(), opened: false, draft: this.modelValue, draftDirty: false, hexError: '', composing: false, hsv: hexToHsv(this.modelValue), alpha: hexAlpha(this.modelValue), dragging: false, pointerId: null as number | null, outside: null as ((event: PointerEvent) => void) | null } },
   computed: { motionMode() { const context = this.apple as AppleContext | null; return resolveMotion(this.motion, context?.motion.value.mode, context?.motion.value.reduced) } },
   watch: {
-    modelValue(value: string) { if (!this.draftDirty && !this.composing) this.draft = value; const next = hexToHsv(value); if (next.s > 0 && next.v > 0) this.hsv.h = next.h; this.hsv.s = next.s; this.hsv.v = next.v },
+    modelValue(value: string) { if (!this.draftDirty && !this.composing) this.draft = value; this.alpha = hexAlpha(value); const next = hexToHsv(value); if (next.s > 0 && next.v > 0) this.hsv.h = next.h; this.hsv.s = next.s; this.hsv.v = next.v },
     disabled(value: boolean) { if (value) this.close() }, loading(value: boolean) { if (value) this.close() },
     motionMode(mode: string) { if (mode !== 'full') finishPopup(this.$refs.menu as HTMLElement) },
   },
@@ -278,15 +278,17 @@ export const AppleColorPicker = defineComponent({
     close(restoreFocus = false) { if (restoreFocus) (this.$refs.trigger as HTMLButtonElement)?.focus({ preventScroll: true }); this.opened = false; this.composing = false; this.endPlane() },
     toggle() { if (this.disabled || this.loading) return; if (this.opened) this.close(); else this.opened = true },
     endPlane(commit = false) { const dragging = this.dragging; this.dragging = false; const plane = this.$refs.plane as HTMLElement | undefined; if (this.pointerId !== null && plane?.hasPointerCapture?.(this.pointerId)) plane.releasePointerCapture(this.pointerId); this.pointerId = null; if (dragging && commit) this.update(hsvToHex(this.hsv), true) },
-    update(hex: string, commit = false) { if (this.disabled || this.loading) return; const value = normalizeHex(hex); if (!value) return; this.draft = value; this.draftDirty = false; this.hexError = ''; this.$emit('update:modelValue', value); if (commit) this.$emit('change', value) },
+    update(hex: string, commit = false) { if (this.disabled || this.loading) return; const color = normalizeHex(hex, this.allowTransparency); if (!color) return; if (color.length === 9) this.alpha = hexAlpha(color); const value = color.slice(0, 7) + (this.allowTransparency ? this.alpha.toString(16).padStart(2, '0') : ''); this.draft = value; this.draftDirty = false; this.hexError = ''; this.$emit('update:modelValue', value); if (commit) this.$emit('change', value) },
     editHex(event: Event) { this.draft = stringValue(event); this.draftDirty = true; this.hexError = '' },
+    editAlpha(event: Event, commit = false) { if (this.disabled || this.loading) return; this.alpha = Math.round(Math.max(0, Math.min(100, numericValue(event))) / 100 * 255); this.update(hsvToHex(this.hsv), commit) },
     applyHex() {
       if (this.disabled || this.loading || this.composing) return
-      const value = normalizeHex(this.draft)
-      if (!value) { this.hexError = '请输入 3 或 6 位 HEX 颜色，例如 #ff8800。'; this.$nextTick(() => (this.$refs.hex as HTMLInputElement)?.focus({ preventScroll: true })); return }
+      const value = normalizeHex(this.draft, this.allowTransparency)
+      if (!value) { this.hexError = this.allowTransparency ? '请输入 3、4、6 或 8 位 HEX 颜色，例如 #ff880080。' : '请输入 3 或 6 位 HEX 颜色，例如 #ff8800。'; this.$nextTick(() => (this.$refs.hex as HTMLInputElement)?.focus({ preventScroll: true })); return }
       const next = hexToHsv(value)
       if (next.s > 0 && next.v > 0) this.hsv.h = next.h
       this.hsv.s = next.s; this.hsv.v = next.v
+      this.alpha = hexAlpha(value)
       this.update(value, true)
     },
     plane(event: PointerEvent) { if (!this.opened || this.disabled || this.loading) return; if (event.type === 'pointerdown') { if (event.button !== 0) return; this.dragging = true; this.pointerId = event.pointerId; (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId) }; if (!this.dragging || event.pointerId !== this.pointerId) return; const rect = (event.currentTarget as HTMLElement).getBoundingClientRect(); if (!rect.width || !rect.height) return; this.hsv.s = Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)); this.hsv.v = Math.max(0, Math.min(100, 100 - (event.clientY - rect.top) / rect.height * 100)); this.update(hsvToHex(this.hsv)) },
@@ -301,24 +303,36 @@ export const AppleColorPicker = defineComponent({
       colorMenuTransition(withDirectives(h('div', { ref: 'menu', id: `${this.inputId}-menu`, class: 'apple-field-menu apple-color-menu', role: 'dialog', 'aria-label': this.label || this.$attrs['aria-label'] || '选择颜色', 'aria-hidden': !this.opened || inactive ? true : undefined, inert: !this.opened || inactive }, h('div', { class: 'apple-color-menu__content' }, [
         h('div', { ref: 'plane', class: 'apple-color-plane', role: 'slider', tabindex: inactive ? -1 : 0, 'aria-disabled': inactive || undefined, 'aria-label': '饱和度与亮度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(this.hsv.s), 'aria-valuetext': `饱和度 ${Math.round(this.hsv.s)}%，亮度 ${Math.round(this.hsv.v)}%`, style: { backgroundColor: `hsl(${this.hsv.h} 100% 50%)` }, onPointerdown: this.plane, onPointermove: this.plane, onPointerup: () => this.endPlane(true), onPointercancel: () => this.endPlane(), onLostpointercapture: () => this.endPlane(), onKeydown: this.planeKey }, h('span', { class: 'apple-color-plane__thumb', style: { left: `${this.hsv.s}%`, top: `${100 - this.hsv.v}%`, backgroundColor: hsvToHex(this.hsv) } })),
         h('input', { type: 'range', min: 0, max: 360, step: 1, class: 'apple-color-hue', disabled: inactive, 'aria-label': '色相', value: this.hsv.h, onInput: (event: Event) => { this.hsv.h = numericValue(event); this.update(hsvToHex(this.hsv)) }, onChange: () => this.update(hsvToHex(this.hsv), true) }),
+        this.allowTransparency ? h('label', { class: 'apple-color-alpha-row' }, [
+          h('span', '不透明度'),
+          h('input', { type: 'range', min: 0, max: 100, step: 1, class: 'apple-color-hue apple-color-alpha', disabled: inactive, 'aria-label': '不透明度', 'aria-valuetext': `${Math.round(this.alpha / 255 * 100)}%`, value: Math.round(this.alpha / 255 * 100), style: { '--apple-alpha-color': hsvToHex(this.hsv) }, onInput: (event: Event) => this.editAlpha(event), onChange: (event: Event) => this.editAlpha(event, true) }),
+          h('output', `${Math.round(this.alpha / 255 * 100)}%`),
+        ]) : null,
         h('div', { class: 'apple-color-hex' }, [h('span', 'HEX'), h('div', { class: ['apple-input-wrap', { 'has-error': !!this.hexError }] }, [
-          h('input', { ref: 'hex', id: `${this.inputId}-hex`, type: 'text', class: 'apple-control', disabled: inactive, 'aria-label': 'HEX 颜色', 'aria-invalid': this.hexError ? true : undefined, 'aria-describedby': this.hexError ? `${this.inputId}-hex-error` : undefined, maxlength: 7, spellcheck: false, autocomplete: 'off', autocapitalize: 'off', value: this.draft, onInput: this.editHex, onCompositionstart: () => { this.composing = true }, onCompositionend: (event: CompositionEvent) => { this.composing = false; this.editHex(event) }, onKeydown: (event: KeyboardEvent) => { if (event.key === 'Enter' && !event.isComposing && !this.composing && event.keyCode !== 229) { event.preventDefault(); event.stopPropagation(); this.applyHex() } } }),
+          h('input', { ref: 'hex', id: `${this.inputId}-hex`, type: 'text', class: 'apple-control', disabled: inactive, 'aria-label': 'HEX 颜色', 'aria-invalid': this.hexError ? true : undefined, 'aria-describedby': this.hexError ? `${this.inputId}-hex-error` : undefined, maxlength: this.allowTransparency ? 9 : 7, spellcheck: false, autocomplete: 'off', autocapitalize: 'off', value: this.draft, onInput: this.editHex, onCompositionstart: () => { this.composing = true }, onCompositionend: (event: CompositionEvent) => { this.composing = false; this.editHex(event) }, onKeydown: (event: KeyboardEvent) => { if (event.key === 'Enter' && !event.isComposing && !this.composing && event.keyCode !== 229) { event.preventDefault(); event.stopPropagation(); this.applyHex() } } }),
           h('span', { class: 'apple-input__affix' }, h(AppleButton, { size: 'small', disabled: inactive, 'aria-label': '应用 HEX 颜色', onClick: this.applyHex }, { default: () => 'Apply' })),
         ])]),
         this.hexError ? h('p', { id: `${this.inputId}-hex-error`, class: 'apple-field__message is-error', role: 'alert' }, this.hexError) : null,
-        h('div', { class: 'apple-color-swatches' }, ['#0071e3', '#34c759', '#ff9f0a', '#ff453a', '#bf5af2', '#1d1d1f', '#86868b', '#ffffff'].map(color => h('button', { type: 'button', class: 'apple-color-swatch', disabled: inactive, 'aria-label': color, 'aria-pressed': this.modelValue.toLowerCase() === color, style: { backgroundColor: color }, onClick: () => { this.hsv = hexToHsv(color); this.update(color, true) } }))),
+        h('div', { class: 'apple-color-swatches' }, ['#0071e3', '#34c759', '#ff9f0a', '#ff453a', '#bf5af2', '#1d1d1f', '#86868b', '#ffffff'].map(color => h('button', { type: 'button', class: 'apple-color-swatch', disabled: inactive, 'aria-label': color, 'aria-pressed': normalizeHex(this.modelValue, true)?.slice(0, 7) === color, style: { backgroundColor: color }, onClick: () => { this.hsv = hexToHsv(color); this.update(color, true) } }))),
       ])), [[vShow, this.opened && !inactive]])),
     ]))
   },
 })
 
-function normalizeHex(hex: string): string | null {
-  const value = hex.trim().replace(/^#?([\da-f]{3})$/i, (_, short: string) => `#${[...short].map(char => char + char).join('')}`).replace(/^([\da-f]{6})$/i, '#$1')
-  return /^#[\da-f]{6}$/i.test(value) ? value.toLowerCase() : null
+function normalizeHex(hex: string, allowAlpha = false): string | null {
+  let value = hex.trim().replace(/^#/, '')
+  if (!/^[\da-f]+$/i.test(value) || !(allowAlpha ? [3, 4, 6, 8] : [3, 6]).includes(value.length)) return null
+  if (value.length === 3 || value.length === 4) value = [...value].map(char => char + char).join('')
+  return `#${value.toLowerCase()}`
+}
+function hexAlpha(value: string): number {
+  if (value.trim().toLowerCase() === 'transparent') return 0
+  const color = normalizeHex(value, true)
+  return color?.length === 9 ? parseInt(color.slice(7), 16) : 255
 }
 
 function hexToHsv(hex: string) {
-  const normalized = /^#[\da-f]{6}$/i.test(hex) ? hex.slice(1) : '0071e3'
+  const normalized = normalizeHex(hex, true)?.slice(1, 7) ?? '0071e3'
   const [r = 0, g = 0, b = 0] = [0, 2, 4].map(index => parseInt(normalized.slice(index, index + 2), 16) / 255)
   const max = Math.max(r, g, b), min = Math.min(r, g, b), difference = max - min
   const hue = difference === 0 ? 0 : max === r ? ((g - b) / difference) % 6 : max === g ? (b - r) / difference + 2 : (r - g) / difference + 4

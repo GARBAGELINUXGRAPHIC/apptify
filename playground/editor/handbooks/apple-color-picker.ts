@@ -50,13 +50,19 @@ export default defineHandbook({
       "name": "modelValue",
       "type": "string",
       "default": "\"#0071e3\"",
-      "description": "HEX 颜色字符串，默认 #0071e3。交互更新为小写的六位 #rrggbb；HEX 输入允许三位简写。"
+      "description": "HEX 颜色字符串。默认输出 #rrggbb；allowTransparency 开启时输出 #rrggbbaa，末两位为 Alpha（00 全透明，ff 不透明）。输入支持三/六位 HEX，开启透明度时也支持四/八位。"
+    },
+    {
+      "name": "allowTransparency",
+      "type": "boolean",
+      "default": "false",
+      "description": "显示不透明度滑块（0–100%），允许输入八位 HEX，交互输出 #rrggbbaa。六位输入按完全不透明处理。"
     },
     {
       "name": "showValue",
       "type": "boolean",
       "default": "true",
-      "description": "在颜色触发按钮旁显示大写 HEX 文字，不影响面板中的 HEX 编辑。"
+      "description": "在颜色触发按钮旁显示大写 HEX，不影响面板中的颜色编辑。"
     }
   ],
   "events": [

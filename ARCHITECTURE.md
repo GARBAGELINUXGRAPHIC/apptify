@@ -12,7 +12,9 @@ Vue 3 + TypeScript; Options API component definitions. All public components use
 
 ## Shared contract
 
-CSS variables: `--apple-bg`, `--apple-surface`, `--apple-surface-alt`, `--apple-text`, `--apple-secondary`, `--apple-border`, `--apple-accent`, `--apple-accent-text`, `--apple-danger`, `--apple-success`, `--apple-warning`, `--apple-shadow`, `--apple-shadow-strong`, `--apple-radius`, `--apple-duration`, `--apple-ease`. Font inherits system sans-serif. Cards 8px radius, controls pill or 8px. No negative letter spacing.
+CSS variables: `--apple-bg`, `--apple-surface`, `--apple-surface-alt`, `--apple-text`, `--apple-secondary`, `--apple-border`, `--apple-accent`, `--apple-accent-text`, `--apple-danger`, `--apple-success`, `--apple-warning`, `--apple-shadow-1`, `--apple-shadow-2`, `--apple-shadow-3`, `--apple-shadow-4`, `--apple-shadow-5`, `--apple-radius`, `--apple-duration`, `--apple-ease`. Font inherits system sans-serif. Cards 8px radius, controls pill or 8px. No negative letter spacing.
+
+Shadow levels 1 and 2 preserve the previous normal and strong shadows. Levels 3–5 progressively increase offset, blur and opacity. Theme token `shadow-1` supplies level 1; levels 2–5 are shared CSS defaults.
 
 Core exports from `src/core/context.ts`: `appleKey` InjectionKey<AppleContext>; `createApple(options?)`; `useApple()`; `resolveMotion(value, global, reduced)` and `motionProps`. `AppleContext` has `theme` and `motion` refs (access state and methods through `.value`), `messages` bus and `overlays` service. Root context is injected via `apple: { from: appleKey }` in Options API. Public components accept `motion: 'inherit'|'auto'|'full'|'reduced'|'none'`, `disabled` where applicable, and forward attrs to their semantic root.
 

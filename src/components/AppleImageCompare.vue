@@ -1,5 +1,5 @@
 <template>
-  <div class="apple-image-compare" :class="{ 'is-disabled': disabled }"
+  <div class="apple-image-compare" :class="{ 'is-disabled': disabled, 'is-dragging': dragging }"
     :style="{ '--apple-compare-position': `${position}%` }"
     @pointerdown="pointerDown" @pointermove="pointerMove" @pointerup="pointerEnd($event)"
     @pointercancel="pointerEnd($event, true)" @lostpointercapture="pointerEnd($event, true)">
@@ -17,7 +17,9 @@
         :aria-label="label" aria-orientation="horizontal" :aria-valuemin="0" :aria-valuemax="100"
         :aria-valuenow="position" :aria-valuetext="`${beforeLabel || '之前'} ${position}% · ${afterLabel || '之后'} ${100 - position}%`"
         :aria-disabled="disabled" @keydown="keyDown">
-        <IconChevronLeft :size="17" aria-hidden="true" /><IconChevronRight :size="17" aria-hidden="true" />
+        <span class="apple-image-compare__grip" aria-hidden="true">
+          <IconChevronLeft :size="14" :stroke-width="1.75" /><IconChevronRight :size="14" :stroke-width="1.75" />
+        </span>
       </div>
     </div>
   </div>
@@ -50,9 +52,10 @@ export default defineComponent({
     const surface = ref<HTMLElement>()
     const handle = ref<HTMLElement>()
     const position = ref(normalize(props.modelValue))
+    const dragging = ref(false)
     let drag: { id: number; start: number } | undefined
     watch(() => props.modelValue, value => { position.value = normalize(value) })
-    watch(() => props.disabled, value => { if (value) finish(true) })
+    watch(() => props.disabled, value => { if (value) finish() })
 
     function update(value: number) {
       const next = normalize(value)
@@ -68,6 +71,7 @@ export default defineComponent({
       if (props.disabled || drag || event.isPrimary === false || event.button !== 0) return
       event.stopPropagation()
       drag = { id: event.pointerId, start: position.value }
+      dragging.value = true
       handle.value?.focus({ preventScroll: true })
       surface.value?.setPointerCapture?.(event.pointerId)
       move(event)
@@ -77,19 +81,19 @@ export default defineComponent({
       event.stopPropagation()
       move(event)
     }
-    function finish(cancelled: boolean) {
+    function finish() {
       if (!drag) return
       const { id, start } = drag
       drag = undefined
-      if (cancelled) update(start)
-      else if (position.value !== start) emit('change', position.value)
+      dragging.value = false
+      if (position.value !== start) emit('change', position.value)
       if (surface.value?.hasPointerCapture?.(id)) surface.value.releasePointerCapture(id)
     }
-    function pointerEnd(event: PointerEvent, cancelled = false) {
+    function pointerEnd(event: PointerEvent, interrupted = false) {
       if (!drag || event.pointerId !== drag.id) return
       event.stopPropagation()
-      if (!cancelled) move(event)
-      finish(cancelled)
+      if (!interrupted) move(event)
+      finish()
     }
     function keyDown(event: KeyboardEvent) {
       if (props.disabled) return
@@ -106,13 +110,13 @@ export default defineComponent({
       update(values[event.key])
       if (previous !== position.value) emit('change', position.value)
     }
-    return { surface, handle, position, pointerDown, pointerMove, pointerEnd, keyDown }
+    return { surface, handle, position, dragging, pointerDown, pointerMove, pointerEnd, keyDown }
   },
 })
 </script>
 
 <style>
-.apple-image-compare { display: grid; place-items: stretch; width: 100%; min-width: 0; box-sizing: border-box; padding-inline: 28px; overflow: clip; isolation: isolate; border-radius: 12px; cursor: ew-resize; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.apple-image-compare { display: grid; place-items: stretch; width: 100%; min-width: 0; box-sizing: border-box; padding-inline: 28px; overflow: clip; isolation: isolate; border-radius: 12px; cursor: default; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .apple-image-compare__surface { position: relative; min-width: 0; min-height: 0; border-radius: inherit; }
 .apple-image-compare__frame { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; background: var(--apple-surface-alt, #f5f5f7); }
 .apple-image-compare__image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; }
@@ -121,7 +125,17 @@ export default defineComponent({
 .apple-image-compare__label--before { left: 12px; }
 .apple-image-compare__label--after { right: 12px; }
 .apple-image-compare__divider { position: absolute; top: 0; bottom: 0; left: var(--apple-compare-position); width: 3px; transform: translateX(-50%); background: #007aff; pointer-events: none; }
-.apple-image-compare__handle { position: absolute; top: 50%; left: var(--apple-compare-position); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; box-sizing: border-box; border: 2px solid #fff; border-radius: 50%; background: #007aff; color: white; box-shadow: 0 2px 12px #0003; transform: translate(-50%, -50%); cursor: ew-resize; }
+.apple-image-compare__handle { position: absolute; top: 50%; left: var(--apple-compare-position); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; box-sizing: border-box; border: 1px solid rgb(255 255 255 / 80%); border-radius: 50%; background: rgb(255 255 255 / 58%); color: #18181b; -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4); box-shadow: inset 0 1px 1px rgb(255 255 255 / 70%), 0 3px 12px rgb(0 0 0 / 18%); transform: translate(-50%, -50%); cursor: ew-resize; touch-action: none; }
+.apple-image-compare__grip { display: inline-flex; align-items: center; justify-content: center; pointer-events: none; }
+.apple-image-compare__handle { transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease, color 160ms ease; }
+@media (hover: hover) {
+  .apple-image-compare:not(.is-disabled) .apple-image-compare__handle:hover { transform: translate(-50%, -50%) scale(1.08); background: rgb(255 255 255 / 78%); box-shadow: inset 0 1px 1px rgb(255 255 255 / 80%), 0 5px 16px rgb(0 0 0 / 24%); }
+}
+.apple-image-compare.is-dragging:not(.is-disabled) .apple-image-compare__handle { transform: translate(-50%, -50%) scale(.96); background: rgb(255 255 255 / 90%); color: #007aff; box-shadow: inset 0 1px 1px rgb(255 255 255 / 80%), 0 2px 8px rgb(0 0 0 / 18%), 0 0 0 4px rgb(0 122 255 / 14%); }
+@media (prefers-reduced-motion: reduce) {
+  .apple-image-compare__handle { transition: none; }
+}
+.apple-image-compare__grip > svg { flex: none; margin-inline: -1px; }
 .apple-image-compare__handle:focus-visible { outline: 3px solid #007aff; outline-offset: 3px; }
 .apple-image-compare.is-disabled { cursor: default; }
 .apple-image-compare.is-disabled .apple-image-compare__handle { opacity: .6; cursor: default; }

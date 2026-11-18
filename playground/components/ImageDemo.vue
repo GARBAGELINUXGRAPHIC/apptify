@@ -7,7 +7,7 @@
     </div>
     <apple-image
       :carousel="carousel"
-      :gallery="carousel ? slides : gallery"
+      :gallery="(carousel ? slides : gallery).slice(0, limit)"
       :gallery-layout="layout"
       :gallery-shape="square ? 'square' : 'natural'"
       :aspect-ratio="aspectRatio"
@@ -19,7 +19,7 @@
 import { ref } from 'vue'
 import { imageUrl } from '../images'
 
-withDefaults(defineProps<{ aspectRatio?: string; controls?: boolean }>(), { controls: true })
+withDefaults(defineProps<{ aspectRatio?: string; controls?: boolean; limit?: number }>(), { controls: true })
 const layout = ref<'compact' | 'tiled' | 'tiled-wrap'>('compact')
 const carousel = ref(false)
 const square = ref(false)

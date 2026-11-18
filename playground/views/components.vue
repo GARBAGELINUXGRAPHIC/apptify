@@ -10,9 +10,6 @@
         <div class="directory-tree"><ComponentIndex v-model:expanded="expandedGroups" :active-group="activeGroup" :active-id="activeId" /></div>
       </aside>
       <div class="components-content">
-        <div class="feed-toolbar">
-          <span class="feed-count">全部组件 <small>{{ catalog.length }}</small></span>
-        </div>
         <div ref="feed" class="component-feed">
           <section v-for="(section, index) in sections" :id="section.id" :key="section.id" class="feed-group feed-anchor" :data-group="section.id" :aria-labelledby="`${section.id}-heading`">
             <header class="feed-group-heading">

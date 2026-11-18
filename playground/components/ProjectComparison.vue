@@ -1,0 +1,41 @@
+<template>
+  <div class="project-comparison">
+    <ImageCompareDemo v-model="position" class="comparison-image" />
+    <div class="comparison-footer">
+      <span>Material UI</span>
+      <apple-button class="comparison-expand" variant="borderless" :icon="IconMaximize" icon-only
+        label="放大图片对比" @click="expanded = true" />
+      <span>Apptify</span>
+    </div>
+  </div>
+  <apple-dialog v-model="expanded" class="comparison-dialog" title="Clash Verge Rev Fork" :width="1100" :show-footer="false">
+    <div class="project-comparison project-comparison--expanded">
+      <ImageCompareDemo v-model="position" class="comparison-image" />
+      <div class="comparison-footer comparison-footer--expanded">
+        <span>Material UI</span>
+        <span>Apptify</span>
+      </div>
+    </div>
+  </apple-dialog>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { IconMaximize } from '@tabler/icons-vue'
+import ImageCompareDemo from './ImageCompareDemo.vue'
+
+const position = ref(50)
+const expanded = ref(false)
+</script>
+
+<style scoped>
+.project-comparison { width: 100%; max-width: 320px; min-width: 0; margin-inline: auto; }
+.comparison-image { border-radius: 12px 12px 0 0; }
+.project-comparison :deep(.apple-image-compare__label) { display: none; }
+.comparison-footer { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 44px; margin-inline: 28px; padding-inline: 10px; border-radius: 0 0 12px 12px; background: #fff; color: #303034; font-size: 11px; line-height: 1.4; }
+.comparison-footer > :last-child { text-align: right; }
+.comparison-expand { width: 32px; min-width: 32px; height: 36px; min-height: 36px; padding: 6px; color: #303034; }
+:global(.comparison-dialog .apple-modal-body) { padding: 8px 0 16px; }
+.project-comparison--expanded { max-width: calc((100dvh - 200px) * 1864 / 1480 + 56px); }
+.comparison-footer--expanded { grid-template-columns: 1fr 1fr; padding-inline: 16px; font-size: 13px; }
+</style>

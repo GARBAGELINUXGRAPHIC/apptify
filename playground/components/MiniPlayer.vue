@@ -99,7 +99,7 @@ onBeforeUnmount(() => clearInterval(timer))
   min-width: 0;
   max-width: 320px;
   margin: auto;
-  padding: 18px 20px 14px;
+  padding: 24px;
   border: 1px solid color-mix(in srgb, var(--apple-border) 45%, transparent);
   border-radius: 20px;
   background: var(--apple-surface);
@@ -146,7 +146,7 @@ onBeforeUnmount(() => clearInterval(timer))
 }
 
 @media (max-width: 360px) {
-  .mini-player { padding-inline: 14px; }
+  .mini-player { padding-inline: 20px; }
   .track-info { gap: 9px; }
   .track-info img { width: 46px; height: 46px; }
 }

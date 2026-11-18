@@ -251,7 +251,6 @@
     </g>
     <path d="M40 78 43 581Q44 614 80 613" fill="none" stroke="#fff8de" stroke-width="2" opacity=".35"></path>
   </g>
-  <g class="meal-scene__edition" fill="var(--apple-secondary, #74766e)" font-size="10" letter-spacing="2"><text x="44" y="20">NOT YOURS</text><text x="942" y="650" text-anchor="end">PAPER TALES — 02</text></g>
 </svg>
     </div>
   </figure>

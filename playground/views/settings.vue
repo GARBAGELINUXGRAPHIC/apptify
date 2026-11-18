@@ -21,7 +21,11 @@
             <span class="theme-label">{{ theme.label }}<IconCheck v-if="apple.theme.value.name === theme.value" :size="15" aria-hidden="true" /></span>
           </apple-link>
         </div>
-        <div class="settings-card-foot">外观偏好保存在这台设备上。</div>
+        <div class="theme-colors" role="group" aria-label="主题颜色">
+          <apple-color-picker v-for="color in themeColors" :key="`${apple.theme.value.resolved}:${color.token}`"
+            :label="color.label" :model-value="apple.theme.value.current.tokens[color.token]" allow-transparency
+            @update:model-value="value => apple.theme.value.setTokens({ [color.token]: value })" />
+        </div>
       </apple-card>
       <apple-card id="setting-motion" class="settings-section" tabindex="-1" aria-labelledby="motion-heading">
         <div class="specimen-caption"><span>02 / 动效</span><IconRipple :size="18" aria-hidden="true" /></div>
@@ -31,7 +35,6 @@
         <div ref="motionDemo" class="effect-demo motion-sample" aria-label="动效自动演示" @pointerenter="motionPaused = true" @pointerleave="motionPaused = false" @focusin="motionPaused = true" @focusout="motionPaused = false">
           <apple-accordion v-model="motionDemoOpened" multiple :items="motionDemoItems" />
         </div>
-        <div class="settings-card-foot">{{ previewMotion === 'none' ? '动效已关闭 · 静态展示' : '自动演示 · 跟随当前动效强度' }}</div>
       </apple-card>
       <apple-card id="setting-ripple" class="settings-section" tabindex="-1" aria-labelledby="ripple-heading">
         <div class="specimen-caption"><span>03 / 点击反馈</span><IconPointer :size="18" aria-hidden="true" /></div>
@@ -41,7 +44,6 @@
           <apple-list :items="rippleDemoItems" selectable label="点击波纹演示" @select="rippleDemoClicks++" />
           <span class="ripple-click-count">已点击 {{ rippleDemoClicks }} 次</span>
         </div>
-        <div class="settings-card-foot">{{ rippleAllowed && apple.ripple.value.enabled ? '自动点击 · 也可以手动试一试' : '点击波纹已关闭 · 静态展示' }}</div>
       </apple-card>
       <apple-card id="setting-glass" class="settings-section" tabindex="-1" aria-labelledby="glass-heading">
         <div class="specimen-caption"><span>04 / 材质</span><IconAdjustmentsHorizontal :size="18" aria-hidden="true" /></div>
@@ -67,7 +69,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { IconCheck, IconStack, IconPointer, IconPalette, IconAdjustmentsHorizontal, IconRipple } from '@tabler/icons-vue'
-import { builtInThemes, resolveMotion, useApple, type Motion } from '../../src'
+import { resolveMotion, useApple, type Motion } from '../../src'
 
 const apple = useApple()
 const selectedSetting = ref('theme')
@@ -133,12 +135,17 @@ function formatOpacity(value: number) { return `${Number(value.toFixed(1))}%` }
 function formatBlur(value: number) { return `${value}px` }
 function setGlassOpacity(opacity: number) { apple.glass.value.set({ opacity }) }
 function setGlassBlur(blur: number) { apple.glass.value.set({ blur }) }
-const themes = [
-  { label: '跟随系统', value: 'system', background: 'linear-gradient(125deg, #f5f5f7 50%, #242426 50%)', accent: '#8a8a90' },
-  { label: '浅色', value: 'light', background: '#f5f5f7', accent: builtInThemes.light.tokens.accent },
-  { label: '深色', value: 'dark', background: '#242426', accent: builtInThemes.dark.tokens.accent },
-  { label: '石墨', value: 'graphite', background: '#253334', accent: '#a6ceca' },
-  { label: '玫瑰', value: 'rose', background: '#fff1f5', accent: '#a83b65' },
+const themeNames = [{ label: '浅色', value: 'light' }, { label: '深色', value: 'dark' }, { label: '石墨', value: 'graphite' }, { label: '玫瑰', value: 'rose' }]
+const themes = computed(() => [
+  { label: '跟随系统', value: 'system', background: `linear-gradient(125deg, ${apple.theme.value.themes.light.tokens.bg} 50%, ${apple.theme.value.themes.dark.tokens.bg} 50%)`, accent: apple.theme.value.current.tokens.accent },
+  ...themeNames.map(theme => ({ ...theme, background: apple.theme.value.themes[theme.value].tokens.bg, accent: apple.theme.value.themes[theme.value].tokens.accent })),
+])
+const themeColors = [
+  { token: 'bg', label: '页面背景' }, { token: 'surface', label: '组件背景' },
+  { token: 'surface-alt', label: '次级背景' }, { token: 'footer', label: '页脚背景' }, { token: 'text', label: '正文' },
+  { token: 'secondary', label: '次级文字' }, { token: 'border', label: '边框' },
+  { token: 'accent', label: '强调色' }, { token: 'accent-text', label: '强调色文字' },
+  { token: 'success', label: '成功' }, { token: 'warning', label: '警告' }, { token: 'danger', label: '危险' },
 ]
 const motionOptions = [{ label: '自动', value: 'auto' }, { label: '完整', value: 'full' }, { label: '减弱', value: 'reduced' }, { label: '关闭', value: 'none' }]
 const motionDescriptions: Record<string, string> = {
@@ -153,6 +160,7 @@ function resetGlass() {
   apple.notify('已恢复默认玻璃效果', { tone: 'success' })
 }
 function reset() {
+  apple.theme.value.resetTokens()
   apple.theme.value.set('light')
   apple.motion.value.set('auto')
   apple.ripple.value.set(true)
@@ -171,7 +179,7 @@ function reset() {
 .settings-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .settings-heading .page-kicker { margin-bottom: 14px; }
 .settings-heading > .apple-button { flex-shrink: 0; }
-.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; align-items: stretch; }
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; align-items: start; }
 .settings-section { min-width: 0; margin: 0; scroll-margin-top: 88px; }
 .settings-section:focus-visible { outline: 2px solid var(--apple-accent); outline-offset: 4px; }
 .settings-section :deep(> .apple-card__body) { height: 100%; display: flex; flex-direction: column; padding: 12px; }
@@ -180,8 +188,14 @@ function reset() {
 .settings-section h2 { font-size: 21px; line-height: 1.3; }
 .settings-section-heading p { margin-top: 9px; }
 .settings-card-foot { margin-top: auto; padding-top: 24px; color: var(--apple-secondary); font-size: 11px; line-height: 1.7; }
-.theme-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.theme-choice { min-width: 0; padding: 6px; border: 1px solid var(--apple-border); border-radius: 10px; }
+#setting-theme { grid-row: span 3; overflow: visible; }
+#setting-theme:has([data-apple-popup-open]) { z-index: 2; }
+.theme-colors { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px 28px; margin-top: 24px; }
+.theme-colors :deep(.apple-field) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.theme-colors :deep(.apple-color__value) { width: 94px; font-size: 12px; }
+.theme-colors :deep(.apple-color-menu) { inset-inline-start: auto; inset-inline-end: 0; }
+.theme-picker { display: flex; flex-wrap: wrap; gap: 10px; }
+.theme-choice { flex: 0 0 112px; max-width: 100%; min-width: 0; padding: 6px; border: 1px solid var(--apple-border); border-radius: 10px; }
 .theme-choice.selected { border-color: var(--apple-accent); outline: 1px solid var(--apple-accent); }
 .theme-choice:focus-visible { outline: 3px solid color-mix(in srgb, var(--apple-accent) 65%, transparent); outline-offset: 3px; }
 .theme-choice :deep(.apple-link__content) { flex-direction: column; width: 100%; gap: 9px; }
@@ -189,7 +203,7 @@ function reset() {
 .theme-label { color: var(--apple-text); font-size: 11px; }
 .settings-note { margin: 16px 0 0; }
 .effect-demo { position: relative; min-height: 144px; border-radius: 12px; overflow: hidden; background: transparent; margin-top: 20px; }
-.motion-sample { display: flex; align-items: flex-start; flex: 1; min-height: 220px; padding: 16px; }
+.motion-sample { display: flex; align-items: flex-start; flex: 1; min-height: 180px; padding: 16px; }
 .motion-sample :deep(.apple-accordion) { width: 100%; }
 .motion-sample :deep(.apple-accordion h3) { font-size: 14px; }
 .motion-sample :deep(.apple-accordion__content) { font-size: 12px; }

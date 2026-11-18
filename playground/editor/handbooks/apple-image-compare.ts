@@ -18,8 +18,8 @@ export default defineHandbook({
   ],
   events: [
     { name: 'update:modelValue', type: '(value: number) => void', description: '拖动或键盘调整时同步百分比。' },
-    { name: 'change', type: '(value: number) => void', description: '拖动结束或一次键盘调整完成且值变化时触发。' },
+    { name: 'change', type: '(value: number) => void', description: '拖动结束（包括手势中断）或一次键盘调整完成且值变化时触发。' },
   ],
   slots: [], methods: [],
-  notes: ['支持鼠标与触屏横向拖动，并保留页面纵向滚动；手势取消时恢复起始位置。', '方向键每次调整 1%，Shift 加方向键及 PageUp / PageDown 调整 10%，Home / End 到达两端。'],
+  notes: ['支持鼠标与触屏横向拖动，并保留页面纵向滚动；手势中断时保留最后位置；从圆形手柄开始拖动时锁定拖动手势。', '方向键每次调整 1%，Shift 加方向键及 PageUp / PageDown 调整 10%，Home / End 到达两端。'],
 })

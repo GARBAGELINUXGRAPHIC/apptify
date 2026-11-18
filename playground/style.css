@@ -5,7 +5,7 @@ button { font: inherit; }
 #app > .apple-provider { min-height: 100dvh; }
 .apple-auto-size__inner { position: relative; }
 .route-page { display: contents; }
-.site-footer { width: 100%; margin-inline: auto; margin-top: 16px; padding-inline: 48px; background: var(--apple-surface-alt); }
+.site-footer { width: 100%; margin-inline: auto; margin-top: 16px; padding-inline: 48px; background: var(--apple-footer); }
 .route-page:has(.components-page) + .site-footer > .page-footer { margin-inline: auto; }
 @media (max-width: 1100px) {
   .site-footer { padding-inline: 28px; }
@@ -55,7 +55,7 @@ button { font: inherit; }
 .more-components { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 38px 0; }
 .more-components h2 { margin: 0 0 8px; font-size: 19px; font-weight: 600; }
 .more-components span { font-size: 12px; color: var(--apple-secondary); }
-.page-footer { padding: 24px 0; border: 0; font-size: 12px; color: var(--apple-secondary); place-items: center; text-align: center }
+.page-footer { padding: 24px 0; border: 0; font-size: 12px; color: var(--apple-text); place-items: center; text-align: center }
 .specimen-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .specimen-caption { display: flex; align-items: center; justify-content: space-between; color: var(--apple-secondary); font-size: 9px; margin-bottom: 22px; }
 .directory-layout { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 32px; align-items: start; }

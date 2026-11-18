@@ -37,7 +37,7 @@ describe('AppleImageCompare', () => {
     wrapper.unmount()
   })
 
-  it('tracks one pointer, commits at release, and rolls back cancelled scrolling gestures', async () => {
+  it.each(['pointercancel', 'lostpointercapture'])('keeps the last position and commits once on %s', async interruption => {
     const wrapper = mount(AppleImageCompare, { props })
     wrapper.get<HTMLElement>('.apple-image-compare__surface').element.getBoundingClientRect = () => ({ left: 100, width: 400 }) as DOMRect
     const event = (pointerId: number, clientX: number) => ({ pointerId, clientX, button: 0 })
@@ -50,9 +50,17 @@ describe('AppleImageCompare', () => {
     await wrapper.trigger('pointerup', event(1, 400))
     expect(wrapper.emitted('change')).toEqual([[75]])
     await wrapper.trigger('pointerdown', event(2, 120))
-    await wrapper.trigger('pointercancel', event(2, 120))
-    expect(wrapper.get('[role=slider]').attributes('aria-valuenow')).toBe('75')
-    expect(wrapper.emitted('change')).toEqual([[75]])
+    await wrapper.trigger('pointermove', event(2, 460))
+    await wrapper.trigger(interruption, event(2, 0))
+    await wrapper.trigger('lostpointercapture', event(2, 0))
+    await wrapper.trigger('pointerup', event(2, 0))
+    expect(wrapper.get('[role=slider]').attributes('aria-valuenow')).toBe('90')
+    expect(wrapper.emitted('change')).toEqual([[75], [90]])
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([90])
+    await wrapper.trigger('pointerdown', event(3, 460))
+    await wrapper.trigger('pointermove', event(3, 180))
+    await wrapper.trigger('pointerup', event(3, 180))
+    expect(wrapper.emitted('change')).toEqual([[75], [90], [20]])
     wrapper.unmount()
   })
 })

@@ -73,7 +73,7 @@ Tabs、TabBar、SegmentedControl、DatePicker 日期/时间页签均不使用 Ri
 | `AppleStepper` | F；`v-model: number`、`min=-Infinity`、`max=Infinity`、`step=1` | `change(value)`；减/加按钮及可编辑数值输入；提交时约束范围。 |
 | `AppleSegmentedControl` | F；`v-model: string/number/null`、`items`、`name` | `change(value)`；基于 radio 的单选分段控件，不是 tabs 内容容器。 |
 | `AppleDatePicker` | F；`v-model: string`、`min`、`max`、`format`、`granularity`、`type=date`（date/month/datetime-local） | `change(value)`；自绘分段输入、年月日历与时间页签；输入不自动跳段，占位时间在创建时冻结。 |
-| `AppleColorPicker` | F；`v-model: string='#0071e3'`、`showValue=true` | `change(value)`；自绘色板和 HEX 输入，不打开原生颜色弹窗。 |
+| `AppleColorPicker` | F；`v-model: string='#0071e3'`、`showValue=true`、`allowTransparency=false` | `change(value)`；自绘色板和 HEX 输入；开启 `allowTransparency` 后显示不透明度滑块，支持四/八位 HEX，交互输出 `#rrggbbaa`（`00` 全透明、`ff` 不透明）。 |
 | `AppleUpload` | F；`v-model: File[]`、`accept`、`multiple`、`maxSize=Infinity`、`maxFiles=Infinity`、`capture=user/environment`、`buttonText` | `change(files)`、`reject({file,reason}[])`、`remove(file)`；default slot；maxSize 单位为字节；不发送网络请求。 |
 | `AppleForm` | M；`disabled`、`loading`、`validator(FormData): boolean/string/Promise` | `submit(FormData)`、`invalid({type,message?})`、`reset()`；default slot `{loading}`；实例方法 `validate(): Promise<boolean>`、`submit()`、`reset()`。 |
 | `AppleFormField` | F；`for` | default slot `{id,disabled,required,'aria-label','aria-labelledby','aria-invalid','aria-describedby'}`；将 slot 属性绑定到自定义输入，以关联字段名称及提示。 |
@@ -204,6 +204,8 @@ Modal slots：`title`、default `{close}`、footer `{close,confirm,cancel}`。�
 | API | 作用 |
 | --- | --- |
 | `theme.value.set(name)` | 切换注册主题或 system。未知名称抛出错误。 |
+| `theme.value.setTokens(tokens,name=resolved)` | 修改指定主题的 token；默认修改当前解析出的主题。启用 persist 时按主题保存并同步其他标签页。 |
+| `theme.value.resetTokens(name?)` | 清除指定主题的修改；省略名称时清除所有主题的修改。 |
 | `theme.value.register(name,tokens,scheme='light')` | 注册自定义主题并补齐基础 token。 |
 | `theme.value.name / resolved / current / themes` | 当前配置名、解析后名称、主题内容、主题注册表。 |
 | `overlays.entries.value` | 当前弹层列表，`Ref<OverlayEntry[]>`。 |

@@ -43,7 +43,7 @@
 .apple-select__chevron { transition: transform var(--apple-duration) var(--apple-ease); }
 .apple-select__chevron.is-open { transform: rotate(180deg); }
 .apple-autocomplete { position: relative; min-width: 0; }
-.apple-field-menu { position: fixed; width: var(--apple-popup-anchor-width, 100%); max-width: var(--apple-popup-available-width, calc(100dvw - 16px)); max-height: var(--apple-popup-available-height, calc(100dvh - 16px)); top: calc(100% + 6px); inset-inline: 0; z-index: 40; box-sizing: border-box; overflow: clip; border: 1px solid var(--apple-border); border-radius: 10px; color: var(--apple-text); background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); box-shadow: var(--apple-shadow); }
+.apple-field-menu { position: fixed; width: var(--apple-popup-anchor-width, 100%); max-width: var(--apple-popup-available-width, calc(100dvw - 16px)); max-height: var(--apple-popup-available-height, calc(100dvh - 16px)); top: calc(100% + 6px); inset-inline: 0; z-index: 40; box-sizing: border-box; overflow: clip; border: 1px solid var(--apple-border); border-radius: 10px; color: var(--apple-text); background: rgb(var(--apple-glass-rgb, 255 255 255) / var(--apple-glass-opacity, .5)); -webkit-backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); backdrop-filter: blur(var(--apple-glass-blur, 12px)) saturate(2); box-shadow: var(--apple-shadow-1); }
 .apple-field-menu-enter-active, .apple-field-menu-leave-active { transition: none; }
 .apple-field-menu-enter-from, .apple-field-menu-leave-to { transform: translateY(var(--apple-popup-y, -8px)); }
 .apple-autocomplete__list { --apple-popup-scroll-limit: 280; max-height: min(calc(var(--apple-popup-scroll-limit) * 1px), 50dvh, calc(var(--apple-popup-available-height, 100dvh) - 2px)); box-sizing: border-box; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; list-style: none; scrollbar-width: thin; }
@@ -79,8 +79,8 @@
 .apple-slider { appearance: none; flex: 1; min-width: 0; height: 44px; margin: 0; background: transparent; cursor: pointer; }
 .apple-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; background: linear-gradient(to right, var(--apple-accent) var(--apple-slider-progress), var(--apple-surface-alt) var(--apple-slider-progress)); }
 .apple-slider::-moz-range-track { height: 6px; border-radius: 4px; background: linear-gradient(to right, var(--apple-accent) var(--apple-slider-progress), var(--apple-surface-alt) var(--apple-slider-progress)); }
-.apple-slider::-webkit-slider-thumb { appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%; border: 1px solid #c4c4c8; background: #fff; box-shadow: none; transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
-.apple-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #c4c4c8; background: #fff; box-shadow: none; transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
+.apple-slider::-webkit-slider-thumb { appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--apple-shadow-2); transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
+.apple-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--apple-shadow-2); transition: background-color var(--apple-duration-fast, 120ms) ease, border-color var(--apple-duration-fast, 120ms) ease, box-shadow var(--apple-duration-fast, 120ms) ease; }
 .apple-slider:hover:not(:disabled)::-webkit-slider-thumb { background: #f0f0f2; }
 .apple-slider:hover:not(:disabled)::-moz-range-thumb { background: #f0f0f2; }
 .apple-slider:active:not(:disabled)::-webkit-slider-thumb { background: #d2d2d7; }
@@ -110,7 +110,7 @@
 .apple-date-input { min-width: 0; max-width: 100%; }
 .apple-color-row { position: relative; display: flex; align-items: center; gap: 12px; }
 .apple-color-picker { box-sizing: border-box; width: 56px; height: 44px; padding: 4px; border: 1px solid var(--apple-border); border-radius: 8px; background: var(--apple-surface); cursor: pointer; }
-.apple-color-picker > span { display: block; width: 100%; height: 100%; border-radius: 5px; background: var(--apple-picked-color); }
+.apple-color-picker > span { display: block; width: 100%; height: 100%; border-radius: 5px; background: linear-gradient(var(--apple-picked-color), var(--apple-picked-color)), repeating-conic-gradient(#c5c5ca 0% 25%, #fff 0% 50%) 0 / 10px 10px; }
 .apple-color-picker:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }
 .apple-color-picker:disabled { opacity: .5; cursor: not-allowed; }
 .apple-color__value { font-size: 14px; font-variant-numeric: tabular-nums; }
@@ -121,6 +121,10 @@
 .apple-color-hue { appearance: none; box-sizing: border-box; width: 100%; height: 14px; margin: 18px 0; border-radius: 8px; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: pointer; }
 .apple-color-hue::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border: 3px solid var(--apple-surface); border-radius: 50%; background: transparent; box-shadow: 0 0 0 1px #0004; }
 .apple-color-hue::-moz-range-thumb { width: 16px; height: 16px; border: 3px solid var(--apple-surface); border-radius: 50%; background: transparent; box-shadow: 0 0 0 1px #0004; }
+.apple-color-alpha-row { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; color: var(--apple-secondary); font-size: 12px; }
+.apple-color-alpha-row > span, .apple-color-alpha-row > output { flex-shrink: 0; }
+.apple-color-alpha-row > output { width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+.apple-color-alpha { flex: 1; min-width: 0; margin: 0; background: linear-gradient(to right, transparent, var(--apple-alpha-color)), repeating-conic-gradient(#c5c5ca 0% 25%, #fff 0% 50%) 0 / 10px 10px; }
 .apple-color-hex { display: flex; align-items: center; gap: 12px; color: var(--apple-secondary); font-size: 12px; }
 .apple-color-hex .apple-input-wrap { flex: 1; min-width: 0; }
 .apple-color-hex .apple-input-wrap.has-error { border-color: var(--apple-danger); }

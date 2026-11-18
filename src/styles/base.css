@@ -1,6 +1,7 @@
 @property --apple-bg { syntax: '<color>'; inherits: true; initial-value: #f5f5f7; }
 @property --apple-surface { syntax: '<color>'; inherits: true; initial-value: #fff; }
 @property --apple-surface-alt { syntax: '<color>'; inherits: true; initial-value: #f0f0f2; }
+@property --apple-footer { syntax: '<color>'; inherits: true; initial-value: #e2e2e6; }
 @property --apple-text { syntax: '<color>'; inherits: true; initial-value: #1d1d1f; }
 @property --apple-secondary { syntax: '<color>'; inherits: true; initial-value: #6e6e73; }
 @property --apple-border { syntax: '<color>'; inherits: true; initial-value: #d2d2d7; }
@@ -9,7 +10,12 @@
 @property --apple-danger { syntax: '<color>'; inherits: true; initial-value: #c93830; }
 @property --apple-success { syntax: '<color>'; inherits: true; initial-value: #34c759; }
 @property --apple-warning { syntax: '<color>'; inherits: true; initial-value: #ffaa00; }
-:root { --apple-shadow-strong: 2px 4px 16px #00000029; }
+:root {
+  --apple-shadow-2: 2px 4px 16px #00000029;
+  --apple-shadow-3: 3px 8px 24px rgb(0 0 0 / 22%);
+  --apple-shadow-4: 4px 12px 32px rgb(0 0 0 / 28%);
+  --apple-shadow-5: 6px 20px 48px rgb(0 0 0 / 34%);
+}
 .apple-provider {
   --apple-duration: 300ms;
   --apple-fast: 120ms;
@@ -29,7 +35,7 @@
   -webkit-font-smoothing: antialiased;
   accent-color: var(--apple-accent);
   min-width: 0;
-  transition: --apple-bg var(--apple-theme-duration) ease, --apple-surface var(--apple-theme-duration) ease, --apple-surface-alt var(--apple-theme-duration) ease, --apple-text var(--apple-theme-duration) ease, --apple-secondary var(--apple-theme-duration) ease, --apple-border var(--apple-theme-duration) ease, --apple-accent var(--apple-theme-duration) ease, --apple-accent-text var(--apple-theme-duration) ease, --apple-danger var(--apple-theme-duration) ease, --apple-success var(--apple-theme-duration) ease, --apple-warning var(--apple-theme-duration) ease;
+  transition: --apple-bg var(--apple-theme-duration) ease, --apple-footer var(--apple-theme-duration) ease, --apple-surface var(--apple-theme-duration) ease, --apple-surface-alt var(--apple-theme-duration) ease, --apple-text var(--apple-theme-duration) ease, --apple-secondary var(--apple-theme-duration) ease, --apple-border var(--apple-theme-duration) ease, --apple-accent var(--apple-theme-duration) ease, --apple-accent-text var(--apple-theme-duration) ease, --apple-danger var(--apple-theme-duration) ease, --apple-success var(--apple-theme-duration) ease, --apple-warning var(--apple-theme-duration) ease;
 }
 .apple-glass { /* 其实我不太确定是否需要important */
   color: var(--apple-text, #1d1d1f) !important;
@@ -69,7 +75,7 @@
 .apple-button--danger:not(:disabled):active { background: color-mix(in srgb,var(--apple-danger) 80%,black); }
 .apple-button--borderless, .apple-button--borderless:not(:disabled):active { background: transparent; color: var(--apple-text); }
 @media (hover: hover) {
-  .apple-button--borderless:not(:disabled):hover { background: var(--apple-surface-alt); }
+  .apple-button--borderless:not(:disabled):hover { background: var(--apple-hover); }
 }
 .apple-link { border: 0; padding: 0; background: transparent; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; color: var(--apple-accent); text-decoration: none; transition: color var(--apple-fast); }
 .apple-link__content { display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
@@ -93,7 +99,7 @@
 .apple-image__surface { position: relative; width: 100%; height: 100%; background: var(--apple-surface-alt); overflow: hidden; border-radius: inherit; transition: transform var(--apple-duration) var(--apple-ease), box-shadow var(--apple-duration) var(--apple-ease); }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .apple-image--loaded[data-apple-motion=full]:has(> .apple-image__surface :is(img, .apple-image__arrow):hover) { z-index: 1; }
-  .apple-image--loaded[data-apple-motion=full] > .apple-image__surface:has(:is(img, .apple-image__arrow):hover) { box-shadow: var(--apple-shadow-strong); }
+  .apple-image--loaded[data-apple-motion=full] > .apple-image__surface:has(:is(img, .apple-image__arrow):hover) { box-shadow: var(--apple-shadow-2); }
   .apple-image--loaded[data-apple-motion=full]:is(:not(.apple-image--group), [data-gallery-layout=compact]) > .apple-image__surface:has(:is(img, .apple-image__arrow):hover) { transform: scale(1.04); }
   .apple-image--loaded[data-gallery-layout^=tiled][data-apple-motion=full] .apple-image__trigger > img:hover { transform: scale(1.04); }
 }
