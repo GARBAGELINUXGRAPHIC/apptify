@@ -116,9 +116,9 @@ export default defineComponent({
 </script>
 
 <style>
-.apple-image-compare { display: grid; place-items: stretch; width: 100%; min-width: 0; box-sizing: border-box; padding-inline: 28px; overflow: clip; isolation: isolate; border-radius: 12px; cursor: default; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.apple-image-compare { display: grid; place-items: stretch; width: 100%; min-width: 0; box-sizing: border-box; padding-inline: 28px; overflow: clip; isolation: isolate; border-radius: 0; cursor: default; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .apple-image-compare__surface { position: relative; min-width: 0; min-height: 0; border-radius: inherit; }
-.apple-image-compare__frame { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; background: var(--apple-surface-alt, #f5f5f7); }
+.apple-image-compare__frame { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; background: transparent; }
 .apple-image-compare__image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; }
 .apple-image-compare__before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--apple-compare-position)) 0 0); }
 .apple-image-compare__label { position: absolute; top: 12px; padding: 5px 9px; border-radius: 9999px; font-size: 11px; line-height: 1.4; pointer-events: none; }

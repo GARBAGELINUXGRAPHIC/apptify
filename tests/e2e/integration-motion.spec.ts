@@ -148,3 +148,20 @@ test('sticky directory follows page entrance while the fixed global bar and hash
   await expect(aside).toBeVisible()
   expect(await aside.evaluate(el=>el.getAnimations().length)).toBe(0)
 })
+
+test('component docs play the page entrance once when opened from the site', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('/')
+  await page.getByRole('link', { name: 'API 文档与低代码编辑器' }).click()
+  await expect(page).toHaveURL('/component-docs/apple-container')
+
+  const main = page.getByRole('main')
+  await expect.poll(() => main.evaluate(element => element.getAnimations().length)).toBeGreaterThan(0)
+  await main.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)))
+
+  await page.getByRole('treeitem', { name: 'width', exact: true }).click()
+  await expect(page).toHaveURL('/component-docs/apple-container#prop-width')
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  expect(await main.evaluate(element => element.getAnimations().length)).toBe(0)
+})

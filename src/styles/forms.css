@@ -113,6 +113,7 @@
 .apple-color-picker > span { display: block; width: 100%; height: 100%; border-radius: 5px; background: linear-gradient(var(--apple-picked-color), var(--apple-picked-color)), repeating-conic-gradient(#c5c5ca 0% 25%, #fff 0% 50%) 0 / 10px 10px; }
 .apple-color-picker:focus-visible { outline: 3px solid var(--apple-accent); outline-offset: 2px; }
 .apple-color-picker:disabled { opacity: .5; cursor: not-allowed; }
+.apple-color__value, .apple-color-hex .apple-control { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .apple-color__value { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .apple-color-menu { width: 280px; inset-inline-end: auto; overflow-y: auto; overscroll-behavior: contain; }
 .apple-color-menu__content { padding: 14px; }

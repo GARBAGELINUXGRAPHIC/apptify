@@ -258,7 +258,6 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .showcase-carousel :deep(.apple-image__surface) { flex: 1; min-height: 0; background: transparent; }
 .showcase-carousel.is-single :deep(.apple-image__pagination) { display: none; }
 .project-preview { display: flex; flex-direction: column; justify-content: center; gap: 12px; width: 100%; height: 100%; color: var(--apple-text); }
-.project-preview > :deep(.project-comparison) { flex: none; min-height: 0; padding-top: 24px; }
 @media (min-width: 1600px) {
   .specimen-grid { --feature-stage-height: 340px; }
 }

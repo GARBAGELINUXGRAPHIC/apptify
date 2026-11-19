@@ -1,20 +1,22 @@
 <template>
-  <apple-container style="padding-top: 12px; padding-bottom: 24px">
-    <template v-if="registration">
-      <apple-breadcrumbs :items="breadcrumbs" label="组件文档路径" @click="navigateBreadcrumb" />
-      <header class="documentation-heading"><div><span class="page-kicker">{{ registration.group }} / COMPONENT API</span><h1>{{ registration.label }}<span>{{ registration.name }}</span></h1><p>{{ registration.description }}</p></div></header>
-      <div class="documentation-layout directory-layout">
-        <aside ref="documentationIndex" class="documentation-index directory-index" aria-label="API 导航"><span>本页接口</span><apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" /></aside>
-        <div ref="documentationContent" class="documentation-content">
-          <section class="component-overview" aria-label="组件演示"><component :is="registration.preview" v-if="registration.preview" /><ComponentPlayground v-else-if="doc" :key="doc.name" :doc="doc" /></section>
-          <ComponentWorkshop v-if="doc" :key="doc.name" :doc="doc" />
-          <apple-alert v-else-if="failed" tone="danger" title="文档加载失败"><apple-button variant="secondary" @click="loadDocument">重试</apple-button></apple-alert>
-          <apple-spinner v-else label="正在加载组件 API" />
+  <main>
+    <apple-container style="padding-top: 12px; padding-bottom: 24px">
+      <template v-if="registration">
+        <apple-breadcrumbs :items="breadcrumbs" label="组件文档路径" @click="navigateBreadcrumb" />
+        <header class="documentation-heading"><div><span class="page-kicker">{{ registration.group }} / COMPONENT API</span><h1>{{ registration.label }}<span>{{ registration.name }}</span></h1><p>{{ registration.description }}</p></div></header>
+        <div class="documentation-layout directory-layout">
+          <aside ref="documentationIndex" class="documentation-index directory-index" aria-label="API 导航"><span>本页接口</span><apple-tree v-model="selectedApi" v-model:expanded="expandedSections" :items="apiTree" label="组件 API 树" @select="navigateApi" /></aside>
+          <div ref="documentationContent" class="documentation-content">
+            <section class="component-overview" aria-label="组件演示"><component :is="registration.preview" v-if="registration.preview" /><ComponentPlayground v-else-if="doc" :key="doc.name" :doc="doc" /></section>
+            <ComponentWorkshop v-if="doc" :key="doc.name" :doc="doc" />
+            <apple-alert v-else-if="failed" tone="danger" title="文档加载失败"><apple-button variant="secondary" @click="loadDocument">重试</apple-button></apple-alert>
+            <apple-spinner v-else label="正在加载组件 API" />
+          </div>
         </div>
-      </div>
-    </template>
-    <apple-empty v-else title="未找到组件文档"><router-link to="/components" custom v-slot="{ href, navigate }"><apple-link :href="href" @click="navigate">返回组件目录</apple-link></router-link></apple-empty>
-  </apple-container>
+      </template>
+      <apple-empty v-else title="未找到组件文档"><router-link to="/components" custom v-slot="{ href, navigate }"><apple-link :href="href" @click="navigate">返回组件目录</apple-link></router-link></apple-empty>
+    </apple-container>
+  </main>
 </template>
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
