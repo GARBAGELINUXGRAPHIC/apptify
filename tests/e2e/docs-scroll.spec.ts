@@ -8,6 +8,7 @@ test('API tree follows reading position while preserving collapsed groups', asyn
   const tree = page.getByRole('tree', { name: '组件 API 树' })
   const scrollTo = async (id: string) => {
     await page.locator(`#${id}`).evaluate(element => {
+      window.dispatchEvent(new WheelEvent('wheel'))
       const offset = parseFloat(getComputedStyle(element).scrollMarginTop)
       window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - offset, behavior: 'instant' })
     })
@@ -53,4 +54,39 @@ test('API tree follows reading position while preserving collapsed groups', asyn
   await scrollTo('slot-prefix')
   await assertSelected('prefix')
   await expect(page).toHaveURL(/#prop-clearable$/)
+})
+
+
+test('API tree animates between anchors and returns to the current hash without an initial jump', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.goto('/component-docs/apple-input')
+  await expect(page.getByTestId('component-document').locator('.api-entry')).toHaveCount(17)
+  await expect(page.locator('#app > .apple-provider')).toHaveAttribute('data-apple-motion', 'full')
+  await page.waitForFunction(() => !document.getAnimations().some(animation => animation.playState === 'running' && Number.isFinite(Number(animation.effect?.getComputedTiming().endTime))))
+  for (const [name, id] of [['clearable', 'prop-clearable'], ['prefix', 'slot-prefix'], ['prefix', 'slot-prefix']]) {
+    if (id === 'slot-prefix' && new URL(page.url()).hash === '#slot-prefix') {
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    }
+    const start = await page.evaluate(() => scrollY)
+    const destination = await page.locator(`#${id}`).evaluate(element => element.getBoundingClientRect().top + scrollY - 96)
+    await page.evaluate(() => {
+      const samples: number[] = [scrollY]
+      ;(window as any).__apiScrollSamples = samples
+      const scrollTo = window.scrollTo.bind(window)
+      const scrollIntoView = Element.prototype.scrollIntoView
+      window.scrollTo = ((...args: Parameters<typeof window.scrollTo>) => { scrollTo(...args); samples.push(scrollY) }) as typeof window.scrollTo
+      Element.prototype.scrollIntoView = function(options) { scrollIntoView.call(this, options); samples.push(scrollY) }
+      ;(window as any).__restoreApiScroll = () => { window.scrollTo = scrollTo; Element.prototype.scrollIntoView = scrollIntoView }
+    })
+    await page.getByRole('tree', { name: '组件 API 树' }).getByRole('treeitem', { name, exact: true }).locator(':scope > .apple-tree__row').evaluate((row: HTMLElement) => row.click())
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(Math.round(destination))
+    const samples = await page.evaluate(() => {
+      ;(window as any).__restoreApiScroll()
+      return (window as any).__apiScrollSamples as number[]
+    })
+    const steps = samples.slice(1).map((value, index) => Math.abs(value - samples[index]))
+    expect(Math.max(...steps)).toBeLessThan(Math.abs(destination - start) / 2)
+    expect(samples.some(value => Math.abs(value - start) > 20 && Math.abs(value - destination) > 20)).toBe(true)
+  }
 })

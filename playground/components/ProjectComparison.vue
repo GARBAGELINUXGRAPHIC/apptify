@@ -35,11 +35,11 @@ const expanded = ref(false)
 </script>
 
 <style scoped>
-.project-comparison { flex: none; width: 100%; max-width: 320px; min-width: 0; min-height: 0; margin-inline: auto; padding-top: 24px; border-radius: 12px; background: #fff; }
+.project-comparison { flex: none; width: 100%; max-width: 320px; min-width: 0; min-height: 0; margin-inline: auto; padding-top: 24px; border-radius: 12px; background: var(--apple-surface); }
 .project-comparison :deep(.apple-image-compare__label) { display: none; }
-.comparison-footer { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 44px; margin-inline: 28px; padding-inline: 10px; border-radius: 0 0 12px 12px; background: #fff; color: #303034; font-size: 11px; line-height: 1.4; }
+.comparison-footer { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 44px; margin-inline: 28px; padding-inline: 10px; border-radius: 0 0 12px 12px; background: var(--apple-surface); color: var(--apple-text); font-size: 11px; line-height: 1.4; }
 .comparison-footer > :last-child { text-align: right; }
-.comparison-expand { width: 32px; min-width: 32px; height: 36px; min-height: 36px; padding: 6px; color: #303034; }
+.comparison-expand { width: 32px; min-width: 32px; height: 36px; min-height: 36px; padding: 6px; color: var(--apple-text); }
 :global(.comparison-dialog .apple-modal-body) { padding: 8px 0 16px; }
 .project-comparison--expanded { max-width: calc((100dvh - 200px) * 1864 / 1480 + 56px); padding-top: 0; }
 .comparison-footer--expanded { grid-template-columns: 1fr 1fr; padding-inline: 16px; font-size: 13px; }

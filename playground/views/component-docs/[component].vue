@@ -22,6 +22,7 @@
 defineOptions({ inheritAttrs: false })
 import { computed, defineAsyncComponent, shallowRef, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { scrollToWithMotion } from '../../../src/core/motion'
 import type { AppleItem, AppleTreeItem, AppleValue } from '../../../src'
 import { componentDocuments } from '../../editor/documents'
 import type { ComponentDocument } from '../../editor/contract'
@@ -142,9 +143,16 @@ async function navigateApi(item: AppleTreeItem) {
   if (item.children?.length) return
   const id = String(item.value)
   await nextTick()
-  await router.replace({ hash: `#${id}` })
-  await nextTick()
-  document.getElementById(id)?.scrollIntoView({ block: 'start' })
+  const hash = `#${id}`
+  if (route.hash !== hash) {
+    await router.replace({ hash })
+    return
+  }
+  const target = document.getElementById(id)
+  if (!target) return
+  const motion = document.querySelector('#app > .apple-provider')?.getAttribute('data-apple-motion')
+  const top = () => Math.min(target.getBoundingClientRect().top + window.scrollY - 96, Math.max(0, document.documentElement.scrollHeight - window.innerHeight))
+  scrollToWithMotion(window, top, motion === 'full')
 }
 
 </script>
