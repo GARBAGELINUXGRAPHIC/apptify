@@ -11,7 +11,11 @@ These images are preview fixtures, not part of the npm library output.
 
 Design references: https://www.apple.com/store/ and https://vuetifyjs.com/en/directives/ripple/ . No Apple fonts are bundled; system fonts are used.
 
-## Home showcase gradients
+## Home showcase wallpapers
+
+The twelve WebP images in `wallpapers/` are light and dark backgrounds **generated with GPT Image** on 2026-11-19, **NOT OFFICIAL WALLPAPERS**.
+
+## Previous home showcase gradients
 
 Retrieved 2026-11-18. These are source images, with no recoloring or generated replacements. Light and dark themes use the same assets.
 

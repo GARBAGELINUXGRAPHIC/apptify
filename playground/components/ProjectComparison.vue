@@ -1,5 +1,5 @@
 <template>
-  <div class="project-comparison">
+  <div class="project-comparison" v-bind="mergeProps($attrs, interaction)">
     <ImageCompareDemo v-model="position" class="comparison-image" />
     <div class="comparison-footer">
       <span>Material UI</span>
@@ -9,7 +9,7 @@
     </div>
   </div>
   <apple-dialog v-model="expanded" class="comparison-dialog" title="Clash Verge Rev Fork" :width="1100" :show-footer="false">
-    <div class="project-comparison project-comparison--expanded">
+    <div class="project-comparison project-comparison--expanded" v-bind="interaction">
       <ImageCompareDemo v-model="position" class="comparison-image" />
       <div class="comparison-footer comparison-footer--expanded">
         <span>Material UI</span>
@@ -20,17 +20,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { mergeProps, ref } from 'vue'
 import { IconMaximize } from '@tabler/icons-vue'
+import { resolveMotion, useApple } from '../../src'
 import ImageCompareDemo from './ImageCompareDemo.vue'
+import { useDemoSweep } from './useDemoAnimation'
 
-const position = ref(50)
+defineOptions({ inheritAttrs: false })
+
+const apple = useApple()
+const { value: position, interaction } = useDemoSweep(50, 10, 90, 7000,
+  () => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced) === 'full')
 const expanded = ref(false)
 </script>
 
 <style scoped>
 .project-comparison { width: 100%; max-width: 320px; min-width: 0; margin-inline: auto; border-radius: 12px; background: #fff; }
-.comparison-image { border-radius: 12px 12px 0 0; }
+.comparison-image { border-radius: 2%; }
 .project-comparison :deep(.apple-image-compare__label) { display: none; }
 .comparison-footer { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 44px; margin-inline: 28px; padding-inline: 10px; border-radius: 0 0 12px 12px; background: #fff; color: #303034; font-size: 11px; line-height: 1.4; }
 .comparison-footer > :last-child { text-align: right; }

@@ -1,5 +1,5 @@
 <template>
-  <main class="main-content home-page">
+  <main class="main-content home-page" :data-apple-scheme="apple.theme.value.current.scheme">
     <section class="home-intro">
       <div class="page-kicker">Apptify.</div>
       <h1>让界面自然，<br /><span>让细节动人。</span></h1>
@@ -28,7 +28,7 @@
         <apple-card class="specimen media-specimen" aria-labelledby="home-gallery">
           <header class="feature-heading"><h3 id="home-gallery">跨端复杂组件，<br /><span>不只基础</span></h3></header>
           <div class="feature-stage photo-stage">
-            <div class="feature-panel photo-panel"><ImageDemo :controls="false" :limit="3" aspect-ratio="auto" /></div>
+            <div class="feature-panel photo-panel"><ImageDemo :controls="false" :limit="3" autoplay aspect-ratio="auto" /></div>
           </div>
           <router-link to="/component-docs/apple-image" custom v-slot="{ href, navigate }">
             <apple-link :href="href" class="feature-foot feature-link" @click="navigate">体验图片组件 <IconArrowUpRight :size="15" aria-hidden="true" /></apple-link>
@@ -67,7 +67,7 @@
           <header class="feature-heading"><h3 id="home-starter">启动框架，<br /><span>一应俱全</span></h3></header>
           <div class="feature-stage starter-stage">
             <div class="feature-panel starter-preview">
-              <div class="terminal-command"><span aria-hidden="true">$</span><code>npm create apptify</code></div>
+              <div class="terminal-command" :data-motion="motion"><span aria-hidden="true">$</span><code>npm create apptify<span class="terminal-cursor" aria-hidden="true">_</span></code></div>
               <ul class="starter-features">
                 <li v-for="feature in starterFeatures" :key="feature"><IconCheck :size="15" :stroke-width="3" aria-hidden="true" />{{ feature }}</li>
               </ul>
@@ -79,15 +79,15 @@
         <apple-card class="specimen editor-specimen" aria-labelledby="home-editor">
           <header class="feature-heading"><h3 id="home-editor">低代码示例，<br /><span>易学易用</span></h3></header>
           <div class="feature-stage editor-stage">
-            <div class="feature-panel editor-panel">
+            <div class="feature-panel editor-panel" v-bind="containerInteraction">
               <div class="editor-toolbar">
-                <span style="font-size: 14px; font-weight: 600; margin-right: 16px; margin-bottom: 2px">容器宽度</span><apple-slider v-model="containerWidth" aria-label="容器宽度" :min="40" :max="100" :step="5" :format-value="value => `${value}%`" />
+                <span style="font-size: 14px; font-weight: 600; margin-right: 16px; margin-bottom: 2px">容器宽度</span><apple-slider v-model="containerWidth" aria-label="容器宽度" :min="40" :max="100" :step=".001" :format-value="value => `${Math.round(value)}%`" />
               </div>
               <div class="editor-preview">
                 <apple-container :width="`${containerWidth}%`" class="container-preview"><span>内容</span></apple-container>
               </div>
               <div class="editor-code">
-                <pre class="editor-example"><code><span class="code-tag">&lt;apple-container</span> <span class="code-attribute">width</span>=<span class="code-string">"{{ containerWidth }}%"</span><span class="code-tag">&gt;</span>
+                <pre class="editor-example"><code><span class="code-tag">&lt;apple-container</span> <span class="code-attribute">width</span>=<span class="code-string">"{{ displayedWidth }}%"</span><span class="code-tag">&gt;</span>
   内容
 <span class="code-tag">&lt;/apple-container&gt;</span></code></pre>
                 <apple-button class="editor-copy" variant="borderless" :icon="IconCopy" icon-only label="复制示例代码" @click="copyExample" />
@@ -127,13 +127,16 @@ import { resolveMotion, useApple } from '../../src'
 import ImageDemo from '../components/ImageDemo.vue'
 import ProjectComparison from '../components/ProjectComparison.vue'
 import MiniPlayer from '../components/MiniPlayer.vue'
+import { useDemoSweep } from '../components/useDemoAnimation'
 
 const apple = useApple()
+const motion = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced))
 const rippleAllowed = computed(() => resolveMotion('inherit', apple.motion.value.mode, apple.motion.value.reduced) !== 'none')
 const themeOptions = [{ label: '系统', value: 'system' }, { label: '浅色', value: 'light' }, { label: '深色', value: 'dark' }, { label: '石墨', value: 'graphite' }, { label: '玫瑰', value: 'rose' }]
 const starterFeatures = ['Apptify 组件', '自动创建 Vue 3 路由', 'HTTP 错误页', '常用页面（导航栏、登录、注册表单等）', '全局广播 API', '本地 /component-docs 低代码与文档']
-const containerWidth = ref(75)
-const containerExample = computed(() => `<apple-container width="${containerWidth.value}%">
+const { value: containerWidth, interaction: containerInteraction } = useDemoSweep(75, 40, 100, 5000, () => motion.value === 'full')
+const displayedWidth = computed(() => Math.round(containerWidth.value))
+const containerExample = computed(() => `<apple-container width="${displayedWidth.value}%">
   内容
 </apple-container>`)
 
@@ -168,18 +171,43 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .specimen h3 { margin: 0; font-size: 27px; line-height: 1.28; font-weight: 650; }
 .specimen h3 span { color: var(--apple-secondary); }
 .feature-heading p { margin: 12px 0 0; color: var(--apple-secondary); font-size: 13px; line-height: 1.6; }
-.feature-stage { display: grid; align-items: center; min-width: 0; height: var(--feature-stage-height); flex-shrink: 0; margin: 0 20px; padding: 22px; border-radius: 14px; background-color: var(--feature-tint); background-size: cover; background-position: center; }
+.feature-stage { display: grid; align-items: center; min-width: 0; height: var(--feature-stage-height); flex-shrink: 0; margin: 0 20px; padding: 22px; border-radius: 14px; background-color: var(--feature-tint); background-image: var(--feature-wallpaper-light); background-size: cover; background-position: center; }
+.home-page[data-apple-scheme=dark] .feature-stage { background-image: var(--feature-wallpaper-dark); }
 .feature-panel { width: 100%; min-width: 0; max-width: 320px; max-height: 100%; margin: auto; border: 1px solid color-mix(in srgb, var(--apple-border) 45%, transparent); border-radius: 20px; background: var(--apple-surface); box-shadow: 0 2px 5px rgb(0 0 0 / 3%), 0 12px 28px -10px rgb(0 0 0 / 18%); }
 .feature-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; min-height: 64px; margin: 0; padding: 16px 28px 20px; color: var(--apple-secondary); font-size: 12px; line-height: 1.6; }
 .feature-foot code { color: var(--apple-text); font-size: 12px; }
 .feature-link { color: var(--apple-accent); }
-.controls-stage { --feature-tint: #5288e9; background-image: url('/images/gradients/openai-blue-pink.webp'); }
-.photo-stage { --feature-tint: #23bc9e; background-image: url('/images/gradients/openai-green-purple.webp'); }
-.appearance-stage { --feature-tint: #ed85c3; background-image: url('/images/gradients/wang-pink.jpg'); }
-.starter-stage { --feature-tint: #efaa8d; background-image: url('/images/gradients/wang-peach.jpg'); }
-.editor-stage { --feature-tint: #008ba9; background-image: url('/images/gradients/openai-cyan-blue.webp'); }
-.showcase-stage { --feature-tint: #8783ef; background-image: url('/images/gradients/openai-purple-blue.webp'); }
-.photo-panel { height: 100%; padding: 20px 20px 0 20px; }
+.controls-stage {
+  --feature-tint: #5288e9;
+  --feature-wallpaper-light: url('/images/wallpapers/big-sur-light.webp');
+  --feature-wallpaper-dark: url('/images/wallpapers/big-sur-dark.webp');
+}
+.photo-stage {
+  --feature-tint: #7051b8;
+  --feature-wallpaper-light: url('/images/wallpapers/monterey-light.webp');
+  --feature-wallpaper-dark: url('/images/wallpapers/monterey-dark.webp');
+}
+.appearance-stage {
+  --feature-tint: #e78243;
+  --feature-wallpaper-light: url('/images/wallpapers/ventura-light.webp');
+  --feature-wallpaper-dark: url('/images/wallpapers/ventura-dark.webp');
+}
+.starter-stage {
+  --feature-tint: #65986d;
+  --feature-wallpaper-light: url('/images/wallpapers/sonoma-light.webp');
+  --feature-wallpaper-dark: url('/images/wallpapers/sonoma-dark.webp');
+}
+.editor-stage {
+  --feature-tint: #477cb1;
+  --feature-wallpaper-light: url('/images/wallpapers/tahoe-light.webp');
+  --feature-wallpaper-dark: url('/images/wallpapers/tahoe-dark.webp');
+}
+.showcase-stage {
+  --feature-tint: #a28b68;
+  --feature-wallpaper-light: url('/images/wallpapers/golden-gate-light.webp');
+  --feature-wallpaper-dark: url('/images/wallpapers/golden-gate-dark.webp');
+}
+.photo-panel { width: calc(100% - 16px); max-width: 280px; height: calc(100% - 32px); max-height: 280px; padding: 24px 24px 0 24px; }
 .photo-stage :deep(.demo-image) { width: 100%; height: 100%; }
 .photo-stage :deep(.apple-image) { display: flex; flex-direction: column; height: 100%; border-radius: 12px; }
 .photo-stage :deep(.apple-image__surface) { flex: 1; min-height: 0; }
@@ -208,6 +236,9 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .starter-preview { display: flex; flex-direction: column; justify-content: center; padding: 20px; }
 .terminal-command { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--apple-border); font-size: 14px; }
 .terminal-command > span { color: var(--apple-secondary); }
+.terminal-cursor { display: inline-block; width: .65em; height: 3px; margin-left: 2px; overflow: hidden; vertical-align: -.12em; background: currentColor; font-size: inherit; line-height: 0; color: var(--apple-text); animation: terminal-blink 1.4s cubic-bezier(.65, 0, .35, 1) infinite; }
+@keyframes terminal-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.terminal-command:not([data-motion="full"]) .terminal-cursor { animation: none; }
 .starter-features { display: grid; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; color: var(--apple-secondary); font-size: 11px; }
 .starter-features li { display: flex; align-items: center; gap: 10px; line-height: 1.8; }
 .starter-features svg { color: var(--apple-success); flex-shrink: 0; }
@@ -218,7 +249,7 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .editor-preview { display: flex; align-items: center; padding: 8px 14px 22px 14px; }
 .container-preview { display: grid; place-items: center; min-height: 56px; border-radius: 8px; background: var(--apple-accent); color: var(--apple-accent-text); font-size: 12px; }
 .editor-code { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: start; gap: 6px; padding: 12px 14px 16px 20px; border-top: 1px solid color-mix(in srgb, var(--apple-border) 50%, transparent); background: var(--apple-surface-alt); }
-.editor-example { min-width: 0; margin: 0; padding: 0; font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.editor-example { min-width: 0; margin: 0; padding: 0; font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .editor-copy { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 6px; }
 .code-tag { color: var(--apple-accent); }
 .code-attribute { color: var(--apple-secondary); }
@@ -227,10 +258,10 @@ const activeProject = computed(() => projects[projectIndex.value] ?? projects[0]
 .showcase-carousel :deep(.apple-image__surface) { flex: 1; min-height: 0; background: transparent; }
 .showcase-carousel.is-single :deep(.apple-image__pagination) { display: none; }
 .project-preview { display: flex; flex-direction: column; justify-content: center; gap: 12px; width: 100%; height: 100%; color: var(--apple-text); }
-.project-preview > .project-comparison { flex: none; min-height: 0; }
+.project-preview > :deep(.project-comparison) { flex: none; min-height: 0; padding-top: 24px; }
 @media (min-width: 1600px) {
   .specimen-grid { --feature-stage-height: 340px; }
-}`
+}
 @media (max-width: 1200px) and (min-width: 1101px) {
   .feature-heading { padding-inline: 22px; }
   .feature-stage { margin-inline: 14px; padding: 14px; }

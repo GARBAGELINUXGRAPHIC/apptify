@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 import { resolve, sep } from 'node:path'
 import { existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { parse, compileScript, compileStyle } from 'vue/compiler-sfc'
+import { parse, compileScript, compileStyle, compileTemplate } from 'vue/compiler-sfc'
 
 // The editor runtime uses esbuild, so compile library SFCs just as Vite does.
 const vueComponents = {
@@ -25,8 +25,20 @@ const vueComponents = {
         return { contents: styles.join('\n'), loader: 'css' }
       }
       const script = compileScript(descriptor, { id, inlineTemplate: true, genDefaultAs: '__component' })
+      let contents = script.content
+      if (descriptor.template && !descriptor.scriptSetup) {
+        const template = compileTemplate({
+          source: descriptor.template.content,
+          filename: args.path,
+          id: scope,
+          scoped: descriptor.styles.some(style => style.scoped),
+          compilerOptions: { bindingMetadata: script.bindings },
+        })
+        if (template.errors.length) throw template.errors[0]
+        contents += `\n${template.code.replace('export function render(', 'function __render(')}\n__component.render = __render;`
+      }
       return {
-        contents: `${script.content}\n__component.__scopeId = ${JSON.stringify(scope)};\nexport default __component;\nimport ${JSON.stringify(args.path + '?style')};`,
+        contents: `${contents}\n__component.__scopeId = ${JSON.stringify(scope)};\nexport default __component;\nimport ${JSON.stringify(args.path + '?style')};`,
         loader: 'ts', resolveDir: resolve(args.path, '..'),
       }
     })

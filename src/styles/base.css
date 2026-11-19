@@ -1,7 +1,7 @@
 @property --apple-bg { syntax: '<color>'; inherits: true; initial-value: #f5f5f7; }
 @property --apple-surface { syntax: '<color>'; inherits: true; initial-value: #fff; }
 @property --apple-surface-alt { syntax: '<color>'; inherits: true; initial-value: #f0f0f2; }
-@property --apple-footer { syntax: '<color>'; inherits: true; initial-value: #e2e2e6; }
+@property --apple-footer { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
 @property --apple-text { syntax: '<color>'; inherits: true; initial-value: #1d1d1f; }
 @property --apple-secondary { syntax: '<color>'; inherits: true; initial-value: #6e6e73; }
 @property --apple-border { syntax: '<color>'; inherits: true; initial-value: #d2d2d7; }

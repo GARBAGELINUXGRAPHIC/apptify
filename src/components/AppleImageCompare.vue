@@ -9,13 +9,13 @@
         <div class="apple-image-compare__before">
           <img class="apple-image-compare__image" :src="before" :alt="beforeAlt" :style="{ objectFit: fit }" draggable="false" />
         </div>
-        <span v-if="beforeLabel" class="apple-image-compare__label apple-image-compare__label--before" aria-hidden="true">{{ beforeLabel }}</span>
-        <span v-if="afterLabel" class="apple-image-compare__label apple-image-compare__label--after" aria-hidden="true">{{ afterLabel }}</span>
+        <span v-if="beforeLabel" class="apple-image-compare__label apple-image-compare__label--before apple-glass" aria-hidden="true">{{ beforeLabel }}</span>
+        <span v-if="afterLabel" class="apple-image-compare__label apple-image-compare__label--after apple-glass" aria-hidden="true">{{ afterLabel }}</span>
         <div class="apple-image-compare__divider" aria-hidden="true" />
       </div>
       <div ref="handle" class="apple-image-compare__handle" role="slider" :tabindex="disabled ? -1 : 0"
         :aria-label="label" aria-orientation="horizontal" :aria-valuemin="0" :aria-valuemax="100"
-        :aria-valuenow="position" :aria-valuetext="`${beforeLabel || '之前'} ${position}% · ${afterLabel || '之后'} ${100 - position}%`"
+        :aria-valuenow="position" :aria-valuetext="`${beforeLabel || '之前'} ${Math.round(position)}% · ${afterLabel || '之后'} ${Math.round(100 - position)}%`"
         :aria-disabled="disabled" @keydown="keyDown">
         <span class="apple-image-compare__grip" aria-hidden="true">
           <IconChevronLeft :size="14" :stroke-width="1.75" /><IconChevronRight :size="14" :stroke-width="1.75" />
@@ -29,7 +29,7 @@
 import { defineComponent, ref, watch, type PropType } from 'vue'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-vue'
 
-const normalize = (value: number) => Number.isFinite(value) ? Math.round(Math.min(100, Math.max(0, value))) : 50
+const normalize = (value: number) => Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 50
 
 export default defineComponent({
   name: 'AppleImageCompare',
@@ -58,7 +58,7 @@ export default defineComponent({
     watch(() => props.disabled, value => { if (value) finish() })
 
     function update(value: number) {
-      const next = normalize(value)
+      const next = normalize(Math.round(value))
       if (next === position.value) return
       position.value = next
       emit('update:modelValue', next)
@@ -121,7 +121,7 @@ export default defineComponent({
 .apple-image-compare__frame { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; background: var(--apple-surface-alt, #f5f5f7); }
 .apple-image-compare__image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; }
 .apple-image-compare__before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--apple-compare-position)) 0 0); }
-.apple-image-compare__label { position: absolute; top: 12px; padding: 5px 9px; border: 1px solid rgb(0 0 0 / 6%); border-radius: 6px; background: rgb(255 255 255 / 92%); color: #303034; font-size: 11px; line-height: 1.4; pointer-events: none; }
+.apple-image-compare__label { position: absolute; top: 12px; padding: 5px 9px; border-radius: 9999px; font-size: 11px; line-height: 1.4; pointer-events: none; }
 .apple-image-compare__label--before { left: 12px; }
 .apple-image-compare__label--after { right: 12px; }
 .apple-image-compare__divider { position: absolute; top: 0; bottom: 0; left: var(--apple-compare-position); width: 3px; transform: translateX(-50%); background: #007aff; pointer-events: none; }

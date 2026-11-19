@@ -10,7 +10,7 @@ const options = JSON.stringify([{ label: '第一项', value: 'first' }, { label:
 const content = '<p>这里是组件内容。</p>'
 const blocks = '<div v-for="n in 3" :key="n" class="tile">{{ n }}</div>'
 const actions = JSON.stringify([{ label: '收藏', value: 'favorite' }, { label: '分享', value: 'share' }, { label: '删除', value: 'delete', danger: true }, { label: '不可用', value: 'disabled', disabled: true }])
-const image = (color: string, text: string) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="640" height="480" fill="${color}"/><text x="320" y="260" fill="white" text-anchor="middle" font-size="64" font-family="sans-serif">${text}</text></svg>`)
+const image = (color: string, text: string, textColor = 'white') => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="640" height="480" fill="${color}"/><text x="320" y="260" fill="${textColor}" text-anchor="middle" font-size="64" font-family="sans-serif">${text}</text></svg>`)
 const gallery = JSON.stringify([{ src: image('#0071e3', 'Apptify'), alt: '蓝色示例图片', label: '蓝色' }, { src: image('#bf5af2', 'Vue'), alt: '紫色示例图片', label: '紫色' }, { src: image('#34c759', 'Hello'), alt: '绿色示例图片', label: '绿色' }])
 const scroll = '<div id="demo-scroll" class="scroll-demo" tabindex="0" aria-label="滚动示例"><div style="height: 900px">向下滚动，体验回到顶部。</div></div>'
 
@@ -23,7 +23,7 @@ const examples: Record<string, PlaygroundExample> = {
   AppleGrid: { props: { min: '120' }, slots: { default: { code: blocks, enabled: true } } },
   AppleCard: { props: { title: '"Apptify"', subtitle: '"组件文档"', text: '"修改配置，体验卡片。"', image: JSON.stringify(image('#0071e3', 'Apptify')), imageAlt: '"蓝色示例图片"' } },
   AppleImage: { props: { gallery, index: '0' }, slots: { item: { scope: '{ item, index, active }', code: '<div class="tile">{{ index + 1 }} · {{ item.label }} · {{ active }}</div>' } } },
-  AppleImageCompare: { props: { before: JSON.stringify(image('#8f9ca9', 'Before')), after: JSON.stringify(image('#007aff', 'After')) } },
+  AppleImageCompare: { props: { before: JSON.stringify(image('#8f9ca9', 'Before')), after: JSON.stringify(image('#fff', 'After', '#1d1d1f')) } },
   AppleSearch: { props: { modelValue: '"Apptify"' } },
   AppleTextarea: { props: { label: '"个人简介"', modelValue: '"写下你的想法。"', maxlength: '160', counter: 'true' } },
   AppleSelect: { props: { label: '"选择项目"', items: options, modelValue: '"first"' } },

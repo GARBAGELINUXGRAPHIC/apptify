@@ -31,6 +31,30 @@ test('every gallery card links to its own handbook', async ({ page }) => {
   await expect(page.locator('.component-source')).toHaveCount(0)
 })
 
+test('image comparison renders both images and records slider changes in the live preview', async ({ page }) => {
+  await page.goto('/component-docs/apple-image-compare')
+  const frame = page.frameLocator('.vue-repl iframe')
+  const slider = frame.getByRole('slider', { name: '图片对比' })
+  await expect(slider).toBeVisible({ timeout: 20000 })
+  for (const name of ['调整前的图片', '调整后的图片']) {
+    await expect(frame.getByRole('img', { name })).toHaveJSProperty('naturalWidth', 640)
+  }
+  await expect(slider).toHaveAttribute('aria-valuenow', '50')
+  await slider.press('ArrowRight')
+  await expect(frame.locator('output')).toHaveText('modelValue = 51')
+
+  await slider.scrollIntoViewIfNeeded()
+  const surface = (await frame.locator('.apple-image-compare__surface').boundingBox())!
+  const y = surface.y + surface.height / 2
+  await page.mouse.move(surface.x + surface.width * 0.51, y)
+  await page.mouse.down()
+  await page.mouse.move(surface.x + surface.width * 0.75, y)
+  await page.mouse.up()
+  await expect(frame.locator('output')).toHaveText('modelValue = 75')
+  const events = frame.getByRole('textbox', { name: '事件记录内容' })
+  await expect(events).toHaveValue(/update:modelValue 75\n\d+\. change 75/)
+})
+
 test('table models, JSON validation, scoped slots and reset work in the live preview', async ({ page }) => {
   await page.goto('/component-docs/apple-table')
   const frame = page.frameLocator('.vue-repl iframe')

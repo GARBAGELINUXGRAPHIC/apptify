@@ -14,7 +14,7 @@ test('home player runs silently, seeks, pauses and advances to the next track', 
   const title = player.getByRole('heading', { name: '海岸来信' })
   await expect(title).toBeVisible()
   await page.clock.install()
-  await player.getByRole('button', { name: '播放', exact: true }).press('Space')
+  await expect(player.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await page.clock.fastForward(2100)
   await expect(progress).not.toHaveValue('42')
   await player.getByRole('button', { name: '暂停' }).click()
@@ -31,7 +31,7 @@ test('home player runs silently, seeks, pauses and advances to the next track', 
   await progress.fill('167')
   await page.clock.fastForward(1500)
   await expect(player.getByRole('heading', { name: '山间回声' })).toBeVisible()
-  await expect(progress).toHaveValue('0')
+  expect(Number(await progress.inputValue())).toBeLessThan(1)
   await expect(player.getByRole('button', { name: '暂停' })).toBeVisible()
   expect(errors).toEqual([])
 })
@@ -101,6 +101,8 @@ for (const width of [320, 1440]) {
     await expand.click()
     const dialog = page.getByRole('dialog', { name: 'Clash Verge Rev Fork', exact: true })
     await expect(dialog).toBeVisible()
+    await dialog.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())))
+    expect(await dialog.locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0))).toBe(true)
     const enlarged = dialog.getByRole('slider', { name: 'Clash Verge 界面对比' })
     await expect(enlarged).toHaveAttribute('aria-valuenow', '30')
     const enlargedWidth = (await dialog.locator('.apple-image-compare__surface').boundingBox())!.width
@@ -173,6 +175,7 @@ test('comparison keeps its last position after capture loss and a fast subsequen
 })
 
 test('single-project comparison passes horizontal trackpad scrolling through', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   const carousel = page.locator('.showcase-carousel')
   const handle = carousel.getByRole('slider')

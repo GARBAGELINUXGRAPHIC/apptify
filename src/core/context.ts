@@ -18,7 +18,7 @@ function glassSettings(value: unknown, fallback: AppleGlassSettings): AppleGlass
 }
 
 const light: ThemeTokens = {
-  bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', footer: '#e2e2e6', text: '#1d1d1f', secondary: '#6e6e73',
+  bg: '#f5f5f7', surface: '#ffffff', 'surface-alt': '#f0f0f2', footer: '#ffffff', text: '#1d1d1f', secondary: '#6e6e73',
   border: '#d2d2d7', accent: '#0071e3', 'accent-text': '#ffffff', danger: '#c93830', success: '#34c759',
   warning: '#ffaa00', 'shadow-1': '0 8px 28px rgb(0 0 0 / 0.07)', radius: '8px',
 }

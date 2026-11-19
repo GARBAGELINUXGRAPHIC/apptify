@@ -27,10 +27,9 @@ test('the six home features use live controls and link to their resources', asyn
     '启动框架，一应俱全', '低代码示例，易学易用', '看看实例，高下立判',
   ])
   const gallery = page.locator('.photo-stage')
-  await expect(gallery.getByRole('group', { name: '图片组分页', exact: true }).getByRole('button')).toHaveCount(3)
+  await expect(gallery.getByRole('group', { name: '选择幻灯片', exact: true }).getByRole('button')).toHaveCount(3)
   await expect(gallery.locator('.apple-image__pagination')).toContainText('1 / 3')
   const player = page.locator('.mini-player')
-  await player.getByRole('button', { name: '播放', exact: true }).click()
   await expect(player.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
   await expect.poll(() => player.getByRole('slider', { name: '播放进度' }).inputValue()).not.toBe('42')
   await player.getByRole('button', { name: '暂停', exact: true }).click()

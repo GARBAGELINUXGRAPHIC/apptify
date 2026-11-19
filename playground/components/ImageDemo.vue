@@ -7,7 +7,8 @@
     </div>
     <apple-image
       :carousel="carousel"
-      :gallery="(carousel ? slides : gallery).slice(0, limit)"
+      :autoplay="autoplay"
+      :gallery="(carousel && controls ? slides : gallery).slice(0, limit)"
       :gallery-layout="layout"
       :gallery-shape="square ? 'square' : 'natural'"
       :aspect-ratio="aspectRatio"
@@ -19,9 +20,9 @@
 import { ref } from 'vue'
 import { imageUrl } from '../images'
 
-withDefaults(defineProps<{ aspectRatio?: string; controls?: boolean; limit?: number }>(), { controls: true })
+const props = withDefaults(defineProps<{ aspectRatio?: string; controls?: boolean; limit?: number; autoplay?: boolean }>(), { controls: true, autoplay: true })
 const layout = ref<'compact' | 'tiled' | 'tiled-wrap'>('compact')
-const carousel = ref(false)
+const carousel = ref(!props.controls && props.autoplay)
 const square = ref(false)
 const layouts = [
   { label: '省空间', value: 'compact' },

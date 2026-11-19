@@ -1,0 +1,131 @@
+import { expect, test } from '@playwright/test'
+
+test.use({ reducedMotion: 'no-preference' })
+
+test('player starts with a spinning record, advances linearly each frame and resumes after manual pause', async ({ page }) => {
+  await page.goto('/')
+  const player = page.locator('.mini-player')
+  const progress = player.getByRole('slider', { name: '播放进度' })
+  await expect(player.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await expect(player.locator('.track-record')).toHaveCSS('animation-play-state', 'running')
+  await expect(player.locator('.track-record')).toHaveCSS('animation-timing-function', 'linear')
+  const frames = await progress.evaluate(input => new Promise<Array<{ time: number; value: number }>>(resolve => {
+    const samples: Array<{ time: number; value: number }> = []
+    const sample = (time: number) => {
+      samples.push({ time, value: Number((input as HTMLInputElement).value) })
+      if (samples.length === 12) resolve(samples)
+      else requestAnimationFrame(sample)
+    }
+    requestAnimationFrame(sample)
+  }))
+  for (let i = 1; i < frames.length; i++) {
+    expect(frames[i].value).toBeGreaterThan(frames[i - 1].value)
+    expect(Math.abs(frames[i].value - frames[i - 1].value - (frames[i].time - frames[i - 1].time) / 1000)).toBeLessThan(.003)
+  }
+  await page.clock.install()
+  await player.getByRole('button', { name: '暂停', exact: true }).click()
+  const paused = await progress.inputValue()
+  await page.clock.fastForward(4500)
+  await expect(progress).toHaveValue(paused)
+  await expect(player.locator('.track-record')).toHaveCSS('animation-play-state', 'paused')
+  await progress.fill('80')
+  await progress.press('ArrowRight')
+  await expect(progress).toHaveValue('81')
+  await page.clock.fastForward(6500)
+  await page.clock.runFor(100)
+  await expect(player.getByRole('button', { name: '暂停', exact: true })).toBeVisible()
+  await expect(progress).not.toHaveValue(paused)
+})
+
+test('gallery autoplays and terminal cursor fades smoothly', async ({ page }) => {
+  await page.clock.install()
+  await page.goto('/')
+  const pagination = page.locator('.photo-stage .apple-image__pagination')
+  await expect(pagination).toContainText('1 / 3')
+  await page.clock.fastForward(5200)
+  await expect(pagination).toContainText('2 / 3')
+  const cursor = page.locator('.terminal-cursor')
+  await expect(cursor).toHaveText('_')
+  await expect(cursor).toHaveCSS('animation-timing-function', 'cubic-bezier(0.65, 0, 0.35, 1)')
+  expect(await cursor.evaluate(el => el.getAnimations().some(animation => animation.effect?.getTiming().iterations === Infinity))).toBe(true)
+})
+
+test('width and comparison yield during long drags and resume continuously after six idle seconds', async ({ page }) => {
+  await page.clock.install()
+  await page.clock.pauseAt(new Date(Date.now() + 1000))
+  await page.goto('/')
+  await page.clock.runFor(100)
+  const width = page.getByRole('slider', { name: '容器宽度' })
+  const comparison = page.locator('.showcase-carousel .apple-image-compare')
+  const handle = comparison.getByRole('slider')
+  await width.fill('60')
+  await handle.press('Home')
+  await expect(handle).toHaveAttribute('aria-valuenow', '0')
+  await page.clock.fastForward(4500)
+  await expect(width).toHaveValue('60')
+  await expect(handle).toHaveAttribute('aria-valuenow', '0')
+  await page.clock.fastForward(2000)
+  await expect(width).toHaveValue('60')
+  await expect(handle).toHaveAttribute('aria-valuenow', '0')
+  await page.clock.runFor(700)
+  expect(Number(await width.inputValue())).toBeGreaterThan(60)
+  expect(Number(await width.inputValue())).toBeLessThan(64)
+  expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(0)
+  expect(Number(await handle.getAttribute('aria-valuenow'))).toBeLessThan(4)
+
+  const surface = comparison.locator('.apple-image-compare__surface')
+  await surface.scrollIntoViewIfNeeded()
+  const bounds = (await surface.boundingBox())!
+  await page.mouse.move(bounds.x + bounds.width * .3, bounds.y + bounds.height / 2)
+  await page.mouse.down()
+  await expect(handle).toHaveAttribute('aria-valuenow', '30')
+  await page.clock.fastForward(10000)
+  await expect(handle).toHaveAttribute('aria-valuenow', '30')
+  await page.mouse.up()
+  await page.clock.fastForward(4500)
+  await expect(handle).toHaveAttribute('aria-valuenow', '30')
+  await page.clock.fastForward(2000)
+  await expect(handle).toHaveAttribute('aria-valuenow', '30')
+  await page.clock.runFor(700)
+  expect(Number(await handle.getAttribute('aria-valuenow'))).toBeGreaterThan(30)
+  expect(Number(await handle.getAttribute('aria-valuenow'))).toBeLessThan(34)
+})
+
+test('decorative motion follows reduced motion while manual controls remain available', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.clock.install()
+  await page.goto('/')
+  const width = page.getByRole('slider', { name: '容器宽度' })
+  const comparison = page.locator('.showcase-carousel').getByRole('slider')
+  await page.clock.fastForward(8000)
+  await expect(width).toHaveValue('75')
+  await expect(comparison).toHaveAttribute('aria-valuenow', '50')
+  await expect(page.locator('.track-record')).toHaveCSS('animation-play-state', 'paused')
+  await expect(page.locator('.terminal-cursor')).toHaveCSS('animation-name', 'none')
+  await width.fill('40')
+  await width.press('ArrowRight')
+  await comparison.press('End')
+  await expect(width).toHaveValue('41')
+  await expect(comparison).toHaveAttribute('aria-valuenow', '100')
+})
+
+test('container code and copied value match the integer slider label without layout jumps', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (value: string) => { (window as any).__copied = value } } })
+  })
+  await page.goto('/')
+  const card = page.locator('.editor-panel')
+  const slider = card.getByRole('slider', { name: '容器宽度' })
+  const code = card.locator('.editor-example')
+  const heights: number[] = []
+  for (const value of ['75.125', '75.999', '99.499', '99.999', '100']) {
+    await slider.fill(value)
+    const displayed = `${Math.round(Number(value))}%`
+    await expect(card.locator('.apple-slider__value')).toHaveText(displayed)
+    await expect(code).toContainText(`width="${displayed}"`)
+    await card.getByRole('button', { name: '复制示例代码' }).click()
+    expect(await page.evaluate(() => (window as any).__copied)).toBe(`<apple-container width="${displayed}">\n  内容\n</apple-container>`)
+    heights.push((await code.boundingBox())!.height)
+  }
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(1)
+})
