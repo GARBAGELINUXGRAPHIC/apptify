@@ -20,6 +20,7 @@ import type { ErrorCode } from '../error-pages'
 defineProps<{ code: ErrorCode }>()
 const scenes = {
   400: defineAsyncComponent(() => import('./bad-request-paper-scene.vue')),
+  402: defineAsyncComponent(() => import('./payment-paper-scene.vue')),
   403: defineAsyncComponent(() => import('./forbidden-paper-scene.vue')),
   404: defineAsyncComponent(() => import('./not-found-paper-scene.vue')),
   429: defineAsyncComponent(() => import('./hamster-429-scene.vue')),
