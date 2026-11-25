@@ -1,0 +1,32 @@
+import { expect, test } from '@playwright/test'
+
+test('504 preview opens the full scene and supports playback', async ({ page }) => {
+  await page.goto('/components')
+  const preview = page.locator('#error-504')
+  await preview.scrollIntoViewIfNeeded()
+  await expect(preview.getByRole('img', { name: /狐狸信使/ })).toBeVisible()
+  await preview.getByRole('link', { name: /504 · 网关超时/ }).click()
+  await expect(page).toHaveURL(/\/504$/)
+  await expect(page).toHaveTitle('网关超时 · Apptify')
+  const art = page.getByRole('img', { name: /狐狸信使/ })
+  await page.getByRole('button', { name: '暂停动画' }).click()
+  await expect(art).toHaveAttribute('data-playing', 'false')
+  await page.getByRole('button', { name: '重新播放动画' }).click()
+  await expect(art).toHaveAttribute('data-playing', 'true')
+  await page.getByRole('button', { name: '返回上一页' }).click()
+  await expect(page).toHaveURL(/\/components.*$/)
+})
+
+test('504 alias respects small screens, dark appearance and reduced motion', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 })
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' })
+  await page.addInitScript(() => localStorage.setItem('apptify:preferences', JSON.stringify({ theme: 'dark' })))
+  await page.goto('/error/504')
+  await expect(page.getByRole('heading', { name: '504 · 网关超时' })).toBeVisible()
+  await expect(page.locator('.paper-504-copy')).toHaveCSS('font-size', '12px')
+  await expect(page.locator('.timeout-scene')).toHaveClass(/--dark/)
+  await expect(page.getByRole('img', { name: /狐狸信使/ })).toHaveAttribute('data-story', 'static')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320)
+  await page.getByRole('link', { name: '返回首页' }).click()
+  await expect(page).toHaveURL(/\/$/)
+})

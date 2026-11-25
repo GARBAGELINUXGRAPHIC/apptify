@@ -27,6 +27,7 @@ const scenes = {
   500: defineAsyncComponent(() => import('./server-fire-paper-scene.vue')),
   502: defineAsyncComponent(() => import('./gateway-paper-scene.vue')),
   503: defineAsyncComponent(() => import('./unavailable-paper-scene.vue')),
+  504: defineAsyncComponent(() => import('./timeout-paper-scene.vue')),
 }
 
 const apple = useApple()

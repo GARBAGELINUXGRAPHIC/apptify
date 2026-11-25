@@ -20,7 +20,7 @@
 </template>
 
 <route lang="json">
-{ "alias": "/error/502", "meta": { "title": "网关错误" } }
+{ "alias": "/error/502", "meta": { "title": "坏网关" } }
 </route>
 
 <script setup lang="ts">
